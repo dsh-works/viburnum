@@ -16,8 +16,12 @@ apply    check the tree is clean, check out the tag, let DSH recompose or say re
 revert   put the previous tag and the profile files back
 ```
 
-**Status: design.** There is no code here yet. `DESIGN.md` carries the scope, the decisions and the
-v0 cut; this file gets rewritten when there is something to install.
+**Status: design.** There is no code here yet. [`DESIGN.md`](DESIGN.md) carries the scope, the
+decisions and the v0 cut; this file gets rewritten when there is something to install.
+
+v0 is one page, two tools and one binary over a single idea: the profile's bundles are git clones, so
+"is there a newer one?" is a `fetch` and a comparison, and "apply it" is a checkout with a receipt —
+no pnpm, no lockfile, no manifest edit.
 
 House rules: private by default, MIT when it ships, `npm run check` is the gate, `node:*` before a
 dependency, no telemetry, writes stay inside the workspace.
