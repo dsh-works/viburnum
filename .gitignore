@@ -1,0 +1,9 @@
+# Dependencies
+node_modules/
+
+# Local state and scratch output
+.DS_Store
+*.log
+.env
+.env.*
+coverage/

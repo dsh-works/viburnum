@@ -1,0 +1,6 @@
+# Normalize every text file to LF so formatting and CI agree on Windows and Linux.
+* text=auto eol=lf
+
+# Binary assets are compared byte for byte.
+*.png binary
+*.gif binary
