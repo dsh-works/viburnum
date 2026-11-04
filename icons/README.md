@@ -7,7 +7,7 @@ without redrawing.
 | File | Mark | Colours | Read |
 | :--- | :--- | :--- | :--- |
 | `blue-butterfly.png` | Faceless butterfly after a Morpho dorsal view: indigo body, forewings overlapping the hindwings at a dark seam, copper-ringed ocelli, lavender highlights, head glint, 7° tilt | 12 | The elegant one; reads at 16 px. |
-| `blue-butterfly-dark.png` | The same mark with the body in the head's dark slate instead of indigo | 11 | Head and body read as one piece; quieter, closer to a specimen. |
+| `blue-butterfly-dark.png` | The same mark with the body in the head's dark slate instead of indigo, and the head's lavender rim light | 11 | Head and body read as one piece; quieter, closer to a specimen. |
 | `amber-butterfly.png` | Monarch, rounded wings, black body, cream dashes in the tips | 4 | Reads at 20 px; warm counterpoint to the blue. |
 | `viburnum-sprig.png` | Diagonal branch, two three-lobed leaves, three drupes, six florets | 11 | Best at 64; the florets disappear small. |
 | `viburnum-umbel.png` | Emblem: seven florets over three drupes | 8 | Legible, but the stem reads as a trident and the florets sit apart. |
