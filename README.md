@@ -1,8 +1,11 @@
-# PAM — plugin auto manager
+# Viburnum
 
-A sync button for your own DeepSeek Harness plugins. PAM watches the clones your profile is linked to,
-and one click fetches, pushes, fast-forwards or rebases each one onto the branch it follows — so both
-machines run the same code without you remembering which one pushed last.
+A sync button for your own DeepSeek Harness plugins. Viburnum watches the clones your profile is linked
+to, and one click fetches, pushes, fast-forwards or rebases each one onto the branch it follows — so
+both machines run the same code without you remembering which one pushed last.
+
+Named after the shrub that holds its berries through the winter: in place, visible, current. The
+command is `vib`; `viburnum` works too, and a personal alias is a line in your shell profile.
 
 It is built for one person's workshop: three plugins today, more later, two development machines, no
 marketplace, no other users to design around.
@@ -17,8 +20,8 @@ per machine, so the laptop can try `dev` while the work machine stays on `main`.
 button with the other branch. An update is a fetch and a fast-forward in the linked directory, so
 there is no pnpm run, no lockfile write, and no profile edit.
 
-PAM never commits and never force-pushes. When a rebase would rewrite something already published, it
-stops and shows both sides; when the rebase conflicts, it aborts and hands you the files.
+Viburnum never commits and never force-pushes. When a rebase would rewrite something already
+published, it stops and shows both sides; when the rebase conflicts, it aborts and hands you the files.
 
 **Status: design.** There is no code here yet. [`DESIGN.md`](DESIGN.md) carries the premise, the
 decisions and the v0 cut. The short version: the thing that actually goes wrong — two histories

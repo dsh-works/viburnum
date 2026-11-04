@@ -1,13 +1,16 @@
-# PAM — plugin auto manager
+# Viburnum — plugin sync manager
 
-**Status:** design, revision 3, v0 not started
-**Date:** 2026-11-03
-**Package:** `dsh-plugin-pam` · row `pam` · panel `pam`
-**Repo:** [`dsh-works/pam`](https://github.com/dsh-works/pam)
+**Status:** design, revision 4, v0 not started
+**Date:** 2026-11-04
+**Package:** `dsh-plugin-viburnum` · row `viburnum` · panel `viburnum` · binary `vib`
+**Repo:** [`dsh-works/viburnum`](https://github.com/dsh-works/viburnum)
 
-> Revision 3 fixes the premise that matters most: **both machines write.** Revision 2 assumed a laptop
-> that produces and a work machine that consumes. It does not. Both are checkout-and-commit machines,
-> so the action is not "pull" — it is "reconcile", in both directions, without losing a commit.
+> **The name.** Viburnum is the shrub that keeps its fruit through the winter: in place, visible,
+> current — the same promise this tool makes about a linked checkout. The binary is `vib`; `viburnum`
+> ships as the long form, and any personal alias (`kali`, say) is a shell alias, not a config field.
+>
+> Revision 4 renamed the project from PAM and folded the naming into the surface. Revision 3's premise
+> — both machines write — is now simply part of §1.
 
 ---
 
@@ -35,7 +38,7 @@ and divergence is normal rather than exceptional.
 
 ## 2. Thesis
 
-**PAM is a sync button for code you wrote.**
+**Viburnum is a sync button for code you wrote.**
 
 ```
       laptop ⇄ origin ⇄ work machine        both commit, both push, both pull
@@ -50,7 +53,7 @@ Four properties, in the order they matter to the only user:
    way.
 2. **Hot swap.** Any bundle moves between `main` and `dev` as one action. The track is per machine, so
    the laptop can live on `dev` while the work machine stays on `main`; switching is how they agree.
-3. **Safe by construction.** PAM never commits, never force-pushes, never rebases a published commit
+3. **Safe by construction.** Viburnum never commits, never force-pushes, never rebases a published commit
    onto a rewritten base, and aborts a conflicting rebase rather than leaving a half-finished one.
 4. **Cheap and legible.** An update is a fetch and a fast-forward; a sync adds a push and, at worst, a
    rebase. Seconds, and every step is a git command he could have typed — which is the point.
@@ -62,7 +65,7 @@ yet" in a sentence git does not have.
 ## 3. The model: tracks and directions
 
 Each bundle has a **track**: the branch it follows on this machine. `main` by default, `dev` while
-trying something. The track lives in PAM's state, per machine — not in the repository, not in the
+trying something. The track lives in Viburnum's state, per machine — not in the repository, not in the
 profile.
 
 | Term | Meaning |
@@ -75,37 +78,38 @@ profile.
 | **dirty** | Uncommitted changes. Blocks update, sync and switch. |
 | **detached** | No branch. Blocks sync; offers the branches it can switch to. |
 | **local-only** | No `origin`. Visible, never syncable. |
-| **rebase in progress** | Someone started a rebase. PAM stops and says so. |
+| **rebase in progress** | Someone started a rebase. Viburnum stops and says so. |
 
 The safety predicate that decides diverged cases: **are the local-ahead commits already published?**
-If yes, rebasing them would rewrite shared history and need a force-push — PAM refuses and says "merge,
+If yes, rebasing them would rewrite shared history and need a force-push — Viburnum refuses and says "merge,
 or resolve by hand". If no, the rebase is a private rewrite and safe.
 
 ## 4. Decisions
 
 | #   | Decision | Consequence |
 | --- | --- | --- |
-| D1  | **Watch, update, sync, switch, adopt.** Installing delegates to `plugin_manager.installBundle`; PAM never runs a package manager. | PAM stays small and cannot corrupt a profile's dependency graph. |
+| D1  | **Watch, update, sync, switch, adopt.** Installing delegates to `plugin_manager.installBundle`; Viburnum never runs a package manager. | Viburnum stays small and cannot corrupt a profile's dependency graph. |
 | D2  | **The track is the unit, per machine.** Bulk helpers move everything to `main` or `dev`. | Different tracks per machine are normal; that is what "trying something on the laptop" looks like. |
 | D3  | **Update is fast-forward only.** No rebase, no force, no detached checkout. | Pulling never rewrites anything. |
 | D4  | **Sync pushes, reconciles, and pushes again when the rebase moved something.** | The morning button closes the loop in both directions. |
-| D5  | **Sync never commits and never force-pushes.** A dirty tree blocks it. | PAM cannot invent a commit message or overwrite a remote. |
+| D5  | **Sync never commits and never force-pushes.** A dirty tree blocks it. | Viburnum cannot invent a commit message or overwrite a remote. |
 | D6  | **Rebase only when the local commits are unpublished.** Published divergence is refused, with both commit lists shown. | No rewriting history two machines already saw. |
-| D7  | **A conflicting rebase is aborted, not left open.** PAM lists the files and the retry command. | The tree always ends in a state git understands and the user chose. |
+| D7  | **A conflicting rebase is aborted, not left open.** Viburnum lists the files and the retry command. | The tree always ends in a state git understands and the user chose. |
 | D8  | **Snapshot for update and switch; audit for sync.** Revert restores a pull or a track move, never a pushed rebase. | Undo is honest about which actions are local-only. |
 | D9  | **Checks automatic, actions on click.** `autoUpdateOnStart` exists, default off. | Nothing moves while you are not looking. |
 | D10 | **One core, three faces.** Host service, Web page, tools, CLI binary. | Same calls, different keyboards. |
-| D11 | **State with the profile**, `$DSH_HOME/profiles/<name>/.pam/`. Never in a bundle repo. | `git status` in any plugin stays clean. |
-| D12 | **PAM updates itself separately.** `Sync all` skips its own row; `Update PAM` moves the files and says restart. | The tool that must not be stale gets updated honestly. |
+| D11 | **State with the profile**, `$DSH_HOME/profiles/<name>/.viburnum/`. Never in a bundle repo. | `git status` in any plugin stays clean. |
+| D12 | **Viburnum updates itself separately.** `Sync all` skips its own row; `Update Viburnum` moves the files and says restart. | The tool that must not be stale gets updated honestly. |
 | D13 | **Install is adoption.** Directory picker → validate → `installBundle` → track from the branch it is on. | A new plugin is two clicks and lands in the same table. |
 | D14 | **Tests are offline.** Fixtures are real repositories: a bare `origin`, two clones, commits on both sides. | Divergence, rebase and conflict are exercised without network. |
+| D15 | **`vib` is the command; aliases are the user's.** The package links `vib` and `viburnum` to one entry point; anything else is a shell alias. | The tool answers to its name without owning the keyboard: no alias table to maintain, no runtime string to change. |
 
 ## 5. Surfaces
 
 ### 5.1 Web page — "Updates"
 
-Registered like the Plugins page: a keyed `main` panel with id `pam` and a `sidebar.panellist` entry,
-selected through `ctx.layout.selectPanel('pam')`.
+Registered like the Plugins page: a keyed `main` panel with id `viburnum` and a `sidebar.panellist` entry,
+selected through `ctx.layout.selectPanel('viburnum')`.
 
 ```text
 Updates                                    [ Sync all ]  [ Check ]  [ Install from directory… ]
@@ -136,29 +140,34 @@ Updates                                    [ Sync all ]  [ Check ]  [ Install fr
 
 | Tool | Arguments | Behavior |
 | :--- | :--- | :--- |
-| `pam_status` | — | Cached rows and directions. No network, no writes. |
-| `pam_update` | `bundle?` | Fast-forward only. Snapshot, gate, receipt. Needs approval: writes outside the workspace. |
-| `pam_sync` | `bundle?` | Fetch, push, reconcile, push. Audit entry. Needs approval. |
-| `pam_switch` | `bundle`, `track` | Same gate and receipt, different move. Needs approval. |
-| `pam_install` | `path` | Validate, then `installBundle`. Needs approval. |
-| `pam_revert` | `bundle` | Restores an update or switch receipt. Needs approval. |
+| `vib_status` | — | Cached rows and directions. No network, no writes. |
+| `vib_update` | `bundle?` | Fast-forward only. Snapshot, gate, receipt. Needs approval: writes outside the workspace. |
+| `vib_sync` | `bundle?` | Fetch, push, reconcile, push. Audit entry. Needs approval. |
+| `vib_switch` | `bundle`, `track` | Same gate and receipt, different move. Needs approval. |
+| `vib_install` | `path` | Validate, then `installBundle`. Needs approval. |
+| `vib_revert` | `bundle` | Restores an update or switch receipt. Needs approval. |
 
-A routing sentence in the system prompt so the model proposes `pam_sync` instead of hand-editing a
+A routing sentence in the system prompt so the model proposes `vib_sync` instead of hand-editing a
 `link:` path or running `git push` inside a plugin directory.
 
 ### 5.3 CLI
 
-`dsh plugin` forwards to pnpm, so there is no supported `dsh pam` subcommand. v0 ships a `pam` binary:
+`dsh plugin` forwards its arguments to pnpm, so there is no `dsh <tool>` subcommand to hook. v0 ships a
+standalone binary instead:
 
 ```
-pam status [--json]
-pam update [<bundle>]
-pam sync [<bundle>] [--dry-run]
-pam switch <bundle> <track>
-pam install <dir>
-pam revert <bundle>
-pam log [--limit 20]
+vib status [--json]
+vib update [<bundle>]
+vib sync [<bundle>] [--dry-run]
+vib switch <bundle> <track>
+vib install <dir>
+vib revert <bundle>
+vib log [--limit 20]
 ```
+
+The package links both `vib` and `viburnum` to the same entry point. A personal alias — `alias kali=vib`
+in a shell profile, or a symlink in a bin directory — is documented in the README and deliberately not a
+config field: the name you type belongs to the shell, not to the plugin.
 
 Exit codes: `0` success, `1` failure, `3` something is pending (updates or unpushed commits).
 `--dry-run` prints the reconciliation plan and touches nothing.
@@ -247,7 +256,7 @@ switch is its own inverse: the same action with the other track.
 
 `ctx.directoryPicker` (`native.pick()` or the browse flow) → validate `package.json` declares
 `dsh.bundle.patch` → `pluginManager.installBundle(absoluteDir)` → set the track from the checkout's
-current branch → the row appears. The manager owns pnpm, bundle selection, and compatibility; PAM
+current branch → the row appears. The manager owns pnpm, bundle selection, and compatibility; Viburnum
 reports its answer verbatim.
 
 ### 6.6 Changelog and reload class
@@ -275,7 +284,7 @@ Kept here because the point is to learn the commands, not to hide them.
 
 ## 7. State
 
-`$DSH_HOME/profiles/<name>/.pam/state.json`:
+`$DSH_HOME/profiles/<name>/.viburnum/state.json`:
 
 ```jsonc
 {
@@ -316,7 +325,7 @@ and the tools may touch it at once.
 
 ## 8. Failure modes
 
-| Failure | What PAM does |
+| Failure | What Viburnum does |
 | :--- | :--- |
 | Offline / fetch times out | Keeps the previous row, marks it stale, no dialog. |
 | Push rejected (non-fast-forward) | Reports it, shows both lists, never retries with force. |
@@ -335,10 +344,10 @@ and the tools may touch it at once.
 ## 9. v0 cut — 0.1.0
 
 Ships: one profile, `link:`/`file:` bundles, tracks, check, directions, changelog, compatibility,
-`Sync all` and `Update`, track switch, revert, the Updates page, `pam_status`/`pam_update`/`pam_sync`/
-`pam_switch`/`pam_revert`, the `pam` CLI, offline tests.
+`Sync all` and `Update`, track switch, revert, the Updates page, `vib_status`/`vib_update`/`vib_sync`/
+`vib_switch`/`vib_revert`, the `vib` CLI, offline tests.
 
-Follows immediately (0.1.x): `pam_install` and the picker, `autoUpdateOnStart`, `pam log`,
+Follows immediately (0.1.x): `vib_install` and the picker, `autoUpdateOnStart`, `vib log`,
 `--dry-run` polish.
 
 Not planned: registry bundles, auto-commits, force-push, multi-profile, notifications, diff stat,
@@ -349,8 +358,8 @@ Build order, each step green under `npm run check`:
 1. Fixture repositories: bare origin, two clones, commits on both sides, one conflict fixture.
 2. `lib/git.js` + `lib/version.js`: inspect, counts, both commit lists, changelog.
 3. `lib/sync.js`: ff, push, rebase, conflict abort — tested against the fixtures before any UI.
-4. `pam status` / `pam sync` — the two-machine loop working from the terminal.
-5. Receipts, `pam revert`, state schema.
+4. `vib status` / `vib sync` — the two-machine loop working from the terminal.
+5. Receipts, `vib revert`, state schema.
 6. Track switch.
 7. Web page, sidebar entry, reload banner.
 8. Agent tools.
@@ -361,18 +370,18 @@ Build order, each step green under `npm run check`:
 - **O1 — does HMR recompose a linked bundle when its directory changes?** The reload banner wording
   depends on it; one throwaway commit answers it.
 - **O2 — how does a host plugin learn the profile directory?** If there is no public accessor, state
-  moves to `$DSH_HOME/pam/<profile>/`.
+  moves to `$DSH_HOME/viburnum/<profile>/`.
 - **O3 — conflict UX.** v0 aborts the rebase and hands over commands. Is that enough, or does a
   personal tool want the conflicted files opened in the editor and a "retry when done" button?
 - **O4 — `autoUpdateOnStart`.** Off by default; the moment it is on, every start may move three
   checkouts. Probably a per-bundle flag, not a global one.
-- **O5 — version bumping.** `pam bump <bundle>` from the changelog would stop the drift note from ever
+- **O5 — version bumping.** `vib bump <bundle>` from the changelog would stop the drift note from ever
   appearing. Stretch goal, not v0.
 
 ## 11. House conventions
 
-Package `dsh-plugin-pam`, private, MIT when it ships, `engines` floor `dsh ^0.2.1-rc.2`, `node >=22`.
+Package `dsh-plugin-viburnum`, private, MIT when it ships, `engines` floor `dsh ^0.2.1-rc.2`, `node >=22`.
 Layout follows the workshop: `index.js`, `lib/`, `client.js`, `client.*.js`, `cordis.patch.yml`,
 `test/`, `scripts/check.mjs`, `README.md`. No runtime dependencies beyond `node:*`; every git call is
 a `spawn` with an explicit cwd, a timeout and `GIT_TERMINAL_PROMPT=0`. The README's **Limits** section
-opens with the two things PAM will not do: commit, and force-push.
+opens with the two things Viburnum will not do: commit, and force-push.
