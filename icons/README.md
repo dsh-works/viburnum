@@ -6,7 +6,7 @@ without redrawing.
 
 | File | Mark | Colours | Read |
 | :--- | :--- | :--- | :--- |
-| `blue-butterfly.png` | Faceless butterfly: indigo body, overlapping blue wings, copper-ringed ocelli near the hindwing centres, lavender highlights (asymmetric), 7° tilt | 12 | The elegant one; reads at 16 px. |
+| `blue-butterfly.png` | Faceless butterfly after a Morpho dorsal view: indigo body, forewings overlapping the hindwings at a dark seam, copper-ringed ocelli, lavender highlights, head glint, 7° tilt | 12 | The elegant one; reads at 16 px. |
 | `amber-butterfly.png` | Monarch, rounded wings, black body, cream dashes in the tips | 4 | Reads at 20 px; warm counterpoint to the blue. |
 | `viburnum-sprig.png` | Diagonal branch, two three-lobed leaves, three drupes, six florets | 11 | Best at 64; the florets disappear small. |
 | `viburnum-umbel.png` | Emblem: seven florets over three drupes | 8 | Legible, but the stem reads as a trident and the florets sit apart. |
@@ -20,3 +20,7 @@ with `#b3a6ef` lavender, `#4a4a8c` indigo body, `#b5652f`/`#e8a05c` copper for t
 
 Nothing here is wired into a package yet: there is no `package.json` or `icon` field until v0 starts.
 The eventual icon is whichever of these survives being shrunk to a sidebar entry.
+
+The blue butterfly's wing arrangement follows a *Morpho menelaus* dorsal specimen — forewing over
+hindwing, dark seam, hindwing about half the wing area — from the MHNT collection on
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Morpho_menelaus_huebneri_MHNT_Male_Dos.jpg).
