@@ -6,14 +6,14 @@ without redrawing.
 
 | File | Mark | Colours | Read |
 | :--- | :--- | :--- | :--- |
-| `blue-butterfly.png` | Spread-wing butterfly, top-down, pale wing-tip spots | 5 | Strong silhouette; the safest mark. |
+| `blue-butterfly.png` | Cute butterfly: big eyes, blush, violet rim, 7° tilt | 11 | The friendliest mark; still reads at 16 px. |
 | `amber-butterfly.png` | Monarch, rounded wings, black body, cream dashes in the tips | 4 | Reads at 20 px; warm counterpoint to the blue. |
 | `viburnum-sprig.png` | Diagonal branch, two three-lobed leaves, three drupes, six florets | 11 | Best at 64; the florets disappear small. |
 | `viburnum-umbel.png` | Emblem: seven florets over three drupes | 8 | Legible, but the stem reads as a trident and the florets sit apart. |
 | `viburnum-butterfly.png` | Butterfly above an umbel | ~10 | The idea is right, the execution is two objects rather than one. |
 
-The three butterfly marks share one palette family (`#0f1b2d`/`#1e4f8f`/`#3f86c9`/`#8fd0ef` for the
-blue, `#1a120c`/`#c95a1e`/`#e8944a`/`#f4e3c2` for the amber). The flower marks use
+The three butterfly marks share one palette family (`#141a2e`/`#183566`/`#2f6fb0`/`#4f9bd8`/`#8b6fe0`
+for the blue, `#1a120c`/`#c95a1e`/`#e8944a`/`#f4e3c2` for the amber). The flower marks use
 `#23201a` outline, `#f6f2e4`/`#d9d2bd` petals, `#d8a13f` centres, `#b8322a`/`#e0554a`/`#7d1f1a` drupes
 and `#3f5a32`/`#6f8f4d` leaves.
 
