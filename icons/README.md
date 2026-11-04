@@ -25,3 +25,10 @@ The eventual icon is whichever of these survives being shrunk to a sidebar entry
 The blue butterfly's wing arrangement follows a *Morpho menelaus* dorsal specimen â€” forewing over
 hindwing, dark seam, hindwing about half the wing area â€” from the MHNT collection on
 [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Morpho_menelaus_huebneri_MHNT_Male_Dos.jpg).
+
+## Where these are used
+
+Checked against the harness UI rather than guessed: a bundle icon renders in a 48×48 card
+(`.cardIcon`), in 40×40 detail rows (`.rowIcon`), and as a preview capped at 320 px height
+(`.packagePreview`). There is no 16 px surface, so a single 64×64 master covers every case — the
+browser scales it down for the card and leaves it near 1:1 in the preview.
