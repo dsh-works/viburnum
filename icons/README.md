@@ -6,7 +6,7 @@ without redrawing.
 
 | File | Mark | Colours | Read |
 | :--- | :--- | :--- | :--- |
-| `blue-butterfly.png` | Faceless butterfly: slim body, tapered wings, violet rim, copper forewing tips, 7° tilt | 9 | The elegant one; reads at 16 px. |
+| `blue-butterfly.png` | Faceless butterfly: slim body, tapered wings, violet rim, copper ocelli on the hindwings, 7° tilt | 10 | The elegant one; reads at 16 px. |
 | `amber-butterfly.png` | Monarch, rounded wings, black body, cream dashes in the tips | 4 | Reads at 20 px; warm counterpoint to the blue. |
 | `viburnum-sprig.png` | Diagonal branch, two three-lobed leaves, three drupes, six florets | 11 | Best at 64; the florets disappear small. |
 | `viburnum-umbel.png` | Emblem: seven florets over three drupes | 8 | Legible, but the stem reads as a trident and the florets sit apart. |
