@@ -107,17 +107,30 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 Registered like the Plugins page: a keyed `main` panel with id `pam` and a `sidebar.panellist` entry,
 selected through `ctx.layout.selectPanel('pam')`.
 
-- **Header:** `Sync all`, `Check`, `Install from directory…`, and "checked 3 minutes ago".
-- **Table:** bundle, track (`main` / `dev` toggle per row), current commit, direction (`↑2 ↓0`,
-  `↑0 ↓3`, `↑2 ↓3 diverged`), last checked. Three rows today; no pagination.
-- **Detail:** both commit lists when diverged — *yours* and *theirs* — the changelog for the incoming
-  side, the version drift note, the compatibility verdict, and `Update` / `Sync` / `Switch` / `Revert`.
-- **Version drift:** `v1.3.0 unchanged across 12 commits` — the cheapest reminder for the mismatch that
-  started all this.
+```text
+Updates                                    [ Sync all ]  [ Check ]  [ Install from directory… ]
+2 watched · checked 2 minutes ago
+
+  Pixel Art      main                     v0.3.0 · 33903c8          ✓ in sync
+                 dsh-pixelart-tool · dev +12 (v0.4.0)
+  Alerts         feature/subagents-cost…  v0.4.0 · 3c69dc8          ✓ in sync
+                 dsh-plugin-alerts · main +1
+```
+
+- **The second line is the directory**, because the package name lies: the profile links
+  `dsh-pixelart-tool`, while `dsh-plugin-pixelart` sits beside it on another branch at another
+  version. The path is the only honest identifier, so it stays visible.
+- **The branch is the version selector**, not a `main`/`dev` toggle. A picker lists local and remote
+  branches with `+N` counts against the current head; `main` and `dev` are promoted to chips. Any
+  branch is a track, including `feature/subagents-cost-final`.
+- **Direction, not status.** `↑2` is a push, `↓3` is a pull, `↑2 ↓3` is a rebase, `✓` is nothing.
+  There is no word like "outdated", because it does not say what will happen.
+- **Rows expand in place**, no separate detail pane: both commit lists when diverged, the changelog for
+  the incoming side, the version drift note, the compatibility verdict, and the actions.
+- **Version drift:** `v1.3.0 unchanged across 12 commits` — the cheapest reminder for the mismatch
+  that started all this.
 - **After an action:** one banner: *pushed 2, pulled 3, rebased 0 · restart `dsh web`* — or *conflict
   in 2 files: `lib/png.js`, `client.panel.js` — rebase aborted*.
-- **Diverged rows always show both sides**, because "who is ahead" is the only question that matters
-  on this machine.
 
 ### 5.2 Agent tools
 
@@ -149,6 +162,28 @@ pam log [--limit 20]
 
 Exit codes: `0` success, `1` failure, `3` something is pending (updates or unpushed commits).
 `--dry-run` prints the reconciliation plan and touches nothing.
+
+### 5.4 Two journeys
+
+**A switch, with today's numbers.** Pixel Art's row reads `main · v0.3.0 · ✓`, with `dev +12 (v0.4.0)`
+underneath. Clicking `dev` asks nothing — it is reversible by clicking `main`. The row shows
+`switching…`, then `dev · v0.4.0 · ✓`; the expanded row shows the 0.3.0 → 0.4.0 changelog and the
+banner says *on dev · host half changed — restart `dsh web`*. The version the org profile already
+advertises is now the version running.
+
+**A morning.** Two rows show `↓3` and `↓2`. `Sync all` works through them in order, each row reporting
+its own step — `fetching…`, `fast-forward 3`, `push 1`, `rebase 2` — and a blocked row never stops the
+next one. The banner at the end is the whole report: *pushed 1, pulled 5, rebased 0 · restart `dsh
+web`*. Nothing is modal, nothing blocks the page, and the harness stays usable throughout.
+
+**When it cannot.** Four sentences, never a spinner:
+
+| State | The page says |
+| :--- | :--- |
+| dirty | *3 uncommitted files — commit or stash first* (with the command) |
+| diverged, published | *2 commits here are already on `origin/main` — merge instead of rebase* |
+| conflict | *rebase aborted · 2 files: `lib/png.js`, `client.panel.js`* (with the retry command) |
+| auth | git's own sentence, quoted once, no retry loop |
 
 ## 6. How it works
 
