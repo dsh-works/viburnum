@@ -1,6 +1,6 @@
 # Viburnum — plugin sync manager
 
-**Status:** design, revision 4, v0 not started
+**Status:** design, revision 5, v0 not started
 **Date:** 2026-11-04
 **Package:** `dsh-plugin-viburnum` · row `viburnum` · panel `viburnum` · binary `vib`
 **Repo:** [`dsh-works/viburnum`](https://github.com/dsh-works/viburnum)
@@ -9,8 +9,10 @@
 > current — the same promise this tool makes about a linked checkout. The binary is `vib`; `viburnum`
 > ships as the long form, and any personal alias (`kali`, say) is a shell alias, not a config field.
 >
-> Revision 4 renamed the project from PAM and folded the naming into the surface. Revision 3's premise
-> — both machines write — is now simply part of §1.
+> Revision 4 renamed the project from PAM. Revision 5 adds the surface it was missing — a sidebar row
+> above Plugins with one aggregate status dot — and the install story: a directory, a repository URL,
+> or a whole GitHub organisation. The hover card from the original sketch does not survive contact
+> with the sidebar slot (§5.0).
 
 ---
 
@@ -88,7 +90,7 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 
 | #   | Decision | Consequence |
 | --- | --- | --- |
-| D1  | **Watch, update, sync, switch, adopt.** Installing delegates to `plugin_manager.installBundle`; Viburnum never runs a package manager. | Viburnum stays small and cannot corrupt a profile's dependency graph. |
+| D1  | **Watch, update, sync, switch, install.** Installing delegates to `plugin_manager.installBundle`; Viburnum never runs a package manager. | Viburnum stays small and cannot corrupt a profile's dependency graph. |
 | D2  | **The track is the unit, per machine.** Bulk helpers move everything to `main` or `dev`. | Different tracks per machine are normal; that is what "trying something on the laptop" looks like. |
 | D3  | **Update is fast-forward only.** No rebase, no force, no detached checkout. | Pulling never rewrites anything. |
 | D4  | **Sync pushes, reconciles, and pushes again when the rebase moved something.** | The morning button closes the loop in both directions. |
@@ -100,27 +102,62 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D10 | **One core, three faces.** Host service, Web page, tools, CLI binary. | Same calls, different keyboards. |
 | D11 | **State with the profile**, `$DSH_HOME/profiles/<name>/.viburnum/`. Never in a bundle repo. | `git status` in any plugin stays clean. |
 | D12 | **Viburnum updates itself separately.** `Sync all` skips its own row; `Update Viburnum` moves the files and says restart. | The tool that must not be stale gets updated honestly. |
-| D13 | **Install is adoption.** Directory picker → validate → `installBundle` → track from the branch it is on. | A new plugin is two clicks and lands in the same table. |
+| D13 | **Install is adoption, through three doors.** Directory picker, repository URL, or GitHub organisation → validate → `installBundle` → track from the branch it is on. | A new plugin is one choice and lands in the same table. |
 | D14 | **Tests are offline.** Fixtures are real repositories: a bare `origin`, two clones, commits on both sides. | Divergence, rebase and conflict are exercised without network. |
 | D15 | **`vib` is the command; aliases are the user's.** The package links `vib` and `viburnum` to one entry point; anything else is a shell alias. | The tool answers to its name without owning the keyboard: no alias table to maintain, no runtime string to change. |
+| D16 | **One sidebar row, above Plugins.** A `sidebar.panellist` registration ordered before the Plugins row, with the butterfly as its icon. | The tool is one click from anywhere, and it sits with the other panel launchers instead of inventing a second navigation. |
+| D17 | **One dot is the whole status language.** Green current, blue pullable, orange uncommitted, red unpushed or diverged, grey unknown; worst state wins across bundles. | A glance answers "is anything wrong" without opening anything. Colour is always paired with words on the page, never the only signal. |
+| D18 | **No hover card.** The sidebar owns the row and exposes no hover slot; refresh and detail live on the page, and the row opens it. | The sketch's hover loses; the dot survives. Nothing is built on a seam the harness does not have. |
+| D19 | **Three doors to install, one lifecycle.** Directory, repository URL, or GitHub organisation — all end at `pluginManager.installBundle`. | Org browsing is a list you pick from, not a second manager; one code path creates every plugin. |
+| D20 | **`vib install .` is the CLI spelling of the directory door.** | The terminal stays a first-class face; an in-page command bar, if it ever happens, mirrors the same verbs and resolves `.` to the workspace root. |
 
 ## 5. Surfaces
 
-### 5.1 Web page — "Updates"
+### 5.0 The sidebar row
 
-Registered like the Plugins page: a keyed `main` panel with id `viburnum` and a `sidebar.panellist` entry,
-selected through `ctx.layout.selectPanel('viburnum')`.
+A `sidebar.panellist` registration: id `viburnum`, label "Viburnum", the butterfly as its icon, and an
+`order` that places it above Plugins. The harness renders the icon and passes `{ size, active }`, so the
+status dot is drawn *inside our glyph* — no overlay, nothing extra to support in the shell.
+
+The sketch asked for a hover card with a refresh button. That surface does not exist:
+
+| Sketch | Reality |
+| :--- | :--- |
+| Hover opens a small window | the sidebar owns the row; hover is a background change and a label tooltip |
+| Refresh from that window | refresh is a button on the page, plus a background check that runs anyway |
+| Status available on hover | the dot is always on the icon |
+
+**The dot.** One dot, aggregated across every watched bundle; the worst state wins:
+
+| State | Colour | Meaning |
+| :--- | :--- | :--- |
+| current | green | clean, and equal to `origin/<track>` |
+| pullable | blue | the remote has commits this machine does not |
+| uncommitted | orange | the tree is dirty |
+| unpushed / diverged | red | commits here the remote does not have |
+| unknown | grey | the check failed, the directory is missing, or there is no `origin` |
+
+Precedence: red > orange > blue > grey > green. Every colour is also spelled out in words on the page:
+at nine pixels, orange and red are a guess, and colour alone is not an accessible answer.
+
+### 5.1 Web page — "Viburnum"
+
+The same panel registration as before, retitled. The page is what the hover was meant to be, one click
+later:
 
 ```text
-Updates                                    [ Sync all ]  [ Check ]  [ Install from directory… ]
-2 watched · checked 2 minutes ago
+Viburnum                                    [ Refresh ]  [ Sync all ]  [ Install ▾ ]
+3 watched · 1 pullable · 1 unpushed · 1 current · checked 2 minutes ago
 
-  Pixel Art      main                     v0.3.0 · 33903c8          ✓ in sync
+  Pixel Art      main                     v0.3.0 · 33903c8       ● pullable  ↓12
                  dsh-pixelart-tool · dev +12 (v0.4.0)
-  Alerts         feature/subagents-cost…  v0.4.0 · 3c69dc8          ✓ in sync
+  Alerts         feature/subagents-cost…  v0.4.0 · 3c69dc8       ● unpushed  ↑2
                  dsh-plugin-alerts · main +1
 ```
 
+- **`Refresh` is the hover button.** One fetch pass over every watched bundle, the same code the
+  background check runs; the dot updates while the page is open.
+- **`Install ▾` opens the three doors**: a directory, a repository URL, or a GitHub organisation.
 - **The second line is the directory**, because the package name lies: the profile links
   `dsh-pixelart-tool`, while `dsh-plugin-pixelart` sits beside it on another branch at another
   version. The path is the only honest identifier, so it stays visible.
@@ -128,7 +165,7 @@ Updates                                    [ Sync all ]  [ Check ]  [ Install fr
   branches with `+N` counts against the current head; `main` and `dev` are promoted to chips. Any
   branch is a track, including `feature/subagents-cost-final`.
 - **Direction, not status.** `↑2` is a push, `↓3` is a pull, `↑2 ↓3` is a rebase, `✓` is nothing.
-  There is no word like "outdated", because it does not say what will happen.
+  The dot says how bad it is; the arrows say what will happen.
 - **Rows expand in place**, no separate detail pane: both commit lists when diverged, the changelog for
   the incoming side, the version drift note, the compatibility verdict, and the actions.
 - **Version drift:** `v1.3.0 unchanged across 12 commits` — the cheapest reminder for the mismatch
@@ -144,7 +181,7 @@ Updates                                    [ Sync all ]  [ Check ]  [ Install fr
 | `vib_update` | `bundle?` | Fast-forward only. Snapshot, gate, receipt. Needs approval: writes outside the workspace. |
 | `vib_sync` | `bundle?` | Fetch, push, reconcile, push. Audit entry. Needs approval. |
 | `vib_switch` | `bundle`, `track` | Same gate and receipt, different move. Needs approval. |
-| `vib_install` | `path` | Validate, then `installBundle`. Needs approval. |
+| `vib_install` | `target` (directory or URL) or `org` | Validate, then `installBundle`. An org target lists repositories first. Needs approval. |
 | `vib_revert` | `bundle` | Restores an update or switch receipt. Needs approval. |
 
 A routing sentence in the system prompt so the model proposes `vib_sync` instead of hand-editing a
@@ -157,13 +194,19 @@ standalone binary instead:
 
 ```
 vib status [--json]
+vib refresh
 vib update [<bundle>]
 vib sync [<bundle>] [--dry-run]
 vib switch <bundle> <track>
-vib install <dir>
+vib install <dir|url>
+vib install --org <org> [<repo>]
 vib revert <bundle>
 vib log [--limit 20]
 ```
+
+`vib install .` needs no special case: the CLI has a working directory, so `.` is already the path it
+means. An in-page command bar would have to invent one — the workspace root — and is a gimmick we may
+add later (O8), not a reason to shape the CLI.
 
 The package links both `vib` and `viburnum` to the same entry point. A personal alias — `alias kali=vib`
 in a shell profile, or a symlink in a bin directory — is documented in the README and deliberately not a
@@ -172,7 +215,11 @@ config field: the name you type belongs to the shell, not to the plugin.
 Exit codes: `0` success, `1` failure, `3` something is pending (updates or unpushed commits).
 `--dry-run` prints the reconciliation plan and touches nothing.
 
-### 5.4 Two journeys
+### 5.4 Three journeys
+
+**A glance.** The dot is blue: something can be pulled. Click it and the page opens with *Alerts is 3
+commits behind `origin/main`; Pixel Art has 2 commits that are not on `origin/main`.* `Refresh`
+re-checks while the page is open, `Sync all` runs, and the dot turns green before the banner finishes.
 
 **A switch, with today's numbers.** Pixel Art's row reads `main · v0.3.0 · ✓`, with `dev +12 (v0.4.0)`
 underneath. Clicking `dev` asks nothing — it is reversible by clicking `main`. The row shows
@@ -252,12 +299,27 @@ failure is a reported failure with a timeout.
 locally), then fast-forward, then a receipt with both heads and the reload class between them. A
 switch is its own inverse: the same action with the other track.
 
-### 6.5 Install from directory
+### 6.5 Install — three doors
 
-`ctx.directoryPicker` (`native.pick()` or the browse flow) → validate `package.json` declares
-`dsh.bundle.patch` → `pluginManager.installBundle(absoluteDir)` → set the track from the checkout's
-current branch → the row appears. The manager owns pnpm, bundle selection, and compatibility; Viburnum
-reports its answer verbatim.
+```text
+1  directory   ctx.directoryPicker (native.pick() or the browse flow)
+2  repository  git clone <url> <shelf>/<name>
+3  org         list the org's repositories, keep the ones whose package.json declares
+               dsh.bundle.patch, then door 2 for the pick
+→  validate, pluginManager.installBundle(absoluteDir), track = the checkout's current branch
+```
+
+Door 1 needs no network. Door 3 needs the GitHub API: a public organisation answers without a
+credential, a private one resolves a configured *reference* through `ctx.credentials` — a `GITHUB_TOKEN`
+environment variable, never a token in the plugin's config. Listing is a read; nothing is cloned until a
+repository is picked.
+
+The manager owns pnpm, bundle selection, and compatibility; Viburnum reports its answer verbatim.
+
+**Where clones land is undecided (O6).** Either Viburnum owns a shelf — `~/.dsh/plugins/<repo>` or
+similar — and the profile links into it, or doors 2 and 3 ask for a directory every time and only door 1
+survives. A shelf makes install one lifecycle (clone, link, update, remove) and makes the org list worth
+having; asking each time keeps the tool from deciding where code lives.
 
 ### 6.6 Changelog and reload class
 
@@ -280,7 +342,7 @@ Kept here because the point is to learn the commands, not to hide them.
 | Sync | steps 2–7 above: `git push`, `git merge --ff-only`, or `git rebase` + `git push` |
 | Switch | `git switch <t>`, `git merge --ff-only origin/<t>` |
 | Revert | `git switch <branch>`, `git reset --hard <recorded-sha>` |
-| Install | `pluginManager.installBundle(<dir>)` (pnpm runs inside the manager) |
+| Install | `git clone` for doors 2–3, then `pluginManager.installBundle(<dir>)` (pnpm runs inside the manager) |
 
 ## 7. State
 
@@ -343,12 +405,13 @@ and the tools may touch it at once.
 
 ## 9. v0 cut — 0.1.0
 
-Ships: one profile, `link:`/`file:` bundles, tracks, check, directions, changelog, compatibility,
-`Sync all` and `Update`, track switch, revert, the Updates page, `vib_status`/`vib_update`/`vib_sync`/
-`vib_switch`/`vib_revert`, the `vib` CLI, offline tests.
+Ships: one profile, `link:`/`file:` bundles, the sidebar row and its dot, the Viburnum page with
+`Refresh`, tracks, check, directions, changelog, compatibility, `Sync all` and `Update`, track switch,
+revert, `vib_status`/`vib_update`/`vib_sync`/`vib_switch`/`vib_revert`, `vib status|refresh|sync`,
+offline tests.
 
-Follows immediately (0.1.x): `vib_install` and the picker, `autoUpdateOnStart`, `vib log`,
-`--dry-run` polish.
+Follows immediately (0.1.x): install (directory, then repository URL), the GitHub organisation door and
+the shelf decision, `autoUpdateOnStart`, `vib log`, an in-page command bar, `--dry-run` polish.
 
 Not planned: registry bundles, auto-commits, force-push, multi-profile, notifications, diff stat,
 dependency installation, tray integration.
@@ -361,9 +424,9 @@ Build order, each step green under `npm run check`:
 4. `vib status` / `vib sync` — the two-machine loop working from the terminal.
 5. Receipts, `vib revert`, state schema.
 6. Track switch.
-7. Web page, sidebar entry, reload banner.
+7. Web page, sidebar row and dot, reload banner.
 8. Agent tools.
-9. Directory picker and adoption.
+9. Install: directory picker, then repository URL, then the organisation door if O6 lands on a shelf.
 
 ## 10. Open questions
 
@@ -377,6 +440,14 @@ Build order, each step green under `npm run check`:
   checkouts. Probably a per-bundle flag, not a global one.
 - **O5 — version bumping.** `vib bump <bundle>` from the changelog would stop the drift note from ever
   appearing. Stretch goal, not v0.
+- **O6 — shelf or viewer?** Does Viburnum clone repositories into a directory it owns, or only manage
+  checkouts the profile already links? The organisation list is only worth having with a shelf.
+- **O7 — the organisation.** Which org, are the repositories private, and is `GITHUB_TOKEN` acceptable
+  as the only way in? Unauthenticated listing works but the rate limit is tight.
+- **O8 — command bar.** A real terminal plus an input inside the page, or just the terminal? The page
+  one has to invent a working directory for `.`.
+- **O9 — colour language.** Is blue right for "pullable", or should anything actionable be warm? Does
+  uncommitted (orange) outrank pullable (blue)? The precedence in §5.0 is a first draft.
 
 ## 11. House conventions
 
