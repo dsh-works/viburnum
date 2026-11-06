@@ -2,8 +2,8 @@
 
 *A manager that Keeps All Linked Installs Neatly Synced In Two Universes.*
 
-**Status:** design, revision 5, v0 not started
-**Date:** 2026-11-04
+**Status:** design, revision 6, v0 not started
+**Date:** 2026-11-06
 **Package:** `dsh-plugin-viburnum` · row `viburnum` · panel `viburnum` · binary `vib`
 **Repo:** [`dsh-works/viburnum`](https://github.com/dsh-works/viburnum)
 
@@ -11,10 +11,9 @@
 > current — the same promise this tool makes about a linked checkout. The binary is `vib`; `viburnum`
 > ships as the long form, and any personal alias is a shell alias, not a config field.
 >
-> Revision 4 renamed the project from PAM. Revision 5 adds the surface it was missing — a sidebar row
-> above Plugins with one aggregate status dot — and the install story: a directory, a repository URL,
-> or a whole GitHub organisation. The hover card from the original sketch does not survive contact
-> with the sidebar slot (§5.0).
+> Revision 4 renamed the project from PAM. Revision 5 gave it a surface — the sidebar row with one status
+> dot, and three doors to install. Revision 6 makes it a workbench: a page per plugin, `vib new`, the
+> organisation as the catalog, a conflict with three exits, and the bench behind it all (§11).
 
 ---
 
