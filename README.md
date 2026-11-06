@@ -41,6 +41,14 @@ version number — is the first thing the page shows.
 - 0.1.0 is accepted against offline fixture repositories. No second machine is available for
   verification, so cross-machine sync is not verified in this release.
 
+## Branches
+
+`main` is the **stable line**; `dev` is the **integration line** where work happens. Features use
+`feature/<slug>` branches cut from `dev` and merged back into it; a `hotfix/<slug>` cuts from
+`main`, merges into `main`, then merges back into `dev`. A release merges `dev` into `main` after
+the full `check`, tags `v<version>`, and syncs `main` back into `dev`. The detailed rule lives in
+the `dsh-plugin-development` skill.
+
 
 House rules: private by default, MIT when it ships, `npm run check` is the gate, `node:*` before a
 dependency, no telemetry, writes stay inside the workspace.
