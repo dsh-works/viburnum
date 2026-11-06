@@ -1,0 +1,11 @@
+# The dsh-plugin-viburnum bundle patch.
+#
+# One insert: the row that mounts the plugin. A profile overlay can override
+# the row by id, or disable it:
+#
+#   - id: viburnum
+#     disabled: true
+
+- insert:
+    - id: viburnum
+      name: 'dsh-plugin-viburnum'

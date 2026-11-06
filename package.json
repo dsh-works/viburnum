@@ -1,0 +1,42 @@
+{
+  "name": "dsh-plugin-viburnum",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A workbench for your own DeepSeek Harness plugins: keeps linked checkouts current across two machines.",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./icon": "./icons/blue-butterfly-dark.png",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "icons/",
+    "locale/",
+    "README.md"
+  ],
+  "icon": "./icons/blue-butterfly-dark.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dsh-works/viburnum.git"
+  },
+  "engines": {
+    "node": ">=22",
+    "dsh": "^0.2.1-rc.2"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "node scripts/check.mjs && node --test test/*.test.mjs"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

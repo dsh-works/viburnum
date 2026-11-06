@@ -30,9 +30,17 @@ there is no pnpm run, no lockfile write, and no profile edit.
 Viburnum never commits and never force-pushes. When a rebase would rewrite something already
 published, it stops and shows both sides; when the rebase conflicts, it aborts and hands you the files.
 
-**Status: design.** There is no code here yet. [`DESIGN.md`](DESIGN.md) carries the premise, the
-decisions and the v0 cut. The short version: the thing that actually goes wrong — two histories
-wearing the same version number — is the first thing the page shows.
+**Status: v0 in development.** [`docs/PLAN.md`](docs/PLAN.md) is the approved 0.1.0 plan;
+[`DESIGN.md`](DESIGN.md) carries the premise and decisions, and [`icons/`](icons/) the candidate
+marks. The short version: the thing that actually goes wrong — two histories wearing the same
+version number — is the first thing the page shows.
+
+## Limits
+
+- Viburnum never commits and never force-pushes.
+- 0.1.0 is accepted against offline fixture repositories. No second machine is available for
+  verification, so cross-machine sync is not verified in this release.
+
 
 House rules: private by default, MIT when it ships, `npm run check` is the gate, `node:*` before a
 dependency, no telemetry, writes stay inside the workspace.
