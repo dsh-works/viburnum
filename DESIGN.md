@@ -117,6 +117,7 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D23 | **"Agree" exists only where a suggestion is safe.** Today that is append-only files where a union merge is correct (a `CHANGELOG.md`) and conflicts whose local side is already contained in the incoming commit; otherwise the button is disabled with the reason. | Auto-resolution is a promise the tool can keep, or it is not offered at all. |
 | D24 | **Versions are suggested, never written.** The drift note may add *next would be 0.5.0*, derived from the changelog; `package.json` is never edited by Viburnum. | One fewer thing that changes your files, and the nudge still lands. |
 | D25 | **The organisation is the catalog.** The list is the union of mounted bundles and installable org repositories, grouped *mounted* and *available*; the available group appears only while the org is reachable, and is cached. | The profile stops being the inventory: what you own lives in the org, what runs lives in the profile, and one page shows both. |
+| D26 | **Catalog owners are configured, not hardcoded.** `catalogOwners` defaults to `['dsh-works']`; each entry is an org or a user and is read with the same rules. | A personal account joins the catalog with one config line, and the repository carries no personal handle in its defaults. |
 
 ## 5. Surfaces
 
@@ -168,9 +169,9 @@ Viburnum                                    [ Refresh ]  [ Sync all ]  [ Install
   Pip            dsh-fren                 v1.3.0 · 2 months ago  [ Install ]
 ```
 
-- **Two groups, one list.** Mounted bundles first; below them the organisation's `dsh-plugin`
+- **Two groups, one list.** Mounted bundles first; below them the configured owners' `dsh-plugin`
   repositories that are not installed, each with an `Install` button. The second group exists only
-  while the org is reachable (§6.5) and is cached — it is a catalog, not a check.
+  while an owner is reachable (§6.5) and is cached — it is a catalog, not a check.
 - **`Refresh` is the hover button.** One fetch pass over every watched bundle, the same code the
   background check runs; the dot updates while the page is open.
 - **`Install ▾` opens the three doors**: a directory, a repository URL, or a GitHub organisation.
@@ -374,12 +375,15 @@ links stays where it is: a checkout under `Documents/…` is watched in place an
 records whether it came from the shelf or was linked externally, so *Remove* only ever deletes a
 directory Viburnum created.
 
-**The organisation door, given the taxonomy.** `dsh-works` tags every repository with at most one kind
-topic (`dsh-plugin`, `dsh-skill`, `dsh-process`, `dsh-org`), but a topic is a grouping hint, not proof.
-The door lists the org's repositories, skips archived ones, and reads `package.json` at the default
-branch: `dsh.bundle.patch` is the only thing that makes a repository installable. A repository tagged
-`dsh-plugin` without that manifest is an error row; a bundle without a kind topic is importable and
-labelled *untagged*. Six of the seven repositories are private, so the door is token-first.
+**The catalog, given the taxonomy.** Owners are configured — `catalogOwners`, default `['dsh-works']` —
+and each entry is an org or a user, read with the same rules. `dsh-works` tags every repository with at
+most one kind topic (`dsh-plugin`, `dsh-skill`, `dsh-process`, `dsh-org`), but a topic is a grouping hint,
+not proof. The door lists each owner's repositories, skips archived ones, and reads `package.json` at the
+default branch: `dsh.bundle.patch` is the only thing that makes a repository installable. A repository
+tagged `dsh-plugin` without that manifest is an error row; a bundle without a kind topic is importable
+and labelled *untagged*. Six of the seven org repositories are private, so the door is token-first.
+
+Configuration so far: `catalogOwners`, `pluginsDir`, `checkIntervalMinutes`, `fetchTimeoutMs`.
 
 ### 6.6 Changelog and reload class
 
@@ -525,8 +529,8 @@ Build order, each step green under `npm run check`:
   `vib bump`.
 - **O6 — shelf or viewer: resolved.** Hybrid (D22): a shelf for what Viburnum clones, nothing moved for
   what it inherited.
-- **O7 — the organisation door's leftovers.** The door is disabled without a token, and the catalog is
-  cached rather than re-read on every check. Still open: the token's minimum scope.
+- **O7 — the catalog's leftovers.** Shown disabled without a token, and cached between refreshes. Still
+  open: the token's minimum scope.
 - **O8 — command bar: resolved (D20).** None. The harness's terminal is the command surface; the page
   keeps buttons.
 - **O9 — colour language: resolved (D17).** Violet for pullable; precedence red > orange > violet > grey >
