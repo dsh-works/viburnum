@@ -1,5 +1,7 @@
 # Viburnum — plugin sync manager
 
+*A manager that Keeps All Linked Installs Neatly Synced In Two Universes.*
+
 **Status:** design, revision 5, v0 not started
 **Date:** 2026-11-04
 **Package:** `dsh-plugin-viburnum` · row `viburnum` · panel `viburnum` · binary `vib`
@@ -7,7 +9,7 @@
 
 > **The name.** Viburnum is the shrub that keeps its fruit through the winter: in place, visible,
 > current — the same promise this tool makes about a linked checkout. The binary is `vib`; `viburnum`
-> ships as the long form, and any personal alias (`kali`, say) is a shell alias, not a config field.
+> ships as the long form, and any personal alias is a shell alias, not a config field.
 >
 > Revision 4 renamed the project from PAM. Revision 5 adds the surface it was missing — a sidebar row
 > above Plugins with one aggregate status dot — and the install story: a directory, a repository URL,
@@ -208,9 +210,9 @@ vib log [--limit 20]
 means. An in-page command bar would have to invent one — the workspace root — and is a gimmick we may
 add later (O8), not a reason to shape the CLI.
 
-The package links both `vib` and `viburnum` to the same entry point. A personal alias — `alias kali=vib`
-in a shell profile, or a symlink in a bin directory — is documented in the README and deliberately not a
-config field: the name you type belongs to the shell, not to the plugin.
+The package links both `vib` and `viburnum` to the same entry point. A personal alias — a line in a shell
+profile, or a symlink in a bin directory — works without the plugin knowing anything about it: the name
+you type belongs to the shell.
 
 Exit codes: `0` success, `1` failure, `3` something is pending (updates or unpushed commits).
 `--dry-run` prints the reconciliation plan and touches nothing.
