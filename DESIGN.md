@@ -165,7 +165,7 @@ viburnum                                    [ Refresh ]  [ Sync all ]  [ Install
                  dsh-plugin-alerts · main +1
 
   ── available in dsh-works ─────────────────────────────────────────────────
-  Pip            dsh-fren                 v1.3.0 · 2 months ago  [ Install ]
+  Pip            dsh-plugin-pip                 v1.3.0 · 2 months ago  [ Install ]
 ```
 
 - **Two groups, one list.** Mounted bundles first; below them the configured owners' `dsh-plugin`

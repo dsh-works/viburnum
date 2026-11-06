@@ -10,7 +10,7 @@ This repository follows the DSH plugin development process and standards:
 
 | Rule | Why it exists here |
 |---|---|
-| Package is `dsh-plugin-viburnum`, row id `viburnum`; the repository is `dsh-works/viburnum` rather than `dsh-plugin-viburnum`. | Gate-0 decision on 2026-11-06. The package and row follow the convention; the repository keeps the product name (precedent: `dsh-fren` hosts `dsh-plugin-companion`). |
+| Package is `dsh-plugin-viburnum`, row id `viburnum`; the repository is `dsh-works/viburnum` rather than `dsh-plugin-viburnum`. | Gate-0 decision on 2026-11-06. The package and row follow the convention; the repository keeps the product name (precedent: `dsh-plugin-pip` hosts `dsh-plugin-companion`). |
 | `main` is stable, `dev` is integration; work happens on `dev` or a `feature/<slug>` branch; a `hotfix/<slug>` cuts from `main` and merges back into both lines. | Profiles link a working tree, so the line that runs must be the line that was verified. A release merges `dev` into `main`, tags `v<version>`, and syncs `main` back into `dev`. |
 | No runtime dependencies beyond `node:*`; no build step. | Keeps install a link and keeps every git call a bounded `spawn`. |
 | The page reads the Host through the same-origin routes `/viburnum/status` and `/viburnum/action`, which require the `x-viburnum: 1` header. | Out-of-tree bundles cannot add Typert Remote endpoints; the routes are the only transport. The custom header keeps a cross-site form from acting. |

@@ -25,6 +25,11 @@ First build of the sync core, the sidebar row and the page.
 - Tools, sidebar entry and main page registered live; the browser half fetched `/viburnum/status`.
 - CLI and page transport report the three mounted bundles as current.
 
+### English only
+
+- The `zh` locale was removed; UI copy ships in English, and another language is added only when
+  the plugin actually ships one (the updated `dsh-plugin-development` rule).
+
 ### Repository made public
 
 - MIT licence added; README rewritten for a public, community-facing project; `CONTRIBUTING.md` and
@@ -33,8 +38,8 @@ First build of the sync core, the sidebar row and the page.
 
 ### Not verified in 0.1.0
 
-- Visual checks in light/dark, Chinese UI copy, an approval prompt end to end, a real move on a
-  user checkout, and the second machine.
+- Visual checks in light/dark, an approval prompt end to end, a real move on a user checkout, and
+  the second machine.
 
 ### Not in 0.1.0
 

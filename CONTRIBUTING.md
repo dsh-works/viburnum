@@ -38,7 +38,8 @@ If you change behaviour, change the tests and the README in the same pull reques
   `export`, or top-level `await`).
 - Every registration goes through `ctx.effect`/`ctx.on`; unloading must leave nothing behind.
 - No Harness Client package is imported at runtime; style only with `--dsw-alias-*` tokens.
-- Every user-visible string comes from the locale service; ship `en` and `zh` copy.
+- Every user-visible string comes from the locale service; ship English copy, and add another
+  language only when the plugin actually ships it.
 - Moves that write outside the workspace ask `ctx.approval.request` first; a missing approver fails
   closed.
 - Do not add a runtime dependency without a real reason; `node:*` first.

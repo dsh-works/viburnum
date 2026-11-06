@@ -29,7 +29,7 @@ there is no pnpm run, no lockfile write, and no profile edit.
 viburnum never commits and never force-pushes. When a rebase would rewrite something already
 published, it stops and shows both sides; when the rebase conflicts, it aborts and hands you the files.
 
-**Status: 0.1.0 release candidate, running from the `dev` line, public under the MIT licence.**
+**Status: 0.1.0 released (tag `v0.1.0`), public under the MIT licence.**
 [`docs/PLAN.md`](docs/PLAN.md) is the approved plan and carries the gate-3 evidence;
 [`DESIGN.md`](DESIGN.md) carries the premise and decisions. `main` is the stable line (see
 [Branches](#branches)).
@@ -43,6 +43,8 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
 - **Contributions are welcome.** Read [CONTRIBUTING.md](CONTRIBUTING.md) first: work branches cut from
   `dev`, `npm run check` is the gate, and one change per pull request. Security reports go through
   [SECURITY.md](SECURITY.md), not public issues.
+- **English first.** UI copy ships in English; another language is added only when the plugin
+  actually ships one.
 - **No telemetry, no network daemon, no account.** The only outbound traffic is git's own `fetch` and
   `push`, in the directories the profile already links.
 
@@ -127,9 +129,9 @@ Verified live in the `web` profile:
 - One live fetch hit the 20 s bound and was reported as a timeout without leaving a git process
   behind; `vib status` still answered from cache.
 
-Not run, and therefore not claimed: visual checks in light and dark, the Chinese UI copy, an
-approval prompt end to end (the answerer is disabled in this session), a real move on one of the
-user's plugin checkouts, and the second machine.
+Not run, and therefore not claimed: visual checks in light and dark, an approval prompt end to
+end (the answerer is disabled in this session), a real move on a user checkout, and the second
+machine.
 
 ## Limits
 

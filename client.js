@@ -58,38 +58,6 @@ window.__ModuleLoader__.load({
         'status.missing': 'missing',
         'status.unknown': 'unknown',
       },
-      zh: {
-        panel: 'viburnum',
-        title: 'viburnum',
-        mounted: '已挂载',
-        pullable: '可拉取',
-        refresh: '刷新',
-        syncAll: '全部同步',
-        update: '更新',
-        sync: '同步',
-        revert: '还原',
-        switchTo: '跟踪分支',
-        loading: '检查中…',
-        transportError: 'Host 没有响应。',
-        stale: '已过期',
-        refused: '拒绝',
-        pushed: '已推送',
-        pulled: '已拉取',
-        rebased: '已变基',
-        on: '位于',
-        noBundles: '没有已链接的插件。',
-        dryRun: '计划',
-        'status.current': '最新',
-        'status.remote-ahead': '可拉取',
-        'status.local-ahead': '未推送',
-        'status.diverged': '已分叉',
-        'status.dirty': '未提交',
-        'status.detached': '游离 HEAD',
-        'status.rebasing': '变基进行中',
-        'status.local-only': '仅本地',
-        'status.missing': '目录缺失',
-        'status.unknown': '未知',
-      },
     }
 
     /** Shared inline styles; colour always comes from a theme token. */
@@ -243,42 +211,67 @@ window.__ModuleLoader__.load({
       return state
     }
 
-    /** The sidebar glyph: artwork, with the aggregate dot in the top-right corner. */
+    /**
+     * The sidebar glyph: the butterfly drawn a little larger than the row's
+     * nominal cell, with the aggregate dot in the gap before the label instead
+     * of on top of the artwork.
+     */
     function viburnumIcon(props) {
       const state = useStore(props.store)
-      const size = typeof props.size === 'number' ? props.size : 20
+      const size = typeof props.size === 'number' ? props.size : 18
       const dot = state.snapshot ? state.snapshot.dot : 'grey'
       const active = props.active === true
+      const art = size + 3
+      const offset = Math.floor((art - size) / 2)
 
       return h(
-        'svg',
+        'span',
         {
-          width: size,
-          height: size,
-          viewBox: '0 0 24 24',
-          role: 'presentation',
-          style: { display: 'block', opacity: active ? 1 : 0.82 },
+          style: {
+            position: 'relative',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: size,
+            height: size,
+            flex: '0 0 auto',
+          },
         },
-        h('path', {
-          d: 'M11 6C8.4 2.4 3.4 3.2 2.4 7.2c-1 4 2.8 6 5.8 5.8-2.9 1.1-4.6 3.9-3.5 5.8 1.1 2.2 4.6 1.7 6.3-1.2z',
-          fill: '#2c6499',
-          stroke: '#1b3763',
-          strokeWidth: 1,
-        }),
-        h('path', {
-          d: 'M13 6c2.6-3.6 7.6-2.8 8.6 1.2 1 4-2.8 6-5.8 5.8 2.9 1.1 4.6 3.9 3.5 5.8-1.1 2.2-4.6 1.7-6.3-1.2z',
-          fill: '#4a8fc4',
-          stroke: '#1b3763',
-          strokeWidth: 1,
-        }),
-        h('rect', { x: 11, y: 5, width: 2, height: 14, rx: 1, fill: '#1b3763' }),
-        h('circle', {
-          cx: 19,
-          cy: 5,
-          r: 3,
-          fill: DOT_TOKEN[dot] || DOT_TOKEN.grey,
-          stroke: 'var(--dsw-specific-sidebar-fill)',
-          strokeWidth: 1.5,
+        h(
+          'svg',
+          {
+            width: art,
+            height: art,
+            viewBox: '0 0 24 24',
+            role: 'presentation',
+            style: { display: 'block', margin: `-${offset}px`, opacity: active ? 1 : 0.82 },
+          },
+          h('path', {
+            d: 'M11 6C8.4 2.4 3.4 3.2 2.4 7.2c-1 4 2.8 6 5.8 5.8-2.9 1.1-4.6 3.9-3.5 5.8 1.1 2.2 4.6 1.7 6.3-1.2z',
+            fill: '#2c6499',
+            stroke: '#1b3763',
+            strokeWidth: 1,
+          }),
+          h('path', {
+            d: 'M13 6c2.6-3.6 7.6-2.8 8.6 1.2 1 4-2.8 6-5.8 5.8 2.9 1.1 4.6 3.9 3.5 5.8-1.1 2.2-4.6 1.7-6.3-1.2z',
+            fill: '#4a8fc4',
+            stroke: '#1b3763',
+            strokeWidth: 1,
+          }),
+          h('rect', { x: 11, y: 5, width: 2, height: 14, rx: 1, fill: '#1b3763' }),
+        ),
+        h('span', {
+          'aria-hidden': 'true',
+          style: {
+            position: 'absolute',
+            right: '-5px',
+            top: '50%',
+            width: '4px',
+            height: '4px',
+            marginTop: '-2px',
+            borderRadius: '50%',
+            background: DOT_TOKEN[dot] || DOT_TOKEN.grey,
+          },
         }),
       )
     }

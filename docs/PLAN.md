@@ -2,7 +2,7 @@
 
 - **Repository:** `dsh-works/viburnum` — deliberate deviation from the skill's `dsh-plugin-<slug>`
   repository convention, decided at gate 0 (package and row follow the convention). Precedent:
-  `dsh-fren` hosts `dsh-plugin-companion`.
+  `dsh-plugin-pip` hosts `dsh-plugin-companion`.
 - **Row id:** `viburnum`
 - **Package name:** `dsh-plugin-viburnum`
 - **Client module id:** `dsh-plugin-viburnum` · **locale namespace:** `dsh-viburnum`
@@ -49,7 +49,8 @@ the route (`transport.clientSeenAt` with a Chrome user agent), so the probe pass
 - Registry bundles, multi-profile, notifications, diff stat, dependency installation.
 - Live two-machine verification: 0.1.0 is accepted on offline fixture repositories only; the real
   cross-machine check is manual and reported as **not run** (gate-0 decision).
-- Renaming `dsh-fren` — separate repository; tracked as an open question for 0.2 catalog work.
+- Renaming the Pip repository — done 2026-11-06: `dsh-fren` is now `dsh-plugin-pip`. The package
+  stays `dsh-plugin-companion` until that repository's own rename.
 
 ## Risks and unknowns
 
@@ -78,7 +79,7 @@ the route (`transport.clientSeenAt` with a Chrome user agent), so the probe pass
 | 8 | Track switch, revert and restart | `main`↔`dev` switch (including creating a local branch from a remote-only track), reload class reported, receipt recorded, revert restores; per-machine state survives a restart | page + state file | **pass (fixtures)** — switch/revert/track-persistence tests; a live switch and a profile restart **not run** |
 | 9 | Agent tools in a session | `vib_status` reads cache with no network or writes; `vib_update`/`vib_sync` ask approval and apply; invalid bundle id returns a typed error | session transcript | **partial** — `vib_status` live, `vib_sync --dry-run` exercised through the page route, approval refusal covered by tool tests; an approval prompt end to end **not run** (answerer disabled) |
 | 10 | Invalid config | bad `checkIntervalMinutes` fails the load with an actionable message; a valid edit is honoured after reload | console + `--dump-config` | **partial** — schema validation tests pass; a live invalid-config load **not run** |
-| 11 | Locale and theme | `locale/en.json` and `locale/zh.json` carry non-empty `meta.title`/`meta.description`; client copy comes from the locale service; no hardcoded UI strings; only `--dsw-alias-*` tokens | source + UI in en/zh, light/dark | **partial** — locale files, key parity and the client dictionaries are checked; live Chinese copy and light/dark **not run** |
+| 11 | Locale and theme | `locale/en.json` carries non-empty `meta.title`/`meta.description`; client copy comes from the locale service; no hardcoded UI strings; only `--dsw-alias-*` tokens | source + UI in light/dark | **partial** — locale file and client dictionaries are checked; live light/dark **not run**; English-only per the updated skill |
 | 12 | Self-update | `Sync all` skips viburnum's own row; `Update viburnum` moves files and reports `restart-required` | simulated fixture + live check | **not run** — own-row skip is covered by a fixture test; `Update viburnum` was not moved |
 
 ## Gate 3 evidence (2026-11-06)
@@ -98,7 +99,7 @@ the route (`transport.clientSeenAt` with a Chrome user agent), so the probe pass
 - State: `$DSH_HOME/profiles/web/.viburnum/state.json` (`version: 2`).
 - Timeout: one live fetch hit the 20 s bound and was reported as a timeout with no stuck request;
   `vib status` still answered from cache.
-- Not run: visual light/dark screenshots, Chinese UI switch, an approval prompt end to end, a live
+- Not run: visual light/dark screenshots, an approval prompt end to end, a live
   move on a user checkout, a profile restart, a real second machine.
 
 ## Verification plan
@@ -107,7 +108,7 @@ the route (`transport.clientSeenAt` with a Chrome user agent), so the probe pass
   host-approved unsandboxed run is required (this session's sandbox returns `spawn EPERM`).
 - Install, host reload and restart need explicit user approval: installing executes bundle code in
   the Host process (J1), and a restart can end this session. Coordinate and report it.
-- UI checks run in light and dark, in `en` and `zh`, with screenshots kept as evidence. No second
+- UI checks run in light and dark, in English, with screenshots kept as evidence. No second
   machine is available, so cross-machine sync is **not run** and recorded in the README limits.
 - Rollback: disable the row with `disabled: true`; remove with
   `dsh plugin --profile web remove dsh-plugin-viburnum`; state stays under the profile and is named
@@ -121,7 +122,7 @@ the route (`transport.clientSeenAt` with a Chrome user agent), so the probe pass
 | ~~Which profile directory is visible to a Host plugin?~~ **Resolved 2026-11-06:** the state landed in `~/.dsh/profiles/web/.viburnum/`; no fallback needed. | state path | done |
 | Does a linked bundle's client half re-materialize on file change (O1), and with what banner wording? | reload copy | 0.2 |
 | ~~Final glyph~~ **Resolved:** `blue-butterfly-dark.png` is the package icon; the sidebar glyph is the inline butterfly in `client.js`. | UI assets | done |
-| `dsh-fren` rename: `dsh-plugin-pip` or `dsh-plugin-pipfren`? | 0.2 catalog display | separate repo, decide before 0.2 |
+| ~~`dsh-fren` rename~~ **Resolved 2026-11-06:** renamed to `dsh-plugin-pip`; the local remote and the org profile point at it. | 0.2 catalog display | done |
 | Keep or delete `origin/spike/scaffold` after the local discard? | repo hygiene | defer to the user |
 
 ## Revision log
@@ -131,3 +132,4 @@ the route (`transport.clientSeenAt` with a Chrome user agent), so the probe pass
 | 1 | 2026-11-06 | initial plan from DESIGN rev 6 and gate-0 answers: core-first 0.1.0, transport probe first, `spike/scaffold` discarded, profile state dir, repository kept as `viburnum`, fixtures-only verification | 2026-11-06 |
 | 2 | 2026-11-06 | gate-3 evidence recorded after the live install; implementation matches revision 1, no scope change. Release candidate on `dev`; merge to `main` waits for the user's visual check. | 2026-11-06 |
 | 3 | 2026-11-06 | Repository made public: MIT licence, community docs (CONTRIBUTING, SECURITY), personal paths and handles removed, brand lowercased to `viburnum`; no behaviour change. | 2026-11-06 |
+| 4 | 2026-11-06 | English-only UI copy (`locale/zh.json` removed per the updated skill), Pip repository renamed to `dsh-plugin-pip`, sidebar glyph enlarged with the dot moved into the label gap, 0.1.0 released on `main` as `v0.1.0`. | 2026-11-06 |
