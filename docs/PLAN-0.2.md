@@ -42,7 +42,7 @@ second route pair (the page's transport already exists and is header-guarded).
 | 2 | Open the branch picker and choose `dev` or `main` | the checkout switches track, and the detail reloads on the new branch | live page + `git branch` | not run |
 | 3 | Open a bundle that is behind | direction, incoming changelog (capped), target version and reload-class sentence are shown | live page | not run |
 | 4 | Open a missing or unreadable checkout | a readable error is rendered, not a crash | live page | not run |
-| 5 | `npm run check` and the `detail` route | core detail tests pass; `POST /viburnum/action {"action":"detail"}` answers JSON for a mounted bundle | command transcript | **partial** — 79 tests pass locally; the route is exercised live after the post-merge reload |
+| 5 | `npm run check` and the `detail` route | core detail tests pass; `POST /viburnum/action {"action":"detail"}` answers JSON for a mounted bundle | command transcript | **pass (route)** — 79 tests pass; after the post-merge reload the route returned `ok: true` with five branches, both versions and the reload class. The page view itself is **not run** (needs the browser check). |
 | 6 | Theme and accessibility | detail renders in light and dark; the branch control has an accessible name; no `slot entry crashed` in the console | live page + DevTools | not run |
 
 ## Risks and unknowns
