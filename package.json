@@ -5,6 +5,10 @@
   "type": "module",
   "description": "A workbench for your own DeepSeek Harness plugins: keeps linked checkouts current across two machines.",
   "main": "index.js",
+  "bin": {
+    "vib": "./bin/vib.js",
+    "viburnum": "./bin/vib.js"
+  },
   "exports": {
     ".": "./index.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
@@ -15,6 +19,7 @@
   "files": [
     "index.js",
     "lib/",
+    "bin/",
     "cordis.patch.yml",
     "icons/",
     "locale/",
