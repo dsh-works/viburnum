@@ -116,6 +116,7 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D22 | **Hybrid shelf.** New installs clone into a configurable `pluginsDir` (`$DSH_HOME/viburnum/plugins` by default); checkouts the profile already links are watched where they are and never moved. | One lifecycle for what Viburnum creates, zero migration for what it inherited. |
 | D23 | **"Agree" exists only where a suggestion is safe.** Today that is append-only files where a union merge is correct (a `CHANGELOG.md`) and conflicts whose local side is already contained in the incoming commit; otherwise the button is disabled with the reason. | Auto-resolution is a promise the tool can keep, or it is not offered at all. |
 | D24 | **Versions are suggested, never written.** The drift note may add *next would be 0.5.0*, derived from the changelog; `package.json` is never edited by Viburnum. | One fewer thing that changes your files, and the nudge still lands. |
+| D25 | **The organisation is the catalog.** The list is the union of mounted bundles and installable org repositories, grouped *mounted* and *available*; the available group appears only while the org is reachable, and is cached. | The profile stops being the inventory: what you own lives in the org, what runs lives in the profile, and one page shows both. |
 
 ## 5. Surfaces
 
@@ -155,14 +156,21 @@ later:
 
 ```text
 Viburnum                                    [ Refresh ]  [ Sync all ]  [ Install ▾ ]
-3 watched · 1 pullable · 1 unpushed · 1 current · checked 2 minutes ago
+2 mounted · 1 available · 1 pullable · checked 2 minutes ago
 
+  ── mounted ────────────────────────────────────────────────────────────────
   Pixel Art      main                     v0.3.0 · 33903c8       ● pullable  ↓12
                  dsh-pixelart-tool · dev +12 (v0.4.0)
   Alerts         feature/subagents-cost…  v0.4.0 · 3c69dc8       ● unpushed  ↑2
                  dsh-plugin-alerts · main +1
+
+  ── available in dsh-works ─────────────────────────────────────────────────
+  Pip            dsh-fren                 v1.3.0 · 2 months ago  [ Install ]
 ```
 
+- **Two groups, one list.** Mounted bundles first; below them the organisation's `dsh-plugin`
+  repositories that are not installed, each with an `Install` button. The second group exists only
+  while the org is reachable (§6.5) and is cached — it is a catalog, not a check.
 - **`Refresh` is the hover button.** One fetch pass over every watched bundle, the same code the
   background check runs; the dot updates while the page is open.
 - **`Install ▾` opens the three doors**: a directory, a repository URL, or a GitHub organisation.
@@ -273,6 +281,8 @@ The list is triage; this page is for working on one plugin. Clicking its name op
 - **The branch is the hero control.** Local and remote branches, each with `+N` against the current
   head; switching is one click and reversible, and the page names what will change (browser half, host
   half, dependencies) before you do it.
+- **Branches only.** Tags and commits stay in the terminal: a detached HEAD is a state this tool refuses
+  to enter by accident, and Revert already covers "put it back".
 - **Status, direction, the incoming changelog and the last receipt** live here. The list keeps the dot
   and the quick sync; this page is where a version is chosen.
 - **Opens** is the workbench half: the folder, the README, the CHANGELOG, and a terminal already in
@@ -352,6 +362,9 @@ credential, a private one resolves a configured *reference* through `ctx.credent
 environment variable, never a token in the plugin's config. Listing is a read; nothing is cloned until a
 repository is picked. With no token configured the door is shown disabled, with one line naming
 `GITHUB_TOKEN`, rather than hidden.
+
+The catalog is cached and refreshed by `Refresh`, not re-read on every background check: a page that
+cannot reach the org simply shows the mounted group and the disabled door.
 
 The manager owns pnpm, bundle selection, and compatibility; Viburnum reports its answer verbatim.
 
@@ -512,8 +525,8 @@ Build order, each step green under `npm run check`:
   `vib bump`.
 - **O6 — shelf or viewer: resolved.** Hybrid (D22): a shelf for what Viburnum clones, nothing moved for
   what it inherited.
-- **O7 — the organisation door's leftovers.** The empty-token case is settled (shown disabled, with a
-  hint). Still open: the token's minimum scope, and whether the repository list is cached between checks.
+- **O7 — the organisation door's leftovers.** The door is disabled without a token, and the catalog is
+  cached rather than re-read on every check. Still open: the token's minimum scope.
 - **O8 — command bar: resolved (D20).** None. The harness's terminal is the command surface; the page
   keeps buttons.
 - **O9 — colour language: resolved (D17).** Violet for pullable; precedence red > orange > violet > grey >
