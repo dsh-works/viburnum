@@ -115,6 +115,7 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D21 | **`vib new` scaffolds; `init` is not a verb.** It writes a bundle that already satisfies the taxonomy — manifest, patch row, entry, test, README — and leaves git to a flag. | Creating a plugin stops being a memory test, and the organisation door never sees a mis-tagged new repository. |
 | D22 | **Hybrid shelf.** New installs clone into a configurable `pluginsDir` (`$DSH_HOME/viburnum/plugins` by default); checkouts the profile already links are watched where they are and never moved. | One lifecycle for what Viburnum creates, zero migration for what it inherited. |
 | D23 | **"Agree" exists only where a suggestion is safe.** Today that is append-only files where a union merge is correct (a `CHANGELOG.md`) and conflicts whose local side is already contained in the incoming commit; otherwise the button is disabled with the reason. | Auto-resolution is a promise the tool can keep, or it is not offered at all. |
+| D24 | **Versions are suggested, never written.** The drift note may add *next would be 0.5.0*, derived from the changelog; `package.json` is never edited by Viburnum. | One fewer thing that changes your files, and the nudge still lands. |
 
 ## 5. Surfaces
 
@@ -175,8 +176,9 @@ Viburnum                                    [ Refresh ]  [ Sync all ]  [ Install
   The dot says how bad it is; the arrows say what will happen.
 - **Rows expand in place**, no separate detail pane: both commit lists when diverged, the changelog for
   the incoming side, the version drift note, the compatibility verdict, and the actions.
-- **Version drift:** `v1.3.0 unchanged across 12 commits` — the cheapest reminder for the mismatch
-  that started all this.
+- **Version drift:** `v1.3.0 unchanged across 12 commits`, and where a next version can be derived from
+  the changelog, *next would be 0.5.0* — the cheapest reminder for the mismatch that started all this.
+  Viburnum suggests the number; it never writes it.
 - **After an action:** one banner: *pushed 2, pulled 3, rebased 0 · restart `dsh web`* — or *conflict
   in 2 files: `lib/png.js`, `client.panel.js` — rebase aborted*.
 
@@ -324,7 +326,8 @@ switch is its own inverse: the same action with the other track.
 Door 1 needs no network. Door 3 needs the GitHub API: a public organisation answers without a
 credential, a private one resolves a configured *reference* through `ctx.credentials` — a `GITHUB_TOKEN`
 environment variable, never a token in the plugin's config. Listing is a read; nothing is cloned until a
-repository is picked.
+repository is picked. With no token configured the door is shown disabled, with one line naming
+`GITHUB_TOKEN`, rather than hidden.
 
 The manager owns pnpm, bundle selection, and compatibility; Viburnum reports its answer verbatim.
 
@@ -481,14 +484,12 @@ Build order, each step green under `npm run check`:
   path that leaves a rebase open.
 - **O4 — auto-apply: resolved (D9).** None, ever. The check may run on start and on an interval; every
   move is a click or a command.
-- **O5 — version bumping.** `vib bump <bundle>` from the changelog would stop the drift note from ever
-  appearing. Stretch goal, not v0.
+- **O5 — version bumping: resolved (D24).** Suggested in the drift note, never written; there is no
+  `vib bump`.
 - **O6 — shelf or viewer: resolved.** Hybrid (D22): a shelf for what Viburnum clones, nothing moved for
   what it inherited.
-- **O7 — the organisation door's leftovers.** The org is `dsh-works` and six of its seven repositories
-  are private, so a `GITHUB_TOKEN` reference is required rather than optional. Still open: the token's
-  minimum scope, whether the repository list is cached between checks, and what the door shows when no
-  token is configured — hidden, or offered disabled with a hint.
+- **O7 — the organisation door's leftovers.** The empty-token case is settled (shown disabled, with a
+  hint). Still open: the token's minimum scope, and whether the repository list is cached between checks.
 - **O8 — command bar: resolved (D20).** None. The harness's terminal is the command surface; the page
   keeps buttons.
 - **O9 — colour language: resolved (D17).** Violet for pullable; precedence red > orange > violet > grey >
