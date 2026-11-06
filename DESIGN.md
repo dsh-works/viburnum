@@ -174,8 +174,10 @@ Viburnum                                    [ Refresh ]  [ Sync all ]  [ Install
   branch is a track, including `feature/subagents-cost-final`.
 - **Direction, not status.** `↑2` is a push, `↓3` is a pull, `↑2 ↓3` is a rebase, `✓` is nothing.
   The dot says how bad it is; the arrows say what will happen.
-- **Rows expand in place**, no separate detail pane: both commit lists when diverged, the changelog for
-  the incoming side, the version drift note, the compatibility verdict, and the actions.
+- **Rows expand in place** for the quick actions, and **clicking a bundle's name opens its own page**
+  (§5.5) — the workbench, where the loaded version is the question rather than a detail.
+- **Both commit lists when diverged**, the changelog for the incoming side, the version drift note, the
+  compatibility verdict.
 - **Version drift:** `v1.3.0 unchanged across 12 commits`, and where a next version can be derived from
   the changelog, *next would be 0.5.0* — the cheapest reminder for the mismatch that started all this.
   Viburnum suggests the number; it never writes it.
@@ -253,6 +255,28 @@ web`*. Nothing is modal, nothing blocks the page, and the harness stays usable t
 | diverged, published | *2 commits here are already on `origin/main` — merge instead of rebase* |
 | conflict | *! 2 files conflict: `lib/png.js`, `client.panel.js`* — with **Agree** (when a safe suggestion exists), **Guide**, **Myself** |
 | auth | git's own sentence, quoted once, no retry loop |
+
+### 5.5 The plugin page — the workbench
+
+The list is triage; this page is for working on one plugin. Clicking its name opens it.
+
+```text
+← Viburnum        Pixel Art                        dsh-plugin-pixelart · v0.3.0
+
+  loaded from   dsh-pixelart-tool                  ● current
+  branch        dev ▾                              main · dev +12 (v0.4.0) · feature/…
+  direction     ↓12                                pull 12 commits from origin/dev
+  changelog     0.3.0 → 0.4.0 …                    [ Update ]  [ Revert ]
+  opens         folder · README · CHANGELOG · terminal
+```
+
+- **The branch is the hero control.** Local and remote branches, each with `+N` against the current
+  head; switching is one click and reversible, and the page names what will change (browser half, host
+  half, dependencies) before you do it.
+- **Status, direction, the incoming changelog and the last receipt** live here. The list keeps the dot
+  and the quick sync; this page is where a version is chosen.
+- **Opens** is the workbench half: the folder, the README, the CHANGELOG, and a terminal already in
+  that directory (0.1.x).
 
 ## 6. How it works
 
@@ -456,8 +480,8 @@ Ships: one profile, `link:`/`file:` bundles, the sidebar row and its dot, the Vi
 revert, `vib_status`/`vib_update`/`vib_sync`/`vib_switch`/`vib_revert`, `vib status|refresh|sync`,
 offline tests.
 
-Follows immediately (0.1.x): install (directory, then repository URL), `vib new`, the GitHub organisation
-door and its shelf, `vib log`, `--dry-run` polish.
+Follows immediately (0.1.x): the plugin page (workbench), install (directory, then repository URL),
+`vib new`, the GitHub organisation door and its shelf, the timeline, `vib log`, `--dry-run` polish.
 
 Not planned: registry bundles, auto-commits, force-push, multi-profile, notifications, diff stat,
 dependency installation, tray integration.
@@ -495,7 +519,27 @@ Build order, each step green under `npm run check`:
 - **O9 — colour language: resolved (D17).** Violet for pullable; precedence red > orange > violet > grey >
   green.
 
-## 11. House conventions
+## 11. On the bench
+
+Agreed in shape, not yet scoped into a version.
+
+**The timeline.** What the dot cannot say: *what changed*. Derived from a fetch with one extra field —
+a `lastSeen` timestamp per bundle: commits that arrived on `origin/<track>` since the page was last
+opened, plus the actions already in the history (switch, sync, install). Shown at the top of the page as
+a short feed — `23:41 · alerts · +3 from the other machine · "fix subagent cost"` — and cleared by
+looking at it.
+
+**Hygiene.** A scan of the workspace and the shelf, a couple of levels deep, for what the profile cannot
+see: two checkouts of the same package (today: `dsh-pixelart-tool` at 0.3.0 and linked, next to
+`dsh-plugin-pixelart` on `feature/standards-audit` at 0.4.0), branches never merged into `main`, trees
+dirty for days, versions that never move. It reports and suggests; it never deletes, and it never leaves
+those two roots.
+
+**The agent brief.** The timeline is also the answer to "why does the panel look different?" — a
+`vib_brief` tool returning status plus what changed since the last brief, so a session starts informed.
+Cheap once the timeline exists; not worth building before it.
+
+## 12. House conventions
 
 Package `dsh-plugin-viburnum`, private, MIT when it ships, `engines` floor `dsh ^0.2.1-rc.2`, `node >=22`.
 Layout follows the workshop: `index.js`, `lib/`, `client.js`, `client.*.js`, `cordis.patch.yml`,
