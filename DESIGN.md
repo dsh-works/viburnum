@@ -1,4 +1,4 @@
-# Viburnum — plugin sync manager
+# Viburnum — a workbench for your own plugins
 
 *A manager that Keeps All Linked Installs Neatly Synced In Two Universes.*
 
@@ -42,7 +42,7 @@ and divergence is normal rather than exceptional.
 
 ## 2. Thesis
 
-**Viburnum is a sync button for code you wrote.**
+**At its core, Viburnum is a sync button for code you wrote.**
 
 ```
       laptop ⇄ origin ⇄ work machine        both commit, both push, both pull

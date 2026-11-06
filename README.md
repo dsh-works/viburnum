@@ -2,9 +2,10 @@
 
 *A manager that Keeps All Linked Installs Neatly Synced In Two Universes.*
 
-A sync button for your own DeepSeek Harness plugins. Viburnum watches the clones your profile is linked
-to, and one click fetches, pushes, fast-forwards or rebases each one onto the branch it follows — so
-both machines run the same code without you remembering which one pushed last.
+A workbench for your own DeepSeek Harness plugins: create them, mount them, choose which version runs,
+and keep two machines in sync. It watches the clones your profile is linked to, and one click fetches,
+pushes, fast-forwards or rebases each one onto the branch it follows — so both machines run the same code
+without you remembering which one pushed last.
 
 A row in the sidebar carries one dot: green when everything is current, blue when something can be
 pulled, orange when work is uncommitted, red when it is unpushed. It also installs — from a directory,
