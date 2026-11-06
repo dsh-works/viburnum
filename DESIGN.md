@@ -98,7 +98,7 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D4  | **Sync pushes, reconciles, and pushes again when the rebase moved something.** | The morning button closes the loop in both directions. |
 | D5  | **Sync never commits and never force-pushes.** A dirty tree blocks it. | Viburnum cannot invent a commit message or overwrite a remote. |
 | D6  | **Rebase only when the local commits are unpublished.** Published divergence is refused, with both commit lists shown. | No rewriting history two machines already saw. |
-| D7  | **A conflicting rebase is aborted, not left open.** Viburnum lists the files and the retry command. | The tree always ends in a state git understands and the user chose. |
+| D7  | **A conflict stops the sync and offers three exits.** Agree (apply a safe suggestion and continue), Guide (reopen the rebase, open the files, retry), Myself (abort and print the commands). Nothing is resolved silently. | The tree never sits mid-rebase unless the user chose Guide, and no conflict resolution is invented. |
 | D8  | **Snapshot for update and switch; audit for sync.** Revert restores a pull or a track move, never a pushed rebase. | Undo is honest about which actions are local-only. |
 | D9  | **Checks automatic, actions on click.** `autoUpdateOnStart` exists, default off. | Nothing moves while you are not looking. |
 | D10 | **One core, three faces.** Host service, Web page, tools, CLI binary. | Same calls, different keyboards. |
@@ -108,12 +108,13 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D14 | **Tests are offline.** Fixtures are real repositories: a bare `origin`, two clones, commits on both sides. | Divergence, rebase and conflict are exercised without network. |
 | D15 | **`vib` is the command; aliases are the user's.** The package links `vib` and `viburnum` to one entry point; anything else is a shell alias. | The tool answers to its name without owning the keyboard: no alias table to maintain, no runtime string to change. |
 | D16 | **One sidebar row, above Plugins.** A `sidebar.panellist` registration ordered before the Plugins row, with the butterfly as its icon. | The tool is one click from anywhere, and it sits with the other panel launchers instead of inventing a second navigation. |
-| D17 | **One dot is the whole status language.** Green current, blue pullable, orange uncommitted, red unpushed or diverged, grey unknown; worst state wins across bundles. | A glance answers "is anything wrong" without opening anything. Colour is always paired with words on the page, never the only signal. |
+| D17 | **One dot is the whole status language.** Green current, violet pullable, orange uncommitted, red unpushed or diverged, grey unknown; worst state wins across bundles. | A glance answers "is anything wrong" without opening anything. Colour is always paired with words on the page, never the only signal. |
 | D18 | **No hover card.** The sidebar owns the row and exposes no hover slot; refresh and detail live on the page, and the row opens it. | The sketch's hover loses; the dot survives. Nothing is built on a seam the harness does not have. |
 | D19 | **Three doors to install, one lifecycle.** Directory, repository URL, or GitHub organisation — all end at `pluginManager.installBundle`. | Org browsing is a list you pick from, not a second manager; one code path creates every plugin. |
 | D20 | **`vib install .` is the CLI spelling of the directory door.** | The terminal stays a first-class face; an in-page command bar, if it ever happens, mirrors the same verbs and resolves `.` to the workspace root. |
 | D21 | **`vib new` scaffolds; `init` is not a verb.** It writes a bundle that already satisfies the taxonomy — manifest, patch row, entry, test, README — and leaves git to a flag. | Creating a plugin stops being a memory test, and the organisation door never sees a mis-tagged new repository. |
 | D22 | **Hybrid shelf.** New installs clone into a configurable `pluginsDir` (`$DSH_HOME/viburnum/plugins` by default); checkouts the profile already links are watched where they are and never moved. | One lifecycle for what Viburnum creates, zero migration for what it inherited. |
+| D23 | **"Agree" exists only where a suggestion is safe.** Today that is append-only files where a union merge is correct (a `CHANGELOG.md`) and conflicts whose local side is already contained in the incoming commit; otherwise the button is disabled with the reason. | Auto-resolution is a promise the tool can keep, or it is not offered at all. |
 
 ## 5. Surfaces
 
@@ -136,13 +137,15 @@ The sketch asked for a hover card with a refresh button. That surface does not e
 | State | Colour | Meaning |
 | :--- | :--- | :--- |
 | current | green | clean, and equal to `origin/<track>` |
-| pullable | blue | the remote has commits this machine does not |
+| pullable | violet | the remote has commits this machine does not |
 | uncommitted | orange | the tree is dirty |
 | unpushed / diverged | red | commits here the remote does not have |
 | unknown | grey | the check failed, the directory is missing, or there is no `origin` |
 
-Precedence: red > orange > blue > grey > green. Every colour is also spelled out in words on the page:
-at nine pixels, orange and red are a guess, and colour alone is not an accessible answer.
+Precedence: red > orange > violet > grey > green. Every colour is also spelled out in words on the page:
+at nine pixels, orange and red are a guess, and colour alone is not an accessible answer. The dot sits in
+the icon's top-right corner over the sidebar background, with a 1 px ring in the icon's ink so it reads on
+a light theme.
 
 ### 5.1 Web page — "Viburnum"
 
@@ -243,7 +246,7 @@ web`*. Nothing is modal, nothing blocks the page, and the harness stays usable t
 | :--- | :--- |
 | dirty | *3 uncommitted files — commit or stash first* (with the command) |
 | diverged, published | *2 commits here are already on `origin/main` — merge instead of rebase* |
-| conflict | *rebase aborted · 2 files: `lib/png.js`, `client.panel.js`* (with the retry command) |
+| conflict | *! 2 files conflict: `lib/png.js`, `client.panel.js`* — with **Agree** (when a safe suggestion exists), **Guide**, **Myself** |
 | auth | git's own sentence, quoted once, no retry loop |
 
 ## 6. How it works
@@ -288,8 +291,9 @@ switch-back on a verification failure.
      if published                       → refuse; show both lists; suggest a merge
      git rebase origin/<track>
        on conflict → git diff --name-only --diff-filter=U
-                     git rebase --abort
-                     report the files and the exact retry command
+                     git rebase --abort          (before anything is reported)
+                     return the files; the page offers Agree / Guide / Myself
+                     Guide re-runs the rebase and opens the files
      git push origin HEAD:<track>       (non-force; a rejection is reported, never retried with force)
 8  receipt: pushed N, pulled M, rebased R, previous and resulting HEAD
 ```
@@ -431,7 +435,7 @@ one it found — the only thing that decides whether *Remove* may delete files.
 | Dirty tree | Blocks update, sync and switch; prints the `git stash` and diff stat. |
 | Diverged, local commits published | Refuses; suggests a merge; lists the commits. |
 | Diverged, local commits private | Rebases, then pushes. |
-| Rebase conflict | Lists conflicted files, aborts the rebase, prints the retry command. |
+| Rebase conflict | Aborts before reporting, lists the files, offers Agree / Guide / Myself; never resolves silently. |
 | Rebase already in progress | Stops; names the directory and the command to finish or abort it. |
 | Detached head | Blocks sync; lists the branches it can switch to. |
 | `engines.dsh` unmet | Blocks before the move, names both versions; `--force` for the deliberate case. |
@@ -462,7 +466,7 @@ Build order, each step green under `npm run check`:
 6. Track switch.
 7. Web page, sidebar row and dot, reload banner.
 8. Agent tools.
-9. Install: directory picker, then repository URL, then the organisation door if O6 lands on a shelf.
+9. Install: directory picker, then repository URL, then the organisation door and its shelf.
 
 ## 10. Open questions
 
@@ -470,8 +474,8 @@ Build order, each step green under `npm run check`:
   depends on it; one throwaway commit answers it.
 - **O2 — how does a host plugin learn the profile directory?** If there is no public accessor, state
   moves to `$DSH_HOME/viburnum/<profile>/`.
-- **O3 — conflict UX.** v0 aborts the rebase and hands over commands. Is that enough, or does a
-  personal tool want the conflicted files opened in the editor and a "retry when done" button?
+- **O3 — conflict UX: resolved (D7, D23).** Abort first, then Agree / Guide / Myself; Guide is the only
+  path that leaves a rebase open.
 - **O4 — `autoUpdateOnStart`.** Off by default; the moment it is on, every start may move three
   checkouts. Probably a per-bundle flag, not a global one.
 - **O5 — version bumping.** `vib bump <bundle>` from the changelog would stop the drift note from ever
@@ -484,8 +488,8 @@ Build order, each step green under `npm run check`:
   token is configured — hidden, or offered disabled with a hint.
 - **O8 — command bar.** A real terminal plus an input inside the page, or just the terminal? The page
   one has to invent a working directory for `.`.
-- **O9 — colour language.** Is blue right for "pullable", or should anything actionable be warm? Does
-  uncommitted (orange) outrank pullable (blue)? The precedence in §5.0 is a first draft.
+- **O9 — colour language: resolved (D17).** Violet for pullable; precedence red > orange > violet > grey >
+  green.
 
 ## 11. House conventions
 
