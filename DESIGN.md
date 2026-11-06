@@ -112,6 +112,7 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D18 | **No hover card.** The sidebar owns the row and exposes no hover slot; refresh and detail live on the page, and the row opens it. | The sketch's hover loses; the dot survives. Nothing is built on a seam the harness does not have. |
 | D19 | **Three doors to install, one lifecycle.** Directory, repository URL, or GitHub organisation — all end at `pluginManager.installBundle`. | Org browsing is a list you pick from, not a second manager; one code path creates every plugin. |
 | D20 | **`vib install .` is the CLI spelling of the directory door.** | The terminal stays a first-class face; an in-page command bar, if it ever happens, mirrors the same verbs and resolves `.` to the workspace root. |
+| D21 | **`vib new` scaffolds; `init` is not a verb.** It writes a bundle that already satisfies the taxonomy — manifest, patch row, entry, test, README — and leaves git to a flag. | Creating a plugin stops being a memory test, and the organisation door never sees a mis-tagged new repository. |
 
 ## 5. Surfaces
 
@@ -202,6 +203,7 @@ vib sync [<bundle>] [--dry-run]
 vib switch <bundle> <track>
 vib install <dir|url>
 vib install --org <org> [<repo>]
+vib new <name> [--git] [--org <org>]
 vib revert <bundle>
 vib log [--limit 20]
 ```
@@ -353,6 +355,27 @@ Kept here because the point is to learn the commands, not to hide them.
 | Revert | `git switch <branch>`, `git reset --hard <recorded-sha>` |
 | Install | `git clone` for doors 2–3, then `pluginManager.installBundle(<dir>)` (pnpm runs inside the manager) |
 
+### 6.8 New bundle
+
+```text
+vib new <name> [--git] [--org <org>]
+
+<name>/                         package  dsh-plugin-<name>
+  package.json      0.0.0, private, type module, engines, dsh.bundle.patch → ./cordis.patch.yml
+  cordis.patch.yml  one insert row: id <name>, name dsh-plugin-<name>
+  index.js          name, inject, apply — a shell that does nothing yet
+  lib/              one placeholder module, so the first import has a home
+  test/             one smoke test: the shell exports what the patch row expects
+  README.md         what it does, how it is installed, what it cannot do
+  .gitignore, .editorconfig
+```
+
+- Refuses a directory that exists and is not empty. No `--force`.
+- `--git` initialises `main` and makes the first commit; without it, files only.
+- `--org` creates the repository and applies the `dsh-plugin` topic (0.2; 0.1 prints the command instead).
+- The template is a directory inside the package with three substitutions — `<name>`, `<package>`,
+  `<description>`. No wizard, no prompts, and no network without `--org`.
+
 ## 7. State
 
 `$DSH_HOME/profiles/<name>/.viburnum/state.json`:
@@ -419,8 +442,8 @@ Ships: one profile, `link:`/`file:` bundles, the sidebar row and its dot, the Vi
 revert, `vib_status`/`vib_update`/`vib_sync`/`vib_switch`/`vib_revert`, `vib status|refresh|sync`,
 offline tests.
 
-Follows immediately (0.1.x): install (directory, then repository URL), the GitHub organisation door and
-the shelf decision, `autoUpdateOnStart`, `vib log`, an in-page command bar, `--dry-run` polish.
+Follows immediately (0.1.x): install (directory, then repository URL), `vib new`, the GitHub organisation
+door and the shelf decision, `autoUpdateOnStart`, `vib log`, an in-page command bar, `--dry-run` polish.
 
 Not planned: registry bundles, auto-commits, force-push, multi-profile, notifications, diff stat,
 dependency installation, tray integration.
