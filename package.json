@@ -5,8 +5,13 @@
   "type": "module",
   "description": "A workbench for your own DeepSeek Harness plugins: keeps linked checkouts current across two machines.",
   "main": "index.js",
+  "bin": {
+    "vib": "./bin/vib.js",
+    "viburnum": "./bin/vib.js"
+  },
   "exports": {
     ".": "./index.js",
+    "./client": "./client.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json",
     "./icon": "./icons/blue-butterfly-dark.png",
@@ -14,6 +19,9 @@
   },
   "files": [
     "index.js",
+    "client.js",
+    "lib/",
+    "bin/",
     "cordis.patch.yml",
     "icons/",
     "locale/",
@@ -24,6 +32,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dsh-works/viburnum.git"
+  },
+  "homepage": "https://github.com/dsh-works/viburnum#readme",
+  "bugs": {
+    "url": "https://github.com/dsh-works/viburnum/issues"
   },
   "engines": {
     "node": ">=22",
@@ -37,6 +49,11 @@
     "manifestVersion": 1,
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
     }
   }
 }

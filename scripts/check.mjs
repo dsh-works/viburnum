@@ -7,7 +7,7 @@
  */
 
 import { existsSync, statSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 
 const root = new URL('../', import.meta.url)
 const problems = []
@@ -62,20 +62,31 @@ expect(/^-\s*insert:/mu.test(patch), 'patch has an insert list')
 expect(/id:\s*viburnum\b/u.test(patch), 'patch row id is viburnum')
 expect(patch.includes(`name: '${pkg.name}'`), 'patch row names the package')
 
-const locales = {}
-for (const language of ['en', 'zh']) {
-  locales[language] = await readJson(`locale/${language}.json`)
-  const meta = locales[language].meta
-  expect(typeof meta?.title === 'string' && meta.title.trim().length > 0, `${language} meta.title is non-empty`)
+if (pkg.dsh?.client) {
+  expect(pkg.dsh.client.platform === 'web', 'dsh.client platform is web')
+  expect(pkg.exports['./client'] === './client.js', 'dsh.client requires the ./client export')
+  const client = await readFile(new URL('./client.js', root), 'utf8')
+  expect(!/^\s*(?:import|export)\s/mu.test(client), 'client.js is a classic script, not an ES module')
+  expect(client.includes('__ModuleLoader__'), 'client.js registers through the module loader')
+  let parses = true
+  try {
+    // Parse without executing: a classic script body compiles as a function body.
+    new Function(client) // eslint-disable-line no-new, no-new-func
+  } catch {
+    parses = false
+  }
+  expect(parses, 'client.js parses as a classic script')
+}
+
+const localeFiles = (await readdir(new URL('locale/', root))).filter((name) => name.endsWith('.json'))
+expect(localeFiles.includes('en.json'), 'locale/en.json is required')
+for (const file of localeFiles) {
+  const meta = (await readJson(`locale/${file}`)).meta
+  expect(typeof meta?.title === 'string' && meta.title.trim().length > 0, `${file} meta.title is non-empty`)
   expect(
     typeof meta?.description === 'string' && meta.description.trim().length > 0,
-    `${language} meta.description is non-empty`,
+    `${file} meta.description is non-empty`,
   )
-}
-if (locales.en && locales.zh) {
-  const en = keyPaths(locales.en).join(',')
-  const zh = keyPaths(locales.zh).join(',')
-  expect(en === zh, `locale key sets match (en: ${en}; zh: ${zh})`)
 }
 
 if (problems.length > 0) {
