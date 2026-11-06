@@ -113,6 +113,7 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D19 | **Three doors to install, one lifecycle.** Directory, repository URL, or GitHub organisation — all end at `pluginManager.installBundle`. | Org browsing is a list you pick from, not a second manager; one code path creates every plugin. |
 | D20 | **`vib install .` is the CLI spelling of the directory door.** | The terminal stays a first-class face; an in-page command bar, if it ever happens, mirrors the same verbs and resolves `.` to the workspace root. |
 | D21 | **`vib new` scaffolds; `init` is not a verb.** It writes a bundle that already satisfies the taxonomy — manifest, patch row, entry, test, README — and leaves git to a flag. | Creating a plugin stops being a memory test, and the organisation door never sees a mis-tagged new repository. |
+| D22 | **Hybrid shelf.** New installs clone into a configurable `pluginsDir` (`$DSH_HOME/viburnum/plugins` by default); checkouts the profile already links are watched where they are and never moved. | One lifecycle for what Viburnum creates, zero migration for what it inherited. |
 
 ## 5. Surfaces
 
@@ -320,10 +321,11 @@ repository is picked.
 
 The manager owns pnpm, bundle selection, and compatibility; Viburnum reports its answer verbatim.
 
-**Where clones land is undecided (O6).** Either Viburnum owns a shelf — `~/.dsh/plugins/<repo>` or
-similar — and the profile links into it, or doors 2 and 3 ask for a directory every time and only door 1
-survives. A shelf makes install one lifecycle (clone, link, update, remove) and makes the org list worth
-having; asking each time keeps the tool from deciding where code lives.
+**The shelf (D22).** Viburnum clones only what it installs itself. Doors 2 and 3 target `pluginsDir` —
+`$DSH_HOME/viburnum/plugins/<repo>` by default, configurable at any time. Everything the profile already
+links stays where it is: a checkout under `Documents/…` is watched in place and never moved. Each bundle
+records whether it came from the shelf or was linked externally, so *Remove* only ever deletes a
+directory Viburnum created.
 
 **The organisation door, given the taxonomy.** `dsh-works` tags every repository with at most one kind
 topic (`dsh-plugin`, `dsh-skill`, `dsh-process`, `dsh-org`), but a topic is a grouping hint, not proof.
@@ -388,6 +390,7 @@ vib new <name> [--git] [--org <org>]
       "track": "dev",
       "lastCheck": "2026-11-03T08:40:00Z",
       "dir": "C:/Users/…/dsh-pixelart-tool",
+      "origin": "linked",
       "head": "4f2a91c",
       "branch": "dev",
       "status": "diverged",
@@ -415,7 +418,8 @@ vib new <name> [--git] [--org <org>]
 ```
 
 Retention: 50 history entries, 20 snapshots, 30 days. Atomic writes (temp + rename), because the page
-and the tools may touch it at once.
+and the tools may touch it at once. `origin` is `shelf` for a directory Viburnum cloned and `linked` for
+one it found — the only thing that decides whether *Remove* may delete files.
 
 ## 8. Failure modes
 
@@ -443,7 +447,7 @@ revert, `vib_status`/`vib_update`/`vib_sync`/`vib_switch`/`vib_revert`, `vib sta
 offline tests.
 
 Follows immediately (0.1.x): install (directory, then repository URL), `vib new`, the GitHub organisation
-door and the shelf decision, `autoUpdateOnStart`, `vib log`, an in-page command bar, `--dry-run` polish.
+door and its shelf, `autoUpdateOnStart`, `vib log`, an in-page command bar, `--dry-run` polish.
 
 Not planned: registry bundles, auto-commits, force-push, multi-profile, notifications, diff stat,
 dependency installation, tray integration.
@@ -472,8 +476,8 @@ Build order, each step green under `npm run check`:
   checkouts. Probably a per-bundle flag, not a global one.
 - **O5 — version bumping.** `vib bump <bundle>` from the changelog would stop the drift note from ever
   appearing. Stretch goal, not v0.
-- **O6 — shelf or viewer?** Does Viburnum clone repositories into a directory it owns, or only manage
-  checkouts the profile already links? The organisation list is only worth having with a shelf.
+- **O6 — shelf or viewer: resolved.** Hybrid (D22): a shelf for what Viburnum clones, nothing moved for
+  what it inherited.
 - **O7 — the organisation door's leftovers.** The org is `dsh-works` and six of its seven repositories
   are private, so a `GITHUB_TOKEN` reference is required rather than optional. Still open: the token's
   minimum scope, whether the repository list is cached between checks, and what the door shows when no
