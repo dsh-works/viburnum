@@ -71,7 +71,7 @@ test('update records a receipt and a snapshot, and revert restores it', async (t
   assert.equal(await world.head(world.work), before)
 })
 
-test('sync over all bundles skips Viburnum itself', async (t) => {
+test('sync over all bundles skips viburnum itself', async (t) => {
   const { world, stateDirectory } = await setup(t)
 
   const core = createCore({

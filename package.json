@@ -33,6 +33,10 @@
     "type": "git",
     "url": "git+https://github.com/dsh-works/viburnum.git"
   },
+  "homepage": "https://github.com/dsh-works/viburnum#readme",
+  "bugs": {
+    "url": "https://github.com/dsh-works/viburnum/issues"
+  },
   "engines": {
     "node": ">=22",
     "dsh": "^0.2.1-rc.2"

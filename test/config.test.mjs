@@ -25,7 +25,7 @@ test('defaults apply when the row has no configuration', () => {
 
 test('valid overrides resolve and leave the defaults untouched', () => {
   const resolved = resolveConfig({
-    catalogOwners: ['dsh-works', 'IvanIliev'],
+    catalogOwners: ['dsh-works', 'example-org'],
     pluginsDir: 'D:/plugins',
     checkIntervalMinutes: 0,
     fetchIntervalMinutes: 999,
@@ -34,7 +34,7 @@ test('valid overrides resolve and leave the defaults untouched', () => {
     name: 'dsh-plugin-viburnum',
   })
 
-  assert.deepEqual(resolved.catalogOwners, ['dsh-works', 'IvanIliev'])
+  assert.deepEqual(resolved.catalogOwners, ['dsh-works', 'example-org'])
   assert.equal(resolved.pluginsDir, 'D:/plugins')
   assert.equal(resolved.checkIntervalMinutes, 0)
   assert.equal(resolved.fetchTimeoutMs, 90_000)

@@ -1,4 +1,4 @@
-# Viburnum — plan
+# viburnum — plan
 
 - **Repository:** `dsh-works/viburnum` — deliberate deviation from the skill's `dsh-plugin-<slug>`
   repository convention, decided at gate 0 (package and row follow the convention). Precedent:
@@ -11,7 +11,7 @@
 - **Tier:** new plugin
 - **Revision:** 2
 - **Date:** 2026-11-06
-- **Approved by:** Ivan on 2026-11-06 (gate 1)
+- **Approved by:** the repository owner on 2026-11-06 (gate 1)
 
 ## Outcome
 
@@ -70,7 +70,7 @@ the route (`transport.clientSeenAt` with a Chrome user agent), so the probe pass
 |---|---|---|---|---|
 | 1 | `npm run check` | manifest, patch, locale shape, Host entry form, config validation and the git seam pass against fixtures | command transcript | **pass** 2026-11-06 — 78 tests, 0 failures |
 | 2 | Install into a profile | `dsh plugin --profile web add <path>` succeeds without warnings; row `viburnum` active in `--dump-config` | command + Plugins page | **pass** 2026-11-06 — `plugin_manager.installBundle` returned `application: applied` with no warnings; profile dependency and bundle row present |
-| 3 | Open the Web UI | row above Plugins with butterfly + dot; click opens the Viburnum page; console clean; readable in light and dark | screenshots + DevTools | **partial** — `sidebar.panellist` occupant `viburnum` at order −10 before `plugins`, `main` occupant `viburnum` active, and the browser client fetched `/viburnum/status`; visual light/dark screenshots **not run** |
+| 3 | Open the Web UI | row above Plugins with butterfly + dot; click opens the viburnum page; console clean; readable in light and dark | screenshots + DevTools | **partial** — `sidebar.panellist` occupant `viburnum` at order −10 before `plugins`, `main` occupant `viburnum` active, and the browser client fetched `/viburnum/status`; visual light/dark screenshots **not run** |
 | 4 | Fixture world: bare origin, two clones, commits on both sides | status, dot and arrows match `git rev-list --left-right --count` for current, remote-ahead, local-ahead and diverged; precedence red > orange > violet > grey > green | page text + `vib status --json` | **pass (fixtures)** — status tests cover every state and the dot precedence; live: three mounted rows current, dot green |
 | 5 | Update a fast-forwardable clone | fast-forward only; refuses non-ff; receipt records both heads; `vib revert` restores the snapshot | CLI transcript + state file | **pass (fixtures)** — update and revert tests; a live move on a user checkout **not run** |
 | 6 | Sync both directions | push-only pushes; pull-only fast-forwards; private divergence rebases then pushes; receipt counts pushed/pulled/rebased; never force | CLI transcript + origin log | **pass (fixtures)** — push/pull/private-rebase/published-refusal tests; the real two-machine check **not run** |
@@ -79,7 +79,7 @@ the route (`transport.clientSeenAt` with a Chrome user agent), so the probe pass
 | 9 | Agent tools in a session | `vib_status` reads cache with no network or writes; `vib_update`/`vib_sync` ask approval and apply; invalid bundle id returns a typed error | session transcript | **partial** — `vib_status` live, `vib_sync --dry-run` exercised through the page route, approval refusal covered by tool tests; an approval prompt end to end **not run** (answerer disabled) |
 | 10 | Invalid config | bad `checkIntervalMinutes` fails the load with an actionable message; a valid edit is honoured after reload | console + `--dump-config` | **partial** — schema validation tests pass; a live invalid-config load **not run** |
 | 11 | Locale and theme | `locale/en.json` and `locale/zh.json` carry non-empty `meta.title`/`meta.description`; client copy comes from the locale service; no hardcoded UI strings; only `--dsw-alias-*` tokens | source + UI in en/zh, light/dark | **partial** — locale files, key parity and the client dictionaries are checked; live Chinese copy and light/dark **not run** |
-| 12 | Self-update | `Sync all` skips Viburnum's own row; `Update Viburnum` moves files and reports `restart-required` | simulated fixture + live check | **not run** — own-row skip is covered by a fixture test; `Update Viburnum` was not moved |
+| 12 | Self-update | `Sync all` skips viburnum's own row; `Update viburnum` moves files and reports `restart-required` | simulated fixture + live check | **not run** — own-row skip is covered by a fixture test; `Update viburnum` was not moved |
 
 ## Gate 3 evidence (2026-11-06)
 
@@ -95,7 +95,7 @@ the route (`transport.clientSeenAt` with a Chrome user agent), so the probe pass
 - Client slots: `sidebar.panellist` occupants `viburnum` (order −10), `plugins` (0), `schedules` (10);
   `main` occupants include `viburnum`, active.
 - CLI: `node bin/vib.js status` printed the same three rows and exited 0.
-- State: `C:/Users/IvanIlievImkershop/.dsh/profiles/web/.viburnum/state.json`, `version: 2`.
+- State: `$DSH_HOME/profiles/web/.viburnum/state.json` (`version: 2`).
 - Timeout: one live fetch hit the 20 s bound and was reported as a timeout with no stuck request;
   `vib status` still answered from cache.
 - Not run: visual light/dark screenshots, Chinese UI switch, an approval prompt end to end, a live
@@ -130,3 +130,4 @@ the route (`transport.clientSeenAt` with a Chrome user agent), so the probe pass
 |---|---|---|---|
 | 1 | 2026-11-06 | initial plan from DESIGN rev 6 and gate-0 answers: core-first 0.1.0, transport probe first, `spike/scaffold` discarded, profile state dir, repository kept as `viburnum`, fixtures-only verification | 2026-11-06 |
 | 2 | 2026-11-06 | gate-3 evidence recorded after the live install; implementation matches revision 1, no scope change. Release candidate on `dev`; merge to `main` waits for the user's visual check. | 2026-11-06 |
+| 3 | 2026-11-06 | Repository made public: MIT licence, community docs (CONTRIBUTING, SECURITY), personal paths and handles removed, brand lowercased to `viburnum`; no behaviour change. | 2026-11-06 |

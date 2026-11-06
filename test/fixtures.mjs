@@ -20,9 +20,9 @@ const FIXED_ENV = {
   GIT_TERMINAL_PROMPT: '0',
   GIT_OPTIONAL_LOCKS: '0',
   GIT_CONFIG_NOSYSTEM: '1',
-  GIT_AUTHOR_NAME: 'Viburnum Test',
+  GIT_AUTHOR_NAME: 'viburnum Test',
   GIT_AUTHOR_EMAIL: 'viburnum@example.invalid',
-  GIT_COMMITTER_NAME: 'Viburnum Test',
+  GIT_COMMITTER_NAME: 'viburnum Test',
   GIT_COMMITTER_EMAIL: 'viburnum@example.invalid',
   LC_ALL: 'C',
 }

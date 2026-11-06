@@ -1,7 +1,7 @@
 /**
  * Host half of the viburnum bundle.
  *
- * Viburnum watches the git checkouts the profile links to and keeps them in
+ * viburnum watches the git checkouts the profile links to and keeps them in
  * sync across two machines. This entry owns the core instance and registers
  * its effects: the model-facing tools, the prompt section, the page transport
  * and the background check timer. Unloading the plugin removes all of them.

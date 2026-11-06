@@ -27,8 +27,8 @@ window.__ModuleLoader__.load({
     /** UI copy; every visible string comes from the locale service. */
     const DICT = {
       en: {
-        panel: 'Viburnum',
-        title: 'Viburnum',
+        panel: 'viburnum',
+        title: 'viburnum',
         mounted: 'mounted',
         pullable: 'pullable',
         refresh: 'Refresh',
@@ -59,8 +59,8 @@ window.__ModuleLoader__.load({
         'status.unknown': 'unknown',
       },
       zh: {
-        panel: 'Viburnum',
-        title: 'Viburnum',
+        panel: 'viburnum',
+        title: 'viburnum',
         mounted: '已挂载',
         pullable: '可拉取',
         refresh: '刷新',
@@ -244,7 +244,7 @@ window.__ModuleLoader__.load({
     }
 
     /** The sidebar glyph: artwork, with the aggregate dot in the top-right corner. */
-    function ViburnumIcon(props) {
+    function viburnumIcon(props) {
       const state = useStore(props.store)
       const size = typeof props.size === 'number' ? props.size : 20
       const dot = state.snapshot ? state.snapshot.dot : 'grey'
@@ -311,7 +311,7 @@ window.__ModuleLoader__.load({
     }
 
     /** The full main-area page. */
-    function ViburnumPage(props) {
+    function viburnumPage(props) {
       const store = props.store
       const t = props.locale.bind(NS)
       const state = useStore(store)
@@ -405,7 +405,7 @@ window.__ModuleLoader__.load({
             label: () => ctx.locale.bind(NS)('panel'),
             inject: () => ({ store }),
           },
-          ViburnumIcon,
+          viburnumIcon,
         ))
 
         ctx.slots.inject('main', () => ctx.slots.register(
@@ -415,7 +415,7 @@ window.__ModuleLoader__.load({
             locale: NS,
             inject: () => ({ store, locale: ctx.locale }),
           },
-          ViburnumPage,
+          viburnumPage,
         ))
       },
     }

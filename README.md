@@ -1,4 +1,4 @@
-# Viburnum
+# viburnum
 
 *A manager that Keeps All Linked Installs Neatly Synced In Two Universes.*
 
@@ -11,8 +11,10 @@ A row in the sidebar carries one dot: green when everything is current, violet w
 pulled, orange when work is uncommitted, red when it is unpushed or diverged. Installing from a
 directory, a repository URL or a GitHub organisation follows in 0.2.
 
-Named after the shrub that holds its berries through the winter: in place, visible, current. The
-command is `vib`; `viburnum` works too.
+viburnum began as one person's two-machine workshop, and it is public now because that problem is not
+unique to one person: everyone who develops a harness plugin on more than one machine has the same
+"which checkout is current?" question. Named after the shrub that holds its berries through the
+winter: in place, visible, current. The command is `vib`; `viburnum` works too.
 
 ```
 laptop ⇄ origin ⇄ work machine
@@ -24,18 +26,31 @@ per machine, so the laptop can try `dev` while the work machine stays on `main`.
 button with the other branch. An update is a fetch and a fast-forward in the linked directory, so
 there is no pnpm run, no lockfile write, and no profile edit.
 
-Viburnum never commits and never force-pushes. When a rebase would rewrite something already
+viburnum never commits and never force-pushes. When a rebase would rewrite something already
 published, it stops and shows both sides; when the rebase conflicts, it aborts and hands you the files.
 
-**Status: 0.1.0 release candidate, running from the `dev` line.** [`docs/PLAN.md`](docs/PLAN.md) is
-the approved plan and carries the gate-3 evidence; [`DESIGN.md`](DESIGN.md) carries the premise and
-decisions. `main` is the stable line (see [Branches](#branches)).
+**Status: 0.1.0 release candidate, running from the `dev` line, public under the MIT licence.**
+[`docs/PLAN.md`](docs/PLAN.md) is the approved plan and carries the gate-3 evidence;
+[`DESIGN.md`](DESIGN.md) carries the premise and decisions. `main` is the stable line (see
+[Branches](#branches)).
+
+## Public and open
+
+- **[MIT licence](LICENSE).** Use it, fork it, ship it; no warranty.
+- **Built against the public rulebook.** [dsh-plugin-development](https://github.com/dsh-works/dsh-plugin-development)
+  is the skill and process this repository follows — plan gates, bundle shape, standards, templates and
+  lessons. A process nobody can read is a rumour.
+- **Contributions are welcome.** Read [CONTRIBUTING.md](CONTRIBUTING.md) first: work branches cut from
+  `dev`, `npm run check` is the gate, and one change per pull request. Security reports go through
+  [SECURITY.md](SECURITY.md), not public issues.
+- **No telemetry, no network daemon, no account.** The only outbound traffic is git's own `fetch` and
+  `push`, in the directories the profile already links.
 
 ## What 0.1.0 does
 
 - **One dot** in the sidebar, above Plugins: the worst state across every linked checkout — green
   current, violet pullable, orange uncommitted, red unpushed or diverged, grey unknown.
-- **The Viburnum page**: the mounted checkouts with their track, fresh/behind/ahead counts, directory,
+- **The viburnum page**: the mounted checkouts with their track, fresh/behind/ahead counts, directory,
   the incoming changelog, and `Refresh` / `Sync all`; per bundle `Update`, `Sync`, `Revert` and a track
   selector. Nothing is modal; a blocked row never stops the next one.
 - **Moves**: `Update` is a fetch and a fast-forward. `Sync` pushes unpublished commits, fast-forwards,
@@ -118,7 +133,7 @@ user's plugin checkouts, and the second machine.
 
 ## Limits
 
-- Viburnum never commits and never force-pushes.
+- viburnum never commits and never force-pushes.
 - 0.1.0 is accepted against offline fixture repositories. No second machine is available, so
   cross-machine sync is not verified in this release.
 - The page transport is a localhost-only JSON route pair; it stores no credentials and reads no
@@ -133,6 +148,10 @@ user's plugin checkouts, and the second machine.
 the full `check`, tags `v<version>`, and syncs `main` back into `dev`. The detailed rule lives in
 the `dsh-plugin-development` skill.
 
-House rules: private by default, MIT when it ships, `npm run check` is the gate, `node:*` before a
-dependency, no telemetry, and the only writes are the profile state file and the checkouts the user
-asked a move to touch.
+## Licence
+
+MIT — see [LICENSE](LICENSE). The candidate butterfly marks in [`icons/`](icons/) came from the
+design notebook and are part of the repository; the eventual shipped mark will be chosen there.
+
+House rules: `npm run check` is the gate, `node:*` before a dependency, no telemetry, and the only
+writes are the profile state file and the checkouts the user asked a move to touch.

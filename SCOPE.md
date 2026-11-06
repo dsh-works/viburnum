@@ -1,6 +1,6 @@
 # Scope
 
-What Viburnum ships in which version, and what it deliberately never does. The premise and the
+What viburnum ships in which version, and what it deliberately never does. The premise and the
 decisions live in [`DESIGN.md`](DESIGN.md); the approved build plan and its acceptance checks live in
 [`docs/PLAN.md`](docs/PLAN.md).
 
@@ -8,7 +8,7 @@ decisions live in [`DESIGN.md`](DESIGN.md); the approved build plan and its acce
 
 - One profile; `link:` and `file:` dependencies only.
 - Sidebar row with the aggregate dot, ordered above Plugins.
-- The Viburnum page: mounted bundles, tracks, direction counts, directory, changelog, `Refresh`,
+- The viburnum page: mounted bundles, tracks, direction counts, directory, changelog, `Refresh`,
   `Sync all`, and per-bundle `Update`, `Sync`, `Revert`, track switch.
 - Per-machine tracks; state, receipts and snapshots with the profile.
 - `vib_status`, `vib_update`, `vib_sync`, `vib_switch`, `vib_revert`; approval before every move.
@@ -32,7 +32,7 @@ decisions live in [`DESIGN.md`](DESIGN.md); the approved build plan and its acce
 
 ## Boundaries
 
-- Viburnum never moves a checkout the profile did not link; it records `origin: 'linked'` for what it
+- viburnum never moves a checkout the profile did not link; it records `origin: 'linked'` for what it
   watches, and only 0.2's shelf checkouts may ever be removed by it.
 - The page talks to the Host only through the plugin's own same-origin JSON routes; no iframe, no
   second server, no DOM writes outside the plugin's components.

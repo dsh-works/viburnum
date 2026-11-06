@@ -7,8 +7,7 @@ First build of the sync core, the sidebar row and the page.
 ### Added
 
 - Host core that reads the profile's mounted linked bundles, checks their git state, and owns tracks,
-  cached rows, receipts and snapshots in `$DSH_HOME/profiles/<profile>/.viburnum/state.json`.
-- `sidebar.panellist` glyph with the aggregate status dot, and the Viburnum page in the `main` slot:
+  cached rows, receipts and snapshots in `$DSH_HOME/profiles/<profile>/.viburnum/state.json`.- `sidebar.panellist` glyph with the aggregate status dot, and the viburnum page in the `main` slot:
   per-bundle track, direction counts, directory, incoming changelog, `Refresh`, `Sync all`,
   `Update`, `Sync`, `Revert` and a track selector.
 - Moves: fast-forward-only update, two-way sync (push, pull, rebase private divergence), published
@@ -25,6 +24,12 @@ First build of the sync core, the sidebar row and the page.
 - Installed into the `web` profile with the plugin manager and applied without warnings.
 - Tools, sidebar entry and main page registered live; the browser half fetched `/viburnum/status`.
 - CLI and page transport report the three mounted bundles as current.
+
+### Repository made public
+
+- MIT licence added; README rewritten for a public, community-facing project; `CONTRIBUTING.md` and
+  `SECURITY.md` added; personal paths and handles removed from docs and tests.
+- The `dsh-plugin-development` rulebook is linked as the process every change follows.
 
 ### Not verified in 0.1.0
 
