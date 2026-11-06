@@ -62,6 +62,22 @@ expect(/^-\s*insert:/mu.test(patch), 'patch has an insert list')
 expect(/id:\s*viburnum\b/u.test(patch), 'patch row id is viburnum')
 expect(patch.includes(`name: '${pkg.name}'`), 'patch row names the package')
 
+if (pkg.dsh?.client) {
+  expect(pkg.dsh.client.platform === 'web', 'dsh.client platform is web')
+  expect(pkg.exports['./client'] === './client.js', 'dsh.client requires the ./client export')
+  const client = await readFile(new URL('./client.js', root), 'utf8')
+  expect(!/^\s*(?:import|export)\s/mu.test(client), 'client.js is a classic script, not an ES module')
+  expect(client.includes('__ModuleLoader__'), 'client.js registers through the module loader')
+  let parses = true
+  try {
+    // Parse without executing: a classic script body compiles as a function body.
+    new Function(client) // eslint-disable-line no-new, no-new-func
+  } catch {
+    parses = false
+  }
+  expect(parses, 'client.js parses as a classic script')
+}
+
 const locales = {}
 for (const language of ['en', 'zh']) {
   locales[language] = await readJson(`locale/${language}.json`)

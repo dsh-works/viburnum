@@ -66,6 +66,17 @@ test('the host entry exports the function-plugin form', async () => {
   assert.equal(entry.default, undefined, 'function plugin must not also export a default')
 })
 
+test('the browser half parses as a classic script', async () => {
+  const pkg = await readJson('package.json')
+  assert.equal(pkg.dsh?.client?.platform, 'web')
+  assert.equal(pkg.exports['./client'], './client.js')
+
+  const source = await readText('client.js')
+  assert.ok(!/^\s*(?:import|export)\s/mu.test(source), 'client.js must not use ESM syntax')
+  assert.ok(source.includes('__ModuleLoader__'), 'client.js must register through the module loader')
+  assert.doesNotThrow(() => new Function(source), 'client.js must parse') // eslint-disable-line no-new, no-new-func
+})
+
 test('the patch row mounts this package under the row id', async () => {
   const pkg = await readJson('package.json')
   const patch = await readText('cordis.patch.yml')

@@ -11,6 +11,7 @@
   },
   "exports": {
     ".": "./index.js",
+    "./client": "./client.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json",
     "./icon": "./icons/blue-butterfly-dark.png",
@@ -18,6 +19,7 @@
   },
   "files": [
     "index.js",
+    "client.js",
     "lib/",
     "bin/",
     "cordis.patch.yml",
@@ -43,6 +45,11 @@
     "manifestVersion": 1,
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
     }
   }
 }
