@@ -100,7 +100,7 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D6  | **Rebase only when the local commits are unpublished.** Published divergence is refused, with both commit lists shown. | No rewriting history two machines already saw. |
 | D7  | **A conflict stops the sync and offers three exits.** Agree (apply a safe suggestion and continue), Guide (reopen the rebase, open the files, retry), Myself (abort and print the commands). Nothing is resolved silently. | The tree never sits mid-rebase unless the user chose Guide, and no conflict resolution is invented. |
 | D8  | **Snapshot for update and switch; audit for sync.** Revert restores a pull or a track move, never a pushed rebase. | Undo is honest about which actions are local-only. |
-| D9  | **Checks automatic, actions on click.** `autoUpdateOnStart` exists, default off. | Nothing moves while you are not looking. |
+| D9  | **Checks automatic, actions on click — never auto-apply.** There is no `autoUpdateOnStart`: a check may run on start and on an interval, but every move is a click or a command. | Code never changes state while the user is not looking, and there is no config that can make it. |
 | D10 | **One core, three faces.** Host service, Web page, tools, CLI binary. | Same calls, different keyboards. |
 | D11 | **State with the profile**, `$DSH_HOME/profiles/<name>/.viburnum/`. Never in a bundle repo. | `git status` in any plugin stays clean. |
 | D12 | **Viburnum updates itself separately.** `Sync all` skips its own row; `Update Viburnum` moves the files and says restart. | The tool that must not be stale gets updated honestly. |
@@ -111,7 +111,7 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D17 | **One dot is the whole status language.** Green current, violet pullable, orange uncommitted, red unpushed or diverged, grey unknown; worst state wins across bundles. | A glance answers "is anything wrong" without opening anything. Colour is always paired with words on the page, never the only signal. |
 | D18 | **No hover card.** The sidebar owns the row and exposes no hover slot; refresh and detail live on the page, and the row opens it. | The sketch's hover loses; the dot survives. Nothing is built on a seam the harness does not have. |
 | D19 | **Three doors to install, one lifecycle.** Directory, repository URL, or GitHub organisation — all end at `pluginManager.installBundle`. | Org browsing is a list you pick from, not a second manager; one code path creates every plugin. |
-| D20 | **`vib install .` is the CLI spelling of the directory door.** | The terminal stays a first-class face; an in-page command bar, if it ever happens, mirrors the same verbs and resolves `.` to the workspace root. |
+| D20 | **`vib install .` is the CLI spelling of the directory door.** | The harness's own terminal is the command surface: no in-page bar to build, and the page's buttons are the same verbs without typing. |
 | D21 | **`vib new` scaffolds; `init` is not a verb.** It writes a bundle that already satisfies the taxonomy — manifest, patch row, entry, test, README — and leaves git to a flag. | Creating a plugin stops being a memory test, and the organisation door never sees a mis-tagged new repository. |
 | D22 | **Hybrid shelf.** New installs clone into a configurable `pluginsDir` (`$DSH_HOME/viburnum/plugins` by default); checkouts the profile already links are watched where they are and never moved. | One lifecycle for what Viburnum creates, zero migration for what it inherited. |
 | D23 | **"Agree" exists only where a suggestion is safe.** Today that is append-only files where a union merge is correct (a `CHANGELOG.md`) and conflicts whose local side is already contained in the incoming commit; otherwise the button is disabled with the reason. | Auto-resolution is a promise the tool can keep, or it is not offered at all. |
@@ -213,8 +213,11 @@ vib log [--limit 20]
 ```
 
 `vib install .` needs no special case: the CLI has a working directory, so `.` is already the path it
-means. An in-page command bar would have to invent one — the workspace root — and is a gimmick we may
-add later (O8), not a reason to shape the CLI.
+means. The harness already provides the command surface — a terminal in the sidebar, running a shell in
+the workspace — so there is no in-page bar to build. Type the verb there, or press the button on the page.
+
+For that to work, `vib` has to be on `PATH`: `npm link` from the package directory, or a global install.
+The page's buttons never need it.
 
 The package links both `vib` and `viburnum` to the same entry point. A personal alias — a line in a shell
 profile, or a symlink in a bin directory — works without the plugin knowing anything about it: the name
@@ -451,7 +454,7 @@ revert, `vib_status`/`vib_update`/`vib_sync`/`vib_switch`/`vib_revert`, `vib sta
 offline tests.
 
 Follows immediately (0.1.x): install (directory, then repository URL), `vib new`, the GitHub organisation
-door and its shelf, `autoUpdateOnStart`, `vib log`, an in-page command bar, `--dry-run` polish.
+door and its shelf, `vib log`, `--dry-run` polish.
 
 Not planned: registry bundles, auto-commits, force-push, multi-profile, notifications, diff stat,
 dependency installation, tray integration.
@@ -476,8 +479,8 @@ Build order, each step green under `npm run check`:
   moves to `$DSH_HOME/viburnum/<profile>/`.
 - **O3 — conflict UX: resolved (D7, D23).** Abort first, then Agree / Guide / Myself; Guide is the only
   path that leaves a rebase open.
-- **O4 — `autoUpdateOnStart`.** Off by default; the moment it is on, every start may move three
-  checkouts. Probably a per-bundle flag, not a global one.
+- **O4 — auto-apply: resolved (D9).** None, ever. The check may run on start and on an interval; every
+  move is a click or a command.
 - **O5 — version bumping.** `vib bump <bundle>` from the changelog would stop the drift note from ever
   appearing. Stretch goal, not v0.
 - **O6 — shelf or viewer: resolved.** Hybrid (D22): a shelf for what Viburnum clones, nothing moved for
@@ -486,8 +489,8 @@ Build order, each step green under `npm run check`:
   are private, so a `GITHUB_TOKEN` reference is required rather than optional. Still open: the token's
   minimum scope, whether the repository list is cached between checks, and what the door shows when no
   token is configured — hidden, or offered disabled with a hint.
-- **O8 — command bar.** A real terminal plus an input inside the page, or just the terminal? The page
-  one has to invent a working directory for `.`.
+- **O8 — command bar: resolved (D20).** None. The harness's terminal is the command surface; the page
+  keeps buttons.
 - **O9 — colour language: resolved (D17).** Violet for pullable; precedence red > orange > violet > grey >
   green.
 
