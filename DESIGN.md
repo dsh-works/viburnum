@@ -323,6 +323,13 @@ similar — and the profile links into it, or doors 2 and 3 ask for a directory 
 survives. A shelf makes install one lifecycle (clone, link, update, remove) and makes the org list worth
 having; asking each time keeps the tool from deciding where code lives.
 
+**The organisation door, given the taxonomy.** `dsh-works` tags every repository with at most one kind
+topic (`dsh-plugin`, `dsh-skill`, `dsh-process`, `dsh-org`), but a topic is a grouping hint, not proof.
+The door lists the org's repositories, skips archived ones, and reads `package.json` at the default
+branch: `dsh.bundle.patch` is the only thing that makes a repository installable. A repository tagged
+`dsh-plugin` without that manifest is an error row; a bundle without a kind topic is importable and
+labelled *untagged*. Six of the seven repositories are private, so the door is token-first.
+
 ### 6.6 Changelog and reload class
 
 Changelog, first hit wins: `git show <target>:CHANGELOG.md` section naming the version → the file's
@@ -444,8 +451,10 @@ Build order, each step green under `npm run check`:
   appearing. Stretch goal, not v0.
 - **O6 — shelf or viewer?** Does Viburnum clone repositories into a directory it owns, or only manage
   checkouts the profile already links? The organisation list is only worth having with a shelf.
-- **O7 — the organisation.** Which org, are the repositories private, and is `GITHUB_TOKEN` acceptable
-  as the only way in? Unauthenticated listing works but the rate limit is tight.
+- **O7 — the organisation door's leftovers.** The org is `dsh-works` and six of its seven repositories
+  are private, so a `GITHUB_TOKEN` reference is required rather than optional. Still open: the token's
+  minimum scope, whether the repository list is cached between checks, and what the door shows when no
+  token is configured — hidden, or offered disabled with a hint.
 - **O8 — command bar.** A real terminal plus an input inside the page, or just the terminal? The page
   one has to invent a working directory for `.`.
 - **O9 — colour language.** Is blue right for "pullable", or should anything actionable be warm? Does
