@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- The sidebar glyph is the real `blue-butterfly` pixel art, rendered larger; the status dot now sits
+  centred in the gap between the icon and the label. The package icon is `blue-butterfly.png` too.
+
 ## 0.1.0 — 2026-11-06
 
 First build of the sync core, the sidebar row and the page.

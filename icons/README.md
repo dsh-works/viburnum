@@ -6,8 +6,8 @@ nudged without redrawing.
 
 | File | Mark | Colours | Read |
 | :--- | :--- | :--- | :--- |
-| `blue-butterfly.png` | Faceless butterfly after a Morpho dorsal view: indigo body, forewings overlapping the hindwings at a dark seam, copper-ringed ocelli, lavender highlights, head glint, 7° tilt | 12 | The elegant one; reads at 16 px. |
-| `blue-butterfly-dark.png` | The same mark with the body in the head's dark slate instead of indigo, and a faint violet rim light on the head | 11 | Head and body read as one piece; quieter, closer to a specimen. **This is the package icon.** |
+| `blue-butterfly.png` | Faceless butterfly after a Morpho dorsal view: indigo body, forewings overlapping the hindwings at a dark seam, copper-ringed ocelli, lavender highlights, head glint, 7° tilt | 12 | The elegant one; reads at 16 px. **This is the package icon.** |
+| `blue-butterfly-dark.png` | The same mark with the body in the head's dark slate instead of indigo, and a faint violet rim light on the head | 11 | Head and body read as one piece; quieter, closer to a specimen. The alternative. |
 | `amber-butterfly.png` | Monarch, rounded wings, black body, cream dashes in the tips | 4 | Reads at 20 px; warm counterpoint to the blue. |
 | `viburnum-sprig.png` | Diagonal branch, two three-lobed leaves, three drupes, six florets | 11 | Best at 64; the florets disappear small. |
 | `viburnum-umbel.png` | Emblem: seven florets over three drupes | 8 | Legible, but the stem reads as a trident and the florets sit apart. |
@@ -19,7 +19,7 @@ with `#b3a6ef` lavender, `#4a4a8c` indigo body, `#b5652f`/`#e8a05c` copper for t
 `#f6f2e4`/`#d9d2bd` petals, `#d8a13f` centres, `#b8322a`/`#e0554a`/`#7d1f1a` drupes and
 `#3f5a32`/`#6f8f4d` leaves.
 
-The package icon is `blue-butterfly-dark.png` (declared through `package.json` `icon` and exported as
+The package icon is `blue-butterfly.png` (declared through `package.json` `icon` and exported as
 `./icon`). It is a real artwork, not a placeholder. The **sidebar glyph** is drawn inline in
 `client.js` — a butterfly in the same palette with the status dot in its top-right corner — because
 that surface needs the dot inside the glyph. The final shipped mark may still change: candidates stay

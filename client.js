@@ -251,10 +251,13 @@ window.__ModuleLoader__.load({
       return state
     }
 
+    /** The real blue-butterfly pixel art, embedded so the sidebar and the package share one mark. */
+    const ICON_DATA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACqElEQVR42u2aPU5DMQzHOQQT3AAhGBgQB2DpxAHYgIkrIHEBJGY2Ji6AuAHiFByACVY2UJ7kyrVsx8lL8tL3bMmiqkqb/y/+atKdHTc3t1a2u3f0F3yx4t9ujpcNYGwEzCKCckXMKoJyIJSIoO4gLL54xkTNvmto4hbTMiWRixEv+ewXHV7/+vIz/N/BycXau4YQFnV3/zH4/unVhofnrIsH8eAUAH7cnXgqnHOAIb1PEMeJp94NACr+8PpJdXgdFw149zXxXUEIi9DErx7foyBoBFjdOitULaQcgCBacg1CCQBYpJSCuCZVCX8NAAVBUyIHQEx0Tj1KjgAa9tRxZdcg5IinBdhah4pAsKRAEP35/bt2KRJgMVYAlvrDpR4FMQpCDgAcBbC4lFTQOo819YoB4NJAA0DFS1HAQYDnY3WHplpKIa4aBdKiuB1ZrR4Gp+3LIl6LNq3+FC2Glk6gRQEAwG7pODkAinUDWGAqBBqSnHgMINZtYgCK1wANQkphggWB4LPz2w0A1nmDa7lVw9/63cBakEB8LoAU2MV2nxtHrYMJHU5qAWgiXuoOGgw6mVkB5NSZpuLhQ6SDEmk2jwGwQkj5Kl49/HEflxxewwHImfm5CKt+hiDlPt0dPNzQ0ATxGACOptS0qr7ruWcDUn5q4Z+aUtVzvcQgRCFIAPAOaymF07DZsZm2++Hm9uv5cvgbPBVAalRVHXSsAKh48FwAY9te8/yfGgB9z8kKYAsA+DPw+zeNAq0IQu5bxOcAwIA5CN3NALGTGdr/twaA5aLEckkC0yBMgLEu0EUKpH4J0qY0AICBWCDQFJsMgPWyQhpPOSBjzxiaTYQpd3StzhgmFd/iKr7qzU/vv0SJnS3M/vdEW/lbIjc3Nzc3Nzc3Nzc3Nze3fu0fEatwChLGI+cAAAAASUVORK5CYII='
+
     /**
-     * The sidebar glyph: the butterfly drawn a little larger than the row's
-     * nominal cell, with the aggregate dot in the gap before the label instead
-     * of on top of the artwork.
+     * The sidebar glyph: the chosen pixel art, drawn a little larger than the
+     * row's nominal cell, with the aggregate dot centred in the gap before the
+     * label instead of on top of the artwork.
      */
     function viburnumIcon(props) {
       const state = useStore(props.store)
@@ -262,7 +265,7 @@ window.__ModuleLoader__.load({
       const dot = state.snapshot ? state.snapshot.dot : 'grey'
       const active = props.active === true
       const art = size + 3
-      const offset = Math.floor((art - size) / 2)
+      const shift = Math.floor((art - size) / 2)
 
       return h(
         'span',
@@ -277,38 +280,27 @@ window.__ModuleLoader__.load({
             flex: '0 0 auto',
           },
         },
-        h(
-          'svg',
-          {
-            width: art,
-            height: art,
-            viewBox: '0 0 24 24',
-            role: 'presentation',
-            style: { display: 'block', margin: `-${offset}px`, opacity: active ? 1 : 0.82 },
+        h('img', {
+          src: ICON_DATA,
+          alt: '',
+          width: art,
+          height: art,
+          draggable: false,
+          style: {
+            display: 'block',
+            transform: `translateX(-${shift}px)`,
+            opacity: active ? 1 : 0.82,
           },
-          h('path', {
-            d: 'M11 6C8.4 2.4 3.4 3.2 2.4 7.2c-1 4 2.8 6 5.8 5.8-2.9 1.1-4.6 3.9-3.5 5.8 1.1 2.2 4.6 1.7 6.3-1.2z',
-            fill: '#2c6499',
-            stroke: '#1b3763',
-            strokeWidth: 1,
-          }),
-          h('path', {
-            d: 'M13 6c2.6-3.6 7.6-2.8 8.6 1.2 1 4-2.8 6-5.8 5.8 2.9 1.1 4.6 3.9 3.5 5.8-1.1 2.2-4.6 1.7-6.3-1.2z',
-            fill: '#4a8fc4',
-            stroke: '#1b3763',
-            strokeWidth: 1,
-          }),
-          h('rect', { x: 11, y: 5, width: 2, height: 14, rx: 1, fill: '#1b3763' }),
-        ),
+        }),
         h('span', {
           'aria-hidden': 'true',
           style: {
             position: 'absolute',
-            right: '-5px',
+            right: '-4.5px',
             top: '50%',
-            width: '4px',
-            height: '4px',
-            marginTop: '-2px',
+            width: '3px',
+            height: '3px',
+            marginTop: '-1.5px',
             borderRadius: '50%',
             background: DOT_TOKEN[dot] || DOT_TOKEN.grey,
           },
