@@ -46,6 +46,10 @@ window.__ModuleLoader__.load({
         rebased: 'rebased',
         on: 'on',
         noBundles: 'No linked bundles.',
+        back: 'Back',
+        version: 'version',
+        incoming: 'incoming',
+        noIncoming: 'Nothing to pull on this track.',
         dryRun: 'plan',
         'status.current': 'current',
         'status.remote-ahead': 'pullable',
@@ -100,6 +104,27 @@ window.__ModuleLoader__.load({
       rowTop: { display: 'flex', alignItems: 'center', gap: '8px' },
       dot: { width: '8px', height: '8px', borderRadius: '50%', flex: '0 0 auto' },
       name: { fontWeight: 600 },
+      nameLink: {
+        padding: 0,
+        border: 'none',
+        background: 'none',
+        color: 'inherit',
+        font: 'inherit',
+        fontWeight: 600,
+        cursor: 'pointer',
+      },
+      changelog: {
+        whiteSpace: 'pre-wrap',
+        fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
+        fontSize: '12px',
+        color: 'var(--dsw-alias-label-secondary)',
+        maxHeight: '260px',
+        overflow: 'auto',
+        background: 'var(--dsw-alias-bg-layer-2)',
+        padding: '8px 10px',
+        borderRadius: '6px',
+        margin: 0,
+      },
       track: {
         padding: '0 6px',
         borderRadius: '4px',
@@ -146,7 +171,7 @@ window.__ModuleLoader__.load({
 
     /** One client-local store: the status snapshot, the busy state and the last result. */
     function createStore() {
-      let state = { snapshot: null, phase: 'loading', error: null, busy: null, last: null }
+      let state = { snapshot: null, phase: 'loading', error: null, busy: null, last: null, detail: null }
       const listeners = new Set()
 
       const emit = () => {
@@ -199,6 +224,21 @@ window.__ModuleLoader__.load({
           } finally {
             set({ busy: null })
           }
+        },
+        async openDetail(name) {
+          set({ detail: { name, phase: 'loading', data: null, error: null } })
+          try {
+            const data = await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'detail', bundle: name }),
+            })
+            set({ detail: { name, phase: 'ready', data, error: null } })
+          } catch (error) {
+            set({ detail: { name, phase: 'error', data: null, error: error.message } })
+          }
+        },
+        closeDetail() {
+          set({ detail: null })
         },
       }
       return store
@@ -313,9 +353,18 @@ window.__ModuleLoader__.load({
       const pullable = rows.filter((row) => row.status === 'remote-ahead').length
       const busy = state.busy !== null
       const banner = state.last ? describeResult(state.last, t) : null
+      const detail = state.detail
 
       const run = (action, payload) => {
         void store.act(action, payload)
+      }
+      const openDetail = (name) => {
+        void store.openDetail(name)
+      }
+      const runDetail = (action, payload) => {
+        void store.act(action, payload).then(() => {
+          if (detail !== null) void store.openDetail(detail.name)
+        })
       }
 
       const rowView = (row) =>
@@ -326,7 +375,7 @@ window.__ModuleLoader__.load({
             'div',
             { style: styles.rowTop },
             h('span', { style: { ...styles.dot, background: DOT_TOKEN[row.dot] || DOT_TOKEN.grey } }),
-            h('span', { style: styles.name }, row.name),
+            h('button', { style: styles.nameLink, onClick: () => openDetail(row.name) }, row.name),
             h('span', { style: styles.track }, row.track || '-'),
             h('span', { style: styles.arrows }, arrows(row)),
             h('span', { style: styles.status }, t('status.' + row.status)),
@@ -354,6 +403,77 @@ window.__ModuleLoader__.load({
             row.error ? h('span', { style: styles.error }, row.error) : null,
           ),
         )
+
+      const detailView = () => {
+        const data = detail.data
+        const back = h('button', { style: styles.button, onClick: () => store.closeDetail() }, '← ' + t('back'))
+        if (detail.phase === 'loading' && data === null) {
+          return h(
+            'div',
+            { style: styles.page },
+            h('div', { style: styles.header }, back),
+            h('div', { style: styles.empty }, t('loading')),
+          )
+        }
+        if (detail.phase === 'error' || data === null || data.ok === false) {
+          return h(
+            'div',
+            { style: styles.page },
+            h('div', { style: styles.header }, back),
+            h('div', { style: styles.error }, (data && data.message) || detail.error || t('transportError')),
+          )
+        }
+
+        const bundle = data.bundle
+        const incoming = data.incoming
+        return h(
+          'div',
+          { style: styles.page },
+          h(
+            'div',
+            { style: styles.header },
+            back,
+            h('span', { style: styles.title }, bundle.name),
+            h('span', { style: styles.subtitle }, (bundle.version ? 'v' + bundle.version + ' · ' : '') + (bundle.track || '-')),
+            h('span', { style: styles.spacer }),
+            h('button', { style: styles.button, disabled: busy, onClick: () => runDetail('update', { bundle: bundle.name }) }, t('update')),
+            h('button', { style: styles.button, disabled: busy, onClick: () => runDetail('sync', { bundle: bundle.name }) }, t('sync')),
+            h('button', { style: styles.button, disabled: busy, onClick: () => runDetail('revert', { bundle: bundle.name }) }, t('revert')),
+          ),
+          h('div', { style: styles.secondary }, bundle.dir),
+          h(
+            'div',
+            { style: styles.controls },
+            h('span', { style: styles.secondary }, t('switchTo')),
+            h(
+              'select',
+              {
+                style: styles.select,
+                value: bundle.track || '',
+                disabled: busy,
+                onChange: (event) => runDetail('switch', { bundle: bundle.name, track: event.target.value }),
+              },
+              data.branches.map((track) => h('option', { key: track, value: track }, track)),
+            ),
+          ),
+          banner !== null && banner !== '' ? h('div', { style: styles.banner }, banner) : null,
+          h(
+            'div',
+            { style: styles.row },
+            h(
+              'div',
+              { style: styles.rowTop },
+              h('span', { style: { ...styles.dot, background: DOT_TOKEN[bundle.dot] || DOT_TOKEN.grey } }),
+              h('span', { style: styles.status }, '↓' + (incoming ? incoming.behind : 0) + ' ' + t('incoming')),
+              incoming && incoming.nextVersion ? h('span', { style: styles.arrows }, 'next ' + incoming.nextVersion) : null,
+            ),
+            h('pre', { style: styles.changelog }, incoming && incoming.changelog ? incoming.changelog : t('noIncoming')),
+            incoming && incoming.reloadLabel ? h('div', { style: styles.secondary }, incoming.reloadLabel) : null,
+          ),
+        )
+      }
+
+      if (detail !== null) return detailView()
 
       return h(
         'div',
