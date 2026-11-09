@@ -7,7 +7,7 @@
 
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
-import { join } from 'node:path'
+import { join, posix } from 'node:path'
 import { test } from 'node:test'
 
 import {
@@ -94,9 +94,12 @@ function fsRules({ files = [], links = {} } = {}) {
 function linkedSystem() {
   const binDir = globalBinDir(POSIX_PREFIX, 'linux')
   const shim = join(binDir, 'vib')
+  // The probe output is a Linux path whatever host runs the test, so build it
+  // in the POSIX flavour rather than the test host's.
+  const probed = posix.join(POSIX_PREFIX, 'bin', 'vib')
   const { spawnImpl } = spawnRules({
     'npm prefix -g': { stdout: `${POSIX_PREFIX}\n` },
-    '/bin/zsh -ilc command -v vib': { stdout: `${shim}\n` },
+    '/bin/zsh -ilc command -v vib': { stdout: `${probed}\n` },
   })
   const fsImpl = fsRules({
     files: [shim],
@@ -105,7 +108,7 @@ function linkedSystem() {
       [join(POSIX_PREFIX, 'node_modules', CLI_PACKAGE)]: CHECKOUT,
     },
   })
-  return { spawnImpl, fsImpl, shim, binDir }
+  return { spawnImpl, fsImpl, probed, binDir }
 }
 
 test('the platform facts are declared once', () => {
@@ -137,7 +140,7 @@ test('output parsers keep only what they can use', () => {
 })
 
 test('an available command reports the path and owns it', async () => {
-  const { spawnImpl, fsImpl, shim } = linkedSystem()
+  const { spawnImpl, fsImpl, probed } = linkedSystem()
   const cli = createCli({
     checkout: CHECKOUT,
     platform: 'linux',
@@ -149,7 +152,7 @@ test('an available command reports the path and owns it', async () => {
   const status = await cli.status()
 
   assert.equal(status.state, 'available')
-  assert.equal(status.path, shim)
+  assert.equal(status.path, probed)
   assert.equal(status.shell, '/bin/zsh')
   assert.equal(status.owned, true)
   assert.equal(status.npm, true)
@@ -222,10 +225,11 @@ test('npm being unavailable is unknown, not a false missing', async () => {
 test('install needs confirmation and then links the checkout', async () => {
   const binDir = globalBinDir(POSIX_PREFIX, 'linux')
   const shim = join(binDir, 'vib')
+  const probed = posix.join(POSIX_PREFIX, 'bin', 'vib')
   let installed = false
   const { spawnImpl, calls } = spawnRules({
     'npm prefix -g': { stdout: `${POSIX_PREFIX}\n` },
-    '/bin/zsh -ilc command -v vib': () => (installed ? { stdout: `${shim}\n` } : { code: 1 }),
+    '/bin/zsh -ilc command -v vib': () => (installed ? { stdout: `${probed}\n` } : { code: 1 }),
     '/bin/zsh -lc command -v vib': { code: 1 },
     '/bin/sh -lc command -v vib': { code: 1 },
     'npm link': () => {
@@ -258,6 +262,7 @@ test('install needs confirmation and then links the checkout', async () => {
   const installedNow = await cli.install({ confirm: true })
   assert.equal(installedNow.ok, true)
   assert.equal(installedNow.status.state, 'available')
+  assert.equal(installedNow.status.path, probed)
   assert.equal(installedNow.status.owned, true)
 })
 
