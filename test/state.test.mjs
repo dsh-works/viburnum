@@ -84,6 +84,8 @@ test('older shapes migrate without losing what is still understood', () => {
   assert.deepEqual(migrated.snapshots, [])
   assert.deepEqual(migrated.timeline, [])
   assert.deepEqual(migrated.seen, {})
+  assert.deepEqual(migrated.settings, {})
+  assert.equal(migrated.dshVersion, null)
 })
 
 test('retention prunes old entries and caps both lists', () => {

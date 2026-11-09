@@ -4,6 +4,10 @@
 
 ### Added
 
+- Plugin icons on the page rows (inlined from each plugin's `package.json` `icon`), aggregate
+  ahead/behind counts at the right edge of the sidebar row, a **Settings → viburnum** page (refresh
+  interval, refresh on startup, version warnings), and **harness-drift tracking**: a warning when the
+  running DSH version changes and for every bundle whose `engines.dsh` rejects it.
 - A **timeline**: what changed since the last look — incoming commits on a track (with their first
   subject) plus viburnum's own moves. Shown above the rows, cleared by reading (`vib log`, or the page
   on load/after an action); stored in the state file.

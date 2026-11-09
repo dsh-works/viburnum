@@ -3,7 +3,7 @@
  */
 
 import assert from 'node:assert/strict'
-import { readFile, mkdtemp, rm } from 'node:fs/promises'
+import { readFile, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -12,7 +12,7 @@ import { createCore, OWN_PACKAGE } from '../lib/core.js'
 import { makeWorld, run } from './fixtures.mjs'
 
 /** Build a world, a state directory and a core that watches both clones. */
-async function setup(t) {
+async function setup(t, options = {}) {
   const world = await makeWorld(t)
   const stateDirectory = await mkdtemp(join(tmpdir(), 'viburnum-core-'))
   t.after(() => rm(stateDirectory, { recursive: true, force: true }))
@@ -25,7 +25,7 @@ async function setup(t) {
       { name: 'dsh-plugin-work', dir: world.work },
     ],
   })
-  const core = createCore({ bundleSource, env, argv: [] })
+  const core = createCore({ bundleSource, env, argv: [], ...options })
   return { world, stateDirectory, core }
 }
 
@@ -49,6 +49,46 @@ test('the core hydrates cached rows from the state file', async (t) => {
   await hydrated.load()
   assert.equal(hydrated.snapshot().rows.length, 2)
   assert.equal(hydrated.snapshot().rows[0].status, 'current')
+})
+
+test('settings save, validate and appear in the snapshot', async (t) => {
+  const { core } = await setup(t)
+  await core.load()
+
+  const saved = await core.setSettings({ checkIntervalMinutes: 15, refreshOnStartup: false, versionWarnings: false })
+  assert.equal(saved.settings.checkIntervalMinutes, 15)
+  assert.equal(saved.settings.refreshOnStartup, false)
+  assert.equal(saved.settings.versionWarnings, false)
+
+  await core.setSettings({ refreshOnStartup: true })
+  assert.equal(core.snapshot().settings.refreshOnStartup, true)
+  assert.equal(core.snapshot().settings.checkIntervalMinutes, 15)
+
+  await assert.rejects(core.setSettings({ checkIntervalMinutes: -1 }), (error) => error.code === 'invalid-settings')
+  await assert.rejects(core.setSettings({ versionWarnings: 'yes' }), (error) => error.code === 'invalid-settings')
+  await assert.rejects(core.setSettings(null), (error) => error.code === 'invalid-settings')
+})
+
+test('compatibility warns when a bundle rejects the running harness', async (t) => {
+  const { world, core } = await setup(t, { dshVersion: '0.2.2-rc.1' })
+  for (const dir of [world.laptop, world.work]) {
+    await writeFile(join(dir, 'package.json'), JSON.stringify({
+      name: 'dsh-plugin-test',
+      version: '0.1.0',
+      engines: { dsh: '^9.0.0' },
+    }))
+  }
+
+  await core.load()
+  const snapshot = await core.refresh()
+  assert.equal(snapshot.compat.runningDsh, '0.2.2-rc.1')
+  const mismatch = snapshot.compat.warnings.find((warning) => warning.kind === 'engine-mismatch')
+  assert.ok(mismatch)
+  assert.equal(mismatch.requires, '^9.0.0')
+  assert.equal(mismatch.running, '0.2.2-rc.1')
+
+  await core.setSettings({ versionWarnings: false })
+  assert.deepEqual(core.snapshot().compat.warnings.filter((warning) => warning.kind === 'engine-mismatch'), [])
 })
 
 test('the timeline records a move and clears when read', async (t) => {

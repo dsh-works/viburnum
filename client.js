@@ -70,6 +70,16 @@ window.__ModuleLoader__.load({
         timeline: 'timeline',
         noHygieneFindings: 'No hygiene problems found.',
         scan: 'Scan',
+        settingsTitle: 'viburnum settings',
+        settingsHint: 'How often viburnum checks, and whether it warns when the harness drifts.',
+        refreshInterval: 'Refresh interval (minutes)',
+        refreshOnStartup: 'Refresh on startup',
+        versionWarnings: 'Warn about harness version drift',
+        save: 'Save',
+        saved: 'saved',
+        harnessCompat: 'Harness compatibility',
+        runningHarness: 'Running harness',
+        noVersionWarnings: 'Every mounted plugin accepts the running harness.',
         close: 'Close',
         truncated: 'truncated',
         back: 'Back',
@@ -199,6 +209,8 @@ window.__ModuleLoader__.load({
       },
       empty: { color: 'var(--dsw-alias-label-secondary)', padding: '12px 0' },
       documentScroll: { maxHeight: '420px', overflow: 'auto', paddingRight: '4px' },
+      rowIcon: { width: '20px', height: '20px', objectFit: 'contain', flex: '0 0 auto', borderRadius: '4px' },
+      settingsPage: { display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '760px', padding: '16px' },
       markdown: { display: 'flex', flexDirection: 'column', gap: '2px', color: 'var(--dsw-alias-label-primary)' },
       mdP: { margin: '4px 0', lineHeight: '1.55' },
       mdH1: { fontSize: '18px', margin: '10px 0 4px' },
@@ -463,6 +475,24 @@ window.__ModuleLoader__.load({
         closeDetail() {
           set({ detail: null, doc: null })
         },
+        async saveSettings(patch) {
+          set({ busy: 'settings', last: null })
+          try {
+            const result = await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'settings', patch }),
+            })
+            set({ last: result })
+            await store.refresh()
+            return result
+          } catch (error) {
+            const failure = { ok: false, code: 'transport', message: error.message }
+            set({ last: failure })
+            return failure
+          } finally {
+            set({ busy: null })
+          }
+        },
         async loadTimeline() {
           try {
             const data = await request('/viburnum/action', {
@@ -568,6 +598,10 @@ window.__ModuleLoader__.load({
       const half = extra / 2
       const vertical = Math.round((height - size) / 2)
       const label = props.locale.bind(NS)('panel')
+      const rows = state.snapshot ? (state.snapshot.rows || []) : []
+      const ahead = rows.reduce((sum, row) => sum + (row.ahead || 0), 0)
+      const behind = rows.reduce((sum, row) => sum + (row.behind || 0), 0)
+      const arrows = [ahead > 0 ? '↑' + ahead : null, behind > 0 ? '↓' + behind : null].filter(Boolean).join(' ')
 
       return h(
         'span',
@@ -577,7 +611,8 @@ window.__ModuleLoader__.load({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            flex: '0 0 auto',
+            flex: '1 1 auto',
+            minWidth: 0,
           },
         },
         h('img', {
@@ -610,6 +645,19 @@ window.__ModuleLoader__.load({
             background: DOT_TOKEN[dot] || DOT_TOKEN.grey,
           },
         }),
+        expanded && arrows !== ''
+          ? h('span', {
+            key: 'arrows',
+            style: {
+              marginLeft: 'auto',
+              paddingLeft: '8px',
+              color: 'var(--dsw-alias-label-secondary)',
+              fontSize: '11px',
+              fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
+            },
+          }, arrows)
+          : null,
       )
     }
 
@@ -630,6 +678,7 @@ window.__ModuleLoader__.load({
         return t('dryRun') + ': ' + plan.action
       }
       if (result.ok === false) return t('refused') + ': ' + (result.code || 'error')
+      if (result.saved === true) return t('saved')
       if (result.installed === true) {
         return t('installed') + ' ' + (result.name || '') + (result.version ? ' v' + result.version : '')
           + (result.cloned === true ? ' · ' + t('cloned') : '')
@@ -706,6 +755,7 @@ window.__ModuleLoader__.load({
             'div',
             { style: styles.rowTop },
             h('span', { style: { ...styles.dot, background: DOT_TOKEN[row.dot] || DOT_TOKEN.grey } }),
+            row.icon ? h('img', { key: 'icon', src: row.icon, alt: '', width: 20, height: 20, style: styles.rowIcon }) : null,
             h('button', {
               style: styles.nameLink,
               onClick: (event) => {
@@ -1052,6 +1102,93 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /** The Settings navigation glyph: the same butterfly mark. */
+    function viburnumSettingsIcon(props) {
+      const size = typeof props.size === 'number' ? props.size : 16
+      return h('img', {
+        src: ICON_DATA,
+        alt: '',
+        width: size,
+        height: size,
+        style: { display: 'block', objectFit: 'contain' },
+      })
+    }
+
+    /** Settings → viburnum: the check schedule and harness compatibility. */
+    function viburnumSettings(props) {
+      const store = props.store
+      const t = props.locale.bind(NS)
+      const state = useStore(store)
+      const snapshot = state.snapshot || { rows: [], settings: {}, compat: {} }
+      const settings = snapshot.settings || {}
+      const compat = snapshot.compat || {}
+      const [minutes, setMinutes] = React.useState(String(settings.checkIntervalMinutes ?? 5))
+      const [startup, setStartup] = React.useState(settings.refreshOnStartup !== false)
+      const [warnings, setWarnings] = React.useState(settings.versionWarnings !== false)
+
+      React.useEffect(() => {
+        setMinutes(String(settings.checkIntervalMinutes ?? 5))
+        setStartup(settings.refreshOnStartup !== false)
+        setWarnings(settings.versionWarnings !== false)
+      }, [settings.checkIntervalMinutes, settings.refreshOnStartup, settings.versionWarnings])
+
+      const save = () => {
+        void store.saveSettings({
+          checkIntervalMinutes: Number.parseInt(minutes, 10),
+          refreshOnStartup: startup,
+          versionWarnings: warnings,
+        })
+      }
+      const notes = Array.isArray(compat.warnings) ? compat.warnings : []
+
+      return h(
+        'div',
+        { style: styles.settingsPage },
+        h('div', { style: styles.title }, t('settingsTitle')),
+        h('div', { style: styles.secondary }, t('settingsHint')),
+        h(
+          'div',
+          { style: styles.controls },
+          h('span', { style: styles.secondary }, t('refreshInterval')),
+          h('input', {
+            style: styles.input,
+            type: 'number',
+            min: 0,
+            max: 1440,
+            value: minutes,
+            onChange: (event) => setMinutes(event.target.value),
+          }),
+        ),
+        h(
+          'label',
+          { style: styles.controls },
+          h('input', { type: 'checkbox', checked: startup, onChange: (event) => setStartup(event.target.checked) }),
+          h('span', { style: styles.secondary }, t('refreshOnStartup')),
+        ),
+        h(
+          'label',
+          { style: styles.controls },
+          h('input', { type: 'checkbox', checked: warnings, onChange: (event) => setWarnings(event.target.checked) }),
+          h('span', { style: styles.secondary }, t('versionWarnings')),
+        ),
+        h(
+          'div',
+          { style: styles.controls },
+          h('button', { style: styles.button, disabled: state.busy !== null, onClick: save }, t('save')),
+          state.last ? h('span', { style: styles.secondary }, describeResult(state.last, t)) : null,
+        ),
+        h(
+          'div',
+          { style: styles.row },
+          h('div', { style: styles.rowTop }, h('span', { style: styles.secondary }, t('harnessCompat'))),
+          compat.runningDsh ? h('div', { style: styles.secondary }, t('runningHarness') + ': ' + compat.runningDsh) : null,
+          notes.length > 0
+            ? notes.map((warning, index) => h('div', { key: index, style: styles.error }, warning.message))
+            : h('div', { style: styles.secondary }, t('noVersionWarnings')),
+        ),
+      )
+    }
+
     return {
       inject: ['slots', 'locale'],
       apply(ctx) {
@@ -1086,6 +1223,23 @@ window.__ModuleLoader__.load({
             inject: () => ({ store, locale: ctx.locale }),
           },
           viburnumPage,
+        ))
+
+        ctx.slots.inject('settings.section', () => ctx.slots.register(
+          {
+            name: 'settings.section',
+            id: 'viburnum',
+            order: 6,
+            label: () => ctx.locale.bind(NS)('title'),
+            locale: NS,
+            inject: () => ({ store, locale: ctx.locale }),
+          },
+          viburnumSettings,
+        ))
+
+        ctx.slots.inject('settings.section.icon', () => ctx.slots.register(
+          { name: 'settings.section.icon', id: 'viburnum' },
+          viburnumSettingsIcon,
         ))
       },
     }

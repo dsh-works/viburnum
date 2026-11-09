@@ -117,27 +117,42 @@ export function apply(ctx, config) {
     )
   })
 
-  const minutes = core.config.checkIntervalMinutes
-  if (minutes > 0) {
-    // A check on start and on the configured interval. Checks never move code;
-    // every move stays a click, a tool call or a CLI command (D9).
+  // One effect owns the whole check schedule: a startup check when the saved
+  // setting allows it, then a one-minute tick that refreshes when the saved
+  // interval is due. Checks never move code; every move stays a click, a tool
+  // call or a CLI command (D9). Changing the settings takes effect here.
+  ctx.effect(() => {
+    let disposed = false
+    let lastCheck = 0
+
+    const runCheck = () => {
+      lastCheck = Date.now()
+      void core.refresh().catch((failure) => log.warn(`dsh-plugin-viburnum: check failed: ${failure.message}`))
+    }
+
     void ready.then((error) => {
+      if (disposed) return
       if (error) {
         reportLoadError(error)
         return
       }
-      void core.refresh().catch((failure) => log.warn(`dsh-plugin-viburnum: check failed: ${failure.message}`))
+      if (core.snapshot().settings.refreshOnStartup === true) runCheck()
     })
 
-    ctx.effect(() => {
-      const timer = setInterval(() => {
-        void core
-          .refresh()
-          .catch((failure) => log.warn(`dsh-plugin-viburnum: check failed: ${failure.message}`))
-      }, minutes * 60 * 1000)
-      return () => clearInterval(timer)
-    }, 'dsh-plugin-viburnum: check interval')
-  }
+    const timer = setInterval(() => {
+      if (disposed) return
+      const minutes = core.snapshot().settings.checkIntervalMinutes
+      if (!Number.isInteger(minutes) || minutes <= 0) return
+      if (Date.now() - lastCheck < minutes * 60 * 1000) return
+      runCheck()
+    }, 60_000)
+    timer.unref?.()
+
+    return () => {
+      disposed = true
+      clearInterval(timer)
+    }
+  }, 'dsh-plugin-viburnum: checks')
 
   log.info(
     `ready — ${core.config.checkIntervalMinutes > 0 ? `checking every ${core.config.checkIntervalMinutes} min` : 'checks on demand'}`,
