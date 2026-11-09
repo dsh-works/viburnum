@@ -4,6 +4,8 @@
 
 ### Added
 
+- The viburnum page header shows its own version, and every bundle row shows the linked plugin's
+  declared version next to its name; the detail already showed the target version.
 - The workbench detail view can hand a bundle's folder, README or CHANGELOG to the desktop through
   the harness's verified native path opener (`sessionController.openWorkspacePath`), with the same
   `missing-file` / `open-unavailable` refusals on the guarded page route.

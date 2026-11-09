@@ -19,10 +19,13 @@ import { makeWorld, run } from './fixtures.mjs'
 
 test('a clean checkout on its track is current', async (t) => {
   const world = await makeWorld(t)
-  const row = await checkBundle({ name: 'plugin-a', dir: world.work })
+  await world.commit(world.laptop, 'package.json', JSON.stringify({ name: 'dsh-plugin-laptop', version: '0.1.0' }), 'package')
+  await world.push(world.laptop)
+  const row = await checkBundle({ name: 'plugin-a', dir: world.laptop })
 
   assert.equal(row.status, STATUS.current)
   assert.equal(row.dot, 'green')
+  assert.equal(row.version, '0.1.0')
   assert.equal(row.ahead, 0)
   assert.equal(row.behind, 0)
   assert.equal(row.track, 'main')

@@ -37,6 +37,7 @@ test('the core hydrates cached rows from the state file', async (t) => {
   const checked = await core.refresh()
   assert.equal(checked.rows.length, 2)
   assert.equal(checked.dot, 'green')
+  assert.match(checked.version ?? '', /^\d+\.\d+\.\d+/u)
   assert.ok(typeof checked.checkedAt === 'string')
   assert.deepEqual(checked.rows.map((row) => row.status), ['current', 'current'])
 
