@@ -11,8 +11,10 @@
 
 import { mkdir } from 'node:fs/promises'
 import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { Config } from './lib/config.js'
+import { createCli } from './lib/cli.js'
 import { createCore } from './lib/core.js'
 import { fetchOwnerRepos, fetchRepoIcon, fetchRepoPreview } from './lib/catalog.js'
 import { readGitCredentials } from './lib/credentials.js'
@@ -41,6 +43,7 @@ export const inject = ['tools', 'systemPrompt', 'pluginManager']
  */
 export function apply(ctx, config) {
   const log = ctx.logger('dsh-plugin-viburnum')
+  const checkout = dirname(fileURLToPath(import.meta.url))
   const directoryService = ctx.get('workingDirectory')
   const workspaceDirectory = typeof directoryService?.defaultDirectory === 'string'
     ? directoryService.defaultDirectory
@@ -122,6 +125,7 @@ export function apply(ctx, config) {
       }
       await sessionController.openWorkspacePath({ path }, signal)
     }
+    const cli = createCli({ checkout, platform: process.platform, env: process.env })
     webCtx.effect(
       () => registerRoutes(webCtx.webServer, {
         core,
@@ -129,6 +133,7 @@ export function apply(ctx, config) {
         openPath,
         pickDirectory,
         openTerminal: (dir) => openTerminalAt(dir, { preferred: core.snapshot().settings.terminal }),
+        cli,
       }),
       'dsh-plugin-viburnum: routes',
     )
