@@ -10,7 +10,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { createCore } from '../lib/core.js'
-import { fetchOwnerRepos } from '../lib/catalog.js'
+import { fetchOwnerRepos, fetchRepoIcon, fetchRepoPreview } from '../lib/catalog.js'
 
 function jsonResponse(body, status = 200) {
   return {
@@ -18,6 +18,20 @@ function jsonResponse(body, status = 200) {
     status,
     async json() {
       return body
+    },
+  }
+}
+
+function rawResponse(body, status = 200) {
+  const bytes = Buffer.isBuffer(body) ? body : Buffer.from(String(body))
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    async text() {
+      return bytes.toString('utf8')
+    },
+    async arrayBuffer() {
+      return bytes
     },
   }
 }
@@ -60,6 +74,61 @@ test('a user owner falls back from /orgs to /users', async () => {
   assert.equal(repos[0].fullName, 'ivan/mine')
   assert.equal(calls.length, 2)
   assert.match(calls[1], /\/users\/ivan\/repos/u)
+})
+
+test('catalog pages are followed until a short page', async () => {
+  const calls = []
+  const fullPage = Array.from({ length: 100 }, (_, index) => ({
+    name: 'repo-' + index,
+    full_name: 'dsh-works/repo-' + index,
+    description: null,
+    default_branch: 'main',
+    archived: false,
+    private: index === 0,
+  }))
+  const fetchImpl = async (url) => {
+    calls.push(url)
+    return jsonResponse(url.includes('page=2') ? [{ name: 'last', full_name: 'dsh-works/last', default_branch: 'main' }] : fullPage)
+  }
+
+  const repos = await fetchOwnerRepos('dsh-works', { fetchImpl })
+  assert.equal(repos.length, 101)
+  assert.equal(repos[0].private, true)
+  assert.equal(calls.length, 2)
+  assert.match(calls[1], /page=2/u)
+})
+
+test('icons and previews are read without cloning the repository', async () => {
+  const calls = []
+  const fetchImpl = async (url, options) => {
+    calls.push({ url, accept: options.headers.accept })
+    if (url.endsWith('/contents/package.json')) {
+      return rawResponse(JSON.stringify({
+        name: 'dsh-plugin-x',
+        version: '1.2.3',
+        description: 'an x plugin',
+        icon: './icon.svg',
+        engines: { dsh: '^0.2.1-rc.2' },
+      }))
+    }
+    if (url.endsWith('/contents/icon.svg')) return rawResponse('<svg xmlns="http://www.w3.org/2000/svg"/>')
+    if (url.endsWith('/readme')) return rawResponse('# dsh-plugin-x\n\nHello.')
+    return rawResponse('not found', 404)
+  }
+
+  const icon = await fetchRepoIcon('dsh-works', 'dsh-plugin-x', { fetchImpl, token: 'sekret' })
+  assert.equal(icon.ok, true)
+  assert.match(icon.icon, /^data:image\/svg\+xml;base64,/u)
+  assert.match(calls[0].accept, /raw/u)
+  assert.ok(calls.every((call) => call.url.includes('/repos/dsh-works/dsh-plugin-x/')))
+
+  const preview = await fetchRepoPreview('dsh-works', 'dsh-plugin-x', { fetchImpl })
+  assert.equal(preview.ok, true)
+  assert.equal(preview.name, 'dsh-plugin-x')
+  assert.equal(preview.version, '1.2.3')
+  assert.equal(preview.enginesDsh, '^0.2.1-rc.2')
+  assert.match(preview.readme, /Hello/u)
+  assert.equal(preview.truncated, false)
 })
 
 test('catalog failures carry readable codes', async () => {

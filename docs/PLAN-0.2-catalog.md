@@ -16,11 +16,14 @@ be refreshed by hand; a failing owner is reported in place and never hides the o
 
 - **Host:** `core.catalog({ refresh, owners })` over an injected `catalogFetcher`; the index supplies
   `fetchOwnerRepos(owner)` from `lib/catalog.js`, which asks `GET /orgs/<owner>/repos`, falls back to
-  `/users/<owner>/repos` for personal owners, and sends `Authorization: Bearer $GITHUB_TOKEN` (or
-  `$GH_TOKEN`) when present. New route action `catalog` on the guarded action pair.
-- **Browser:** the install form gains `Organisation`; it shows an owner picker, a repository picker
-  (archived repositories marked), a `Refresh catalog` button, and installs the picked `owner/repo`
-  through the repository door.
+  `/users/<owner>/repos` for personal owners, follows pages up to 500 repositories, and sends
+  `Authorization: Bearer` with `$GITHUB_TOKEN`/`$GH_TOKEN` or, when neither is set, the token git's own
+  credential helper returns for `github.com` (read in memory only, never stored or logged). New route
+  action `catalog` on the guarded action pair.
+- **Browser:** the install form gains `Organisation`; it shows an owner picker, a `Refresh catalog`
+  button, a filter box and a scrollable repository list (name, description, `private`/`archived`
+  badges) instead of a dropdown; picking a row and pressing Install installs its `owner/repo` through
+  the repository door.
 - Cache is in-memory per Host process: 10 minutes for success, 1 minute for a failure.
 
 ## Non-goals for this delta

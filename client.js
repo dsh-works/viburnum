@@ -61,11 +61,20 @@ window.__ModuleLoader__.load({
         organisation: 'Organisation',
         refreshCatalog: 'Refresh catalog',
         catalogEmpty: 'No repositories to show.',
+        catalogSearch: 'Filter repositories…',
+        catalogNoMatch: 'No repository matches this filter.',
+        repositories: 'repositories',
+        privateRepo: 'private',
+        preview: 'Preview',
+        catalogOwners: 'Organisations',
+        catalogOwnersHint: 'Comma-separated GitHub owner names the organisation door reads.',
+        defaultOrg: 'Default organisation',
+        noDefaultOrg: 'none',
         directoryPlaceholder: 'C:\\path\\to\\plugin',
         repositoryPlaceholder: 'owner/repo or https://github.com/owner/repo',
         installDirectoryHint: 'Link a checkout that already exists where it is.',
         installRepositoryHint: 'Clone into the shelf and link the fresh checkout.',
-        installOrganisationHint: 'Pick a repository of a configured owner; it clones into the shelf like the repository door.',
+        installOrganisationHint: 'Pick a repository of a configured owner; it clones into the shelf like the repository door. Private repositories appear when git has GitHub credentials stored on this machine.',
         hygiene: 'Hygiene',
         timeline: 'timeline',
         noHygieneFindings: 'No hygiene problems found.',
@@ -408,7 +417,20 @@ window.__ModuleLoader__.load({
 
     /** One client-local store: the status snapshot, the busy state and the last result. */
     function createStore() {
-      let state = { snapshot: null, phase: 'loading', error: null, busy: null, last: null, detail: null, doc: null, catalog: null, timeline: null, hygiene: null }
+      let state = {
+        snapshot: null,
+        phase: 'loading',
+        error: null,
+        busy: null,
+        last: null,
+        detail: null,
+        doc: null,
+        catalog: null,
+        catalogIcons: {},
+        catalogPreview: null,
+        timeline: null,
+        hygiene: null,
+      }
       const listeners = new Set()
 
       const emit = () => {
@@ -526,6 +548,55 @@ window.__ModuleLoader__.load({
           } catch (error) {
             set({ hygiene: { phase: 'error', findings: [], checkouts: [], roots: [], error: error.message } })
           }
+        },
+        async loadCatalogIcon(owner, repo) {
+          const key = owner + '/' + repo
+          const existing = state.catalogIcons[key]
+          if (existing !== undefined && (existing.phase === 'loading' || existing.phase === 'ready')) return
+          set({ catalogIcons: { ...state.catalogIcons, [key]: { phase: 'loading', icon: null, error: null } } })
+          try {
+            const data = await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'catalog-icon', owner, repo }),
+            })
+            set({
+              catalogIcons: {
+                ...state.catalogIcons,
+                [key]: {
+                  phase: 'ready',
+                  icon: data.ok === false ? null : data.icon,
+                  error: data.ok === false ? data.message : null,
+                },
+              },
+            })
+          } catch (error) {
+            set({
+              catalogIcons: { ...state.catalogIcons, [key]: { phase: 'error', icon: null, error: error.message } },
+            })
+          }
+        },
+        async openCatalogPreview(owner, repo) {
+          set({ catalogPreview: { phase: 'loading', owner, repo, data: null, error: null } })
+          try {
+            const data = await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'catalog-preview', owner, repo }),
+            })
+            set({
+              catalogPreview: {
+                phase: 'ready',
+                owner,
+                repo,
+                data: data.ok === false ? null : data,
+                error: data.ok === false ? data.message : null,
+              },
+            })
+          } catch (error) {
+            set({ catalogPreview: { phase: 'error', owner, repo, data: null, error: error.message } })
+          }
+        },
+        closeCatalogPreview() {
+          set({ catalogPreview: null })
         },
         async loadCatalog(refresh = false) {
           set({ catalog: { phase: 'loading', owners: [], error: null } })
@@ -699,6 +770,92 @@ window.__ModuleLoader__.load({
       return ''
     }
 
+    /** One repository card in the organisation catalog. */
+    function CatalogRow(props) {
+      const entry = props.entry
+      const owner = entry.fullName.split('/')[0]
+      React.useEffect(() => {
+        if (props.icon === undefined) void props.store.loadCatalogIcon(owner, entry.name)
+      }, [owner, entry.name, props.icon, props.store])
+
+      const selected = props.selected === true
+      return h(
+        'div',
+        {
+          role: 'button',
+          tabIndex: 0,
+          style: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            width: '100%',
+            padding: '4px 6px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            textAlign: 'left',
+            background: selected ? 'var(--dsw-alias-interactive-bg-hover)' : 'transparent',
+            border: '1px solid ' + (selected ? 'var(--dsw-alias-border-l2)' : 'transparent'),
+          },
+          onClick: () => props.onSelect(entry.fullName),
+          onKeyDown: (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              props.onSelect(entry.fullName)
+            }
+          },
+        },
+        props.icon
+          ? h('img', {
+            src: props.icon,
+            alt: '',
+            width: 22,
+            height: 22,
+            style: { width: '22px', height: '22px', objectFit: 'contain', flex: '0 0 auto', borderRadius: '4px' },
+          })
+          : h('span', {
+            style: {
+              width: '22px',
+              height: '22px',
+              flex: '0 0 auto',
+              borderRadius: '4px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--dsw-alias-bg-layer-2)',
+              color: 'var(--dsw-alias-label-secondary)',
+              fontSize: '12px',
+            },
+          }, (entry.name[0] || '?').toUpperCase()),
+        h(
+          'span',
+          { style: { display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0, flex: '1 1 auto' } },
+          h(
+            'span',
+            { style: { color: 'var(--dsw-alias-label-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } },
+            entry.name
+              + (entry.private === true ? ' · private' : '')
+              + (entry.archived === true ? ' · archived' : ''),
+          ),
+          entry.description
+            ? h(
+              'span',
+              { style: { color: 'var(--dsw-alias-label-secondary)', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } },
+              entry.description,
+            )
+            : null,
+        ),
+        h('button', {
+          type: 'button',
+          style: { ...styles.button, flex: '0 0 auto' },
+          disabled: props.disabled === true,
+          onClick: (event) => {
+            event.stopPropagation()
+            props.onPreview(owner, entry.name)
+          },
+        }, props.previewLabel),
+      )
+    }
+
     /** The full main-area page. */
     function viburnumPage(props) {
       const store = props.store
@@ -720,20 +877,39 @@ window.__ModuleLoader__.load({
       const [installOpen, setInstallOpen] = React.useState(false)
       const [installDoor, setInstallDoor] = React.useState('directory')
       const [installSpec, setInstallSpec] = React.useState('')
-      const catalogOwners = Array.isArray(snapshot.config?.catalogOwners) ? snapshot.config.catalogOwners : []
+      const catalogOwners = Array.isArray(snapshot.settings?.catalogOwners)
+        ? snapshot.settings.catalogOwners
+        : (Array.isArray(snapshot.config?.catalogOwners) ? snapshot.config.catalogOwners : [])
+      const catalogDefaultOwner = typeof snapshot.settings?.defaultOwner === 'string' ? snapshot.settings.defaultOwner : ''
       const [catalogOwner, setCatalogOwner] = React.useState('')
       const [catalogRepo, setCatalogRepo] = React.useState('')
+      const [catalogSearch, setCatalogSearch] = React.useState('')
       const catalog = state.catalog
+      const catalogIcons = state.catalogIcons
+      const catalogPreview = state.catalogPreview
       const ownerEntry = catalog !== null && Array.isArray(catalog.owners)
         ? (catalog.owners.find((entry) => entry.owner === (catalogOwner || catalogOwners[0])) ?? null)
         : null
       const catalogRepos = ownerEntry !== null && Array.isArray(ownerEntry.repos) ? ownerEntry.repos : []
+      const catalogQuery = catalogSearch.trim().toLowerCase()
+      const catalogFiltered = catalogQuery === ''
+        ? catalogRepos
+        : catalogRepos.filter((entry) => entry.name.toLowerCase().includes(catalogQuery)
+          || entry.fullName.toLowerCase().includes(catalogQuery)
+          || (entry.description ?? '').toLowerCase().includes(catalogQuery))
       React.useEffect(() => {
-        if (catalogOwner === '' && catalogOwners.length > 0) setCatalogOwner(catalogOwners[0])
-      }, [catalogOwners, catalogOwner])
+        if (catalogOwner === '' && catalogOwners.length > 0) {
+          setCatalogOwner(catalogDefaultOwner !== '' ? catalogDefaultOwner : catalogOwners[0])
+        }
+      }, [catalogOwners, catalogDefaultOwner, catalogOwner])
       React.useEffect(() => {
         if (installOpen && installDoor === 'organisation' && catalog === null) void store.loadCatalog(false)
       }, [installOpen, installDoor, catalog])
+      React.useEffect(() => {
+        if (catalogRepo !== '' && !catalogRepos.some((entry) => entry.fullName === catalogRepo)) {
+          setCatalogRepo('')
+        }
+      }, [catalogRepos, catalogRepo])
 
       const run = (action, payload) => {
         void store.act(action, payload)
@@ -1028,6 +1204,7 @@ window.__ModuleLoader__.load({
                       onChange: (event) => {
                         setCatalogOwner(event.target.value)
                         setCatalogRepo('')
+                        setCatalogSearch('')
                       },
                     },
                     catalogOwners.map((owner) => h('option', { key: owner, value: owner }, owner)),
@@ -1038,23 +1215,14 @@ window.__ModuleLoader__.load({
                     disabled: busy || catalog?.phase === 'loading',
                     onClick: () => void store.loadCatalog(true),
                   }, t('refreshCatalog')),
-                  h(
-                    'select',
-                    {
-                      key: 'repo',
-                      style: styles.select,
-                      value: catalogRepo,
-                      disabled: busy || catalogRepos.length === 0,
-                      onChange: (event) => setCatalogRepo(event.target.value),
-                    },
-                    catalogRepos.length === 0
-                      ? h('option', { value: '' }, catalog?.phase === 'loading' ? t('loading') : t('catalogEmpty'))
-                      : catalogRepos.map((entry) => h(
-                        'option',
-                        { key: entry.fullName, value: entry.fullName },
-                        entry.archived ? entry.name + ' · archived' : entry.name,
-                      )),
-                  ),
+                  h('input', {
+                    key: 'catalog-search',
+                    style: { ...styles.input, flex: '1 1 220px', minWidth: '160px' },
+                    value: catalogSearch,
+                    disabled: busy || catalogRepos.length === 0,
+                    placeholder: t('catalogSearch'),
+                    onChange: (event) => setCatalogSearch(event.target.value),
+                  }),
                   h('button', {
                     key: 'install-organisation',
                     style: styles.button,
@@ -1093,6 +1261,77 @@ window.__ModuleLoader__.load({
                   }, t('install')),
                 ],
             ),
+            installDoor === 'organisation'
+              ? h(
+                'div',
+                { style: { display: 'flex', flexDirection: 'column', gap: '4px', margin: '6px 0' } },
+                h(
+                  'div',
+                  { style: styles.secondary },
+                  catalogRepos.length + ' ' + t('repositories') + (catalogRepo !== '' ? ' · ' + catalogRepo : ''),
+                ),
+                h(
+                  'div',
+                  { style: { maxHeight: '260px', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' } },
+                  catalogFiltered.length === 0
+                    ? h(
+                      'div',
+                      { style: styles.secondary },
+                      catalog?.phase === 'loading'
+                        ? t('loading')
+                        : (catalogRepos.length === 0 ? t('catalogEmpty') : t('catalogNoMatch')),
+                    )
+                    : catalogFiltered.map((entry) => h(CatalogRow, {
+                      key: entry.fullName,
+                      entry,
+                      selected: entry.fullName === catalogRepo,
+                      icon: catalogIcons[entry.fullName]?.icon,
+                      disabled: busy,
+                      previewLabel: t('preview'),
+                      store,
+                      onSelect: (fullName) => setCatalogRepo(fullName),
+                      onPreview: (owner, repo) => void store.openCatalogPreview(owner, repo),
+                    })),
+                ),
+                catalogPreview !== null
+                  ? h(
+                    'div',
+                    { style: styles.row },
+                    h(
+                      'div',
+                      { style: styles.rowTop },
+                      h('span', { style: styles.secondary }, catalogPreview.owner + '/' + catalogPreview.repo),
+                      h('span', { style: styles.spacer }),
+                      h('button', { style: styles.button, onClick: () => store.closeCatalogPreview() }, t('close')),
+                    ),
+                    catalogPreview.phase === 'loading' ? h('div', { style: styles.empty }, t('loading')) : null,
+                    catalogPreview.error ? h('div', { style: styles.error }, catalogPreview.error) : null,
+                    catalogPreview.data
+                      ? h(
+                        'div',
+                        { style: styles.secondary },
+                        [
+                          catalogPreview.data.name,
+                          catalogPreview.data.version ? 'v' + catalogPreview.data.version : null,
+                          catalogPreview.data.enginesDsh ? 'engines.dsh ' + catalogPreview.data.enginesDsh : null,
+                        ].filter(Boolean).join(' · ')
+                          + (catalogPreview.data.description ? ' — ' + catalogPreview.data.description : ''),
+                      )
+                      : null,
+                    catalogPreview.data && catalogPreview.data.readme
+                      ? h(
+                        'div',
+                        { style: styles.documentScroll },
+                        h('div', { style: styles.markdown }, renderMarkdown(catalogPreview.data.readme)),
+                      )
+                      : null,
+                    catalogPreview.data && catalogPreview.data.truncated
+                      ? h('div', { style: styles.secondary }, t('truncated'))
+                      : null,
+                  )
+                  : null,
+              )
+              : null,
             h(
               'div',
               { style: styles.secondary },
@@ -1130,13 +1369,22 @@ window.__ModuleLoader__.load({
       const [startup, setStartup] = React.useState(settings.refreshOnStartup !== false)
       const [warnings, setWarnings] = React.useState(settings.versionWarnings !== false)
       const [shelf, setShelf] = React.useState(typeof settings.pluginsDir === 'string' ? settings.pluginsDir : '')
+      const [ownersText, setOwnersText] = React.useState(
+        Array.isArray(settings.catalogOwners) ? settings.catalogOwners.join(', ') : '',
+      )
+      const [defaultOwner, setDefaultOwner] = React.useState(
+        typeof settings.defaultOwner === 'string' ? settings.defaultOwner : '',
+      )
+      const ownerChoices = ownersText.split(',').map((owner) => owner.trim()).filter(Boolean)
 
       React.useEffect(() => {
         setMinutes(String(settings.checkIntervalMinutes ?? 5))
         setStartup(settings.refreshOnStartup !== false)
         setWarnings(settings.versionWarnings !== false)
         setShelf(typeof settings.pluginsDir === 'string' ? settings.pluginsDir : '')
-      }, [settings.checkIntervalMinutes, settings.refreshOnStartup, settings.versionWarnings, settings.pluginsDir])
+        setOwnersText(Array.isArray(settings.catalogOwners) ? settings.catalogOwners.join(', ') : '')
+        setDefaultOwner(typeof settings.defaultOwner === 'string' ? settings.defaultOwner : '')
+      }, [settings.checkIntervalMinutes, settings.refreshOnStartup, settings.versionWarnings, settings.pluginsDir, settings.catalogOwners, settings.defaultOwner])
 
       const save = () => {
         void store.saveSettings({
@@ -1144,6 +1392,8 @@ window.__ModuleLoader__.load({
           refreshOnStartup: startup,
           versionWarnings: warnings,
           pluginsDir: shelf.trim(),
+          catalogOwners: ownerChoices,
+          defaultOwner: defaultOwner.trim(),
         })
       }
       const notes = Array.isArray(compat.warnings) ? compat.warnings : []
@@ -1200,6 +1450,27 @@ window.__ModuleLoader__.load({
           h('button', { style: styles.button, onClick: () => setShelf('') }, t('useDefault')),
         ),
         h('div', { style: styles.secondary }, t('shelfDirHint') + ' ' + (snapshot.shelfDirectory || '')),
+        h(
+          'label',
+          { style: styles.controls },
+          h('span', { style: styles.secondary }, t('catalogOwners')),
+          h('input', {
+            style: styles.input,
+            value: ownersText,
+            onChange: (event) => setOwnersText(event.target.value),
+          }),
+          h(
+            'select',
+            {
+              style: styles.select,
+              value: defaultOwner,
+              onChange: (event) => setDefaultOwner(event.target.value),
+            },
+            h('option', { value: '' }, t('defaultOrg') + ': ' + t('noDefaultOrg')),
+            ownerChoices.map((owner) => h('option', { key: owner, value: owner }, owner)),
+          ),
+        ),
+        h('div', { style: styles.secondary }, t('catalogOwnersHint')),
         h(
           'div',
           { style: styles.controls },

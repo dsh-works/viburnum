@@ -60,7 +60,9 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
   Markdown, target/current versions, the reload class, README and CHANGELOG inline, the folder opened
   in the desktop, and `Update` / `Sync` / `Revert` / track switch that re-fetch the detail after a move.
 - **Install doors**: **Directory** (with the Host's native folder picker), **Repository URL**, and
-  **Organisation** (a cached list of the configured GitHub owners' repositories). Every install goes
+  **Organisation** (a cached, paginated, searchable list of the configured GitHub owners'
+  repositories — private ones included when git has GitHub credentials stored on the machine — with
+  icons, descriptions and an in-place README **Preview** before installing). Every install goes
   through `pluginManager.installBundle`; new clones land in the shelf (`pluginsDir`), while checkouts
   the profile already links are never moved.
 - **Moves**: `Update` is a fetch and a fast-forward. `Sync` pushes unpublished commits, fast-forwards,
@@ -71,8 +73,8 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
 - **Hygiene scan**: duplicate checkouts, local branches never merged into `main`, and dirty trees,
   each with a suggestion. It reports; it never deletes, moves or checks anything out. `vib hygiene`.
 - **Settings → viburnum**: refresh interval, refresh on startup, the checkout directory
-  (**Browse…** / **Use default**), and harness-drift warnings. Saved in the profile state and applied
-  without a reload.
+  (**Browse…** / **Use default**), the organisation list and its default organisation, and
+  harness-drift warnings. Saved in the profile state and applied without a reload.
 - **Harness-drift tracking**: a warning when the running DSH version changes between runs, and one for
   every plugin whose `engines.dsh` range rejects the running harness.
 - **Five model-facing tools**: `vib_status`, `vib_update`, `vib_sync`, `vib_switch`, `vib_revert`.
