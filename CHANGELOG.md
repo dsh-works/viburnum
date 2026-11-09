@@ -19,6 +19,10 @@
 - **`vib_brief`** — a read-only sixth tool (and `vib brief` CLI command): the aggregate dot, every
   bundle's state, harness-drift warnings, and what changed since the previous brief (the timeline feed,
   marked read), so a session starts informed.
+- A **Command line** card in Settings → viburnum (with a one-time notice while the command is
+  missing): reports whether the user's own shell finds `vib`, installs the command with `npm link` in
+  this checkout after an explicit in-page confirmation, removes our own link again, and shows the
+  copyable PATH line or the direct `node bin/vib.js` command when the shell cannot see it.
 
 ### Fixed
 

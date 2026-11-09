@@ -81,6 +81,11 @@ test('settings save, validate and appear in the snapshot', async (t) => {
   assert.equal((await core.setSettings({ terminal: 'auto' })).settings.terminal, 'auto')
   await assert.rejects(core.setSettings({ terminal: 'not-a-terminal' }), (error) => error.code === 'invalid-settings')
 
+  // The CLI notice dismissal is a saved boolean setting.
+  assert.equal(core.snapshot().settings.cliNoticeHidden, false)
+  assert.equal((await core.setSettings({ cliNoticeHidden: true })).settings.cliNoticeHidden, true)
+  await assert.rejects(core.setSettings({ cliNoticeHidden: 'yes' }), (error) => error.code === 'invalid-settings')
+
   await core.setSettings({ refreshOnStartup: true })
   assert.equal(core.snapshot().settings.refreshOnStartup, true)
   assert.equal(core.snapshot().settings.checkIntervalMinutes, 15)

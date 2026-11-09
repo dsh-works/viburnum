@@ -26,7 +26,16 @@ decisions live in [`DESIGN.md`](DESIGN.md); the approved build plan and its acce
 - `vib new`, the CLI spelling of the install doors (`vib install`), `vib log`, `vib hygiene`.
 - A Settings → viburnum page (refresh schedule, startup refresh, checkout directory, version warnings)
   and harness-drift tracking against `engines.dsh`.
-- Organisation repository creation (`vib new --push`) and `vib_brief` move to 0.3.
+## 0.3.0 — terminal, conflicts and adoption follow-through
+
+- Conflict exits: a stopping rebase offers Agree / Guide / Myself, and
+  `vib sync --agree|--continue|--abort <bundle>`.
+- `vib_brief`: a read-only sixth tool and `vib brief` command with the session-start feed.
+- Terminal opener from the workbench and a per-machine terminal application setting.
+- `vib new --push --org <owner>` repository creation (private by default).
+- A **Command line** card in Settings (plus a one-time notice): whether the user's own shell finds
+  `vib`, `npm link` installation and removal of our own link, and the copyable PATH line when the
+  shim folder is not on PATH.
 
 ## Not planned
 

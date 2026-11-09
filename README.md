@@ -78,15 +78,20 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
 - **Settings → viburnum**: refresh interval, refresh on startup, the checkout directory
   (**Browse…** / **Use default**), the organisation list and its default organisation, the
   **terminal application** (Windows Terminal / PowerShell / iTerm2 / Terminal.app / x-terminal / GNOME
-  / xterm, or automatic), and harness-drift warnings. Saved in the profile state and applied without a
-  reload.
+  / xterm, or automatic), a **Command line** card that reports whether the user's own shell finds
+  `vib`, installs or removes our `npm link` after an in-page confirmation, and copies the PATH line or
+  the direct `node bin/vib.js` command when the shell cannot see it, and harness-drift warnings. Saved
+  in the profile state and applied without a reload.
 - **Harness-drift tracking**: a warning when the running DSH version changes between runs, and one for
   every plugin whose `engines.dsh` range rejects the running harness.
 - **Six model-facing tools**: `vib_status`, `vib_brief`, `vib_update`, `vib_sync`, `vib_switch`,
   `vib_revert`. Reads are free; every move asks for approval.
 - **A CLI**: `vib status | refresh | update | sync | switch | revert | log | hygiene | brief | install | new`,
   plus `--json`, `--dry-run`, `vib sync --agree|--continue|--abort` and
-  `vib new --push --org <owner>` (creates the GitHub repository and pushes the first commit).
+  `vib new --push --org <owner>` (creates the GitHub repository and pushes the first commit). The page
+  can put it on your PATH: **Settings → viburnum → Command line** reports where it resolves, runs the
+  `npm link` install/remove after an in-page confirmation, and copies the fallback PATH line; a
+  one-time notice points there while the command is missing.
 - **State with the profile**: tracks, cached rows, receipts, snapshots, the timeline, the settings and
   the last seen harness version at `$DSH_HOME/profiles/<profile>/.viburnum/state.json`, written
   atomically and pruned on write.
@@ -194,6 +199,15 @@ The macOS path was made verifiable while 0.3.0 was in flight:
 
 Not run: the live Terminal action (it needs a profile reload) and the live page after the change.
 
+### CLI on PATH (2026-11-09, `dev`)
+
+- `npm run check` — 161 tests, 0 failures; the 11 new CLI-path tests cover detection, shim
+  ownership, install/remove and the Windows command shapes.
+- Live detection on this Mac (read-only): `state: "missing"`, `npm: true`, shell `/bin/zsh`, bin dir
+  `/Users/vanish/.nvm/versions/node/v24.21.0/bin`, and the direct command reported; nothing installed.
+- Not run yet: the Settings card, the one-time notice, a real `npm link` install and `command -v vib`
+  in zsh/bash/sh — they need the profile reload that activates this code.
+
 ### 0.1.0 verification (2026-11-06)
 
 Verified live in the `web` profile:
@@ -216,6 +230,10 @@ machine.
 ## Limits
 
 - viburnum never commits and never force-pushes.
+- Installing the `vib` command runs `npm link` in this checkout after an in-page confirmation; it
+  writes only into npm's global bin, and the link belongs to the active Node version (after an nvm
+  version switch, install again). Page buttons do not use the harness approval service — that service
+  is turn-bound, so a browser click cannot route a decision through it.
 - The desktop actions are OS-native: the terminal comes from the platform's candidate list (Windows
   Terminal/PowerShell, iTerm2/Terminal.app, x-terminal/gnome-terminal/xterm), **Browse** needs
   `zenity` or `kdialog` on Linux, and macOS may ask for Automation permission the first time a
