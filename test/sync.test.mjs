@@ -3,12 +3,17 @@
  */
 
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { makeWorld, run } from './fixtures.mjs'
 import {
   FAILURE,
+  abortConflict,
+  agreeConflict,
+  continueConflict,
+  isAppendOnly,
   revertBundle,
   syncAll,
   syncBundle,
@@ -137,7 +142,7 @@ test('sync refuses divergence whose local commits are already published', async 
   assert.equal(result.theirs.length, 1)
 })
 
-test('sync aborts a conflicting rebase before reporting it', async (t) => {
+test('sync leaves a conflicting rebase stopped with three exits', async (t) => {
   const world = await makeWorld(t)
   const base = '# fixture\n\nline one\nline two\n'
 
@@ -149,9 +154,82 @@ test('sync aborts a conflicting rebase before reporting it', async (t) => {
   assert.equal(result.ok, false)
   assert.equal(result.code, FAILURE.conflict)
   assert.deepEqual(result.files, ['README.md'])
-  assert.equal(result.aborted, true)
+  assert.equal(result.bundle, 'plugin-a')
+  assert.equal(result.exits.guide.available, true)
+  assert.equal(result.exits.myself.available, true)
+  assert.equal(result.exits.agree.available, false)
+  assert.match(result.exits.agree.reason, /README\.md/u)
+  assert.equal(await rebaseInProgress(world.work), true)
+
+  const aborted = await abortConflict({ name: 'plugin-a', dir: world.work, track: 'main' })
+  assert.equal(aborted.ok, true)
+  assert.equal(aborted.receipt.result, 'aborted')
   assert.equal(await rebaseInProgress(world.work), false)
   assert.deepEqual(await counts(world.work, 'origin/main'), { behind: 1, ahead: 1 })
+})
+
+test('Agree refuses a conflict outside the append-only allowlist', async (t) => {
+  const world = await makeWorld(t)
+  const base = '# fixture\n\nline one\nline two\n'
+
+  await world.commit(world.laptop, 'README.md', base.replace('line two', 'from laptop'), 'laptop edit')
+  await world.push(world.laptop)
+  await world.commit(world.work, 'README.md', base.replace('line two', 'from work'), 'work edit')
+
+  await syncBundle({ name: 'plugin-a', dir: world.work, track: 'main' })
+  const refused = await agreeConflict({ name: 'plugin-a', dir: world.work, track: 'main' })
+  assert.equal(refused.ok, false)
+  assert.equal(refused.code, FAILURE.agreeUnavailable)
+  assert.match(refused.message, /README\.md/u)
+  await abortConflict({ name: 'plugin-a', dir: world.work, track: 'main' })
+})
+
+test('Agree union-merges CHANGELOG conflicts, continues the rebase and pushes', async (t) => {
+  const world = await makeWorld(t)
+  const base = '# Changelog\n\n## 0.1.0\n\n- base change\n'
+
+  await world.commit(world.laptop, 'CHANGELOG.md', base, 'base changelog')
+  await world.push(world.laptop)
+  await run(world.work, ['pull', '--ff-only'])
+
+  await world.commit(world.laptop, 'CHANGELOG.md', base + '- laptop change\n', 'laptop changelog')
+  await world.push(world.laptop)
+  await world.commit(world.work, 'CHANGELOG.md', base + '- work change\n', 'work changelog')
+  assert.equal(isAppendOnly('docs/CHANGELOG.md'), true)
+  assert.equal(isAppendOnly('README.md'), false)
+
+  const conflict = await syncBundle({ name: 'plugin-a', dir: world.work, track: 'main' })
+  assert.equal(conflict.code, FAILURE.conflict)
+  assert.equal(conflict.exits.agree.available, true)
+
+  const agreed = await agreeConflict({ name: 'plugin-a', dir: world.work, track: 'main' })
+  assert.equal(agreed.ok, true)
+  assert.equal(agreed.receipt.kind, 'sync')
+  assert.equal(await rebaseInProgress(world.work), false)
+  assert.deepEqual(await counts(world.work, 'origin/main'), { behind: 0, ahead: 0 })
+
+  const text = await readFile(join(world.work, 'CHANGELOG.md'), 'utf8')
+  assert.match(text, /- laptop change/u)
+  assert.match(text, /- work change/u)
+  assert.equal(await run(world.origin, ['rev-parse', 'main']), await world.head(world.work))
+})
+
+test('Retry continues a rebase after a manual resolution', async (t) => {
+  const world = await makeWorld(t)
+  const base = '# fixture\n\nline one\nline two\n'
+
+  await world.commit(world.laptop, 'README.md', base.replace('line two', 'from laptop'), 'laptop edit')
+  await world.push(world.laptop)
+  await world.commit(world.work, 'README.md', base.replace('line two', 'from work'), 'work edit')
+
+  await syncBundle({ name: 'plugin-a', dir: world.work, track: 'main' })
+  await world.write(world.work, 'README.md', '# fixture\n\nresolved by hand\n')
+  await run(world.work, ['add', 'README.md'])
+
+  const continued = await continueConflict({ name: 'plugin-a', dir: world.work, track: 'main' })
+  assert.equal(continued.ok, true)
+  assert.equal(await rebaseInProgress(world.work), false)
+  assert.deepEqual(await counts(world.work, 'origin/main'), { behind: 0, ahead: 0 })
 })
 
 test('sync gates dirty trees before touching anything', async (t) => {

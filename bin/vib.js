@@ -27,6 +27,9 @@ Usage:
   vib refresh [--json]                fetch and re-check every mounted bundle
   vib update [<bundle>] [--json]      fast-forward one bundle, or all of them
   vib sync [<bundle>] [--dry-run]     push, pull or rebase; --json for machines
+  vib sync --agree|--continue|--abort <bundle>
+                                       take one conflict exit on a stopped rebase
+  vib brief [--json]                  session-start brief: status plus what changed
   vib switch <bundle> <track>         switch one bundle to another branch
   vib revert <bundle>                 restore the latest update or switch snapshot
   vib log [--json]                    show (and clear) what changed since the last look
@@ -48,7 +51,18 @@ Exit: 0 success, 1 failure, 3 pending (behind or ahead).`
 
 /** Parse command-line arguments into flags and positionals. */
 function parse(argv) {
-  const flags = { json: false, dryRun: false, help: false, profile: undefined, host: undefined, dir: undefined, git: false }
+  const flags = {
+    json: false,
+    dryRun: false,
+    help: false,
+    profile: undefined,
+    host: undefined,
+    dir: undefined,
+    git: false,
+    agree: false,
+    continue: false,
+    abort: false,
+  }
   const positional = []
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -56,6 +70,9 @@ function parse(argv) {
     if (argument === '--json') flags.json = true
     else if (argument === '--dry-run') flags.dryRun = true
     else if (argument === '--git') flags.git = true
+    else if (argument === '--agree') flags.agree = true
+    else if (argument === '--continue') flags.continue = true
+    else if (argument === '--abort') flags.abort = true
     else if (argument === '-h' || argument === '--help') flags.help = true
     else if (argument === '--profile') {
       flags.profile = argv[index + 1]
@@ -159,6 +176,10 @@ function printResult(kind, result) {
   if (result?.ok === false) {
     console.error(`${kind} failed: ${result.code} — ${result.message}`)
     if (result.files?.length) console.error(`conflicted: ${result.files.join(', ')}`)
+    if (result.code === 'conflict' && result.exits) {
+      const agree = result.exits.agree?.available === true ? 'available' : `unavailable${result.exits.agree?.reason ? ` (${result.exits.agree.reason})` : ''}`
+      console.error(`exits: agree ${agree}; guide; myself — run \`vib sync --agree|--continue|--abort ${result.bundle ?? '<bundle>'}\``)
+    }
     if (result.published?.length) console.error(`published: ${result.published.map((entry) => entry.sha).join(', ')}`)
     return
   }
@@ -256,10 +277,35 @@ async function main(argv) {
         return result.ok ? 0 : 1
       }
       case 'sync': {
+        if (flags.agree || flags.continue || flags.abort) {
+          const [name] = rest
+          if (name === undefined) throw new Error('sync --agree, --continue or --abort needs <bundle>')
+          const exit = flags.agree ? 'agree' : flags.continue ? 'continue' : 'abort'
+          const result = await core.conflictExit(name, exit)
+          if (flags.json) console.log(JSON.stringify(result, null, 2))
+          else printResult('sync', result)
+          return result.ok ? 0 : 1
+        }
         const result = await core.sync(rest[0] ?? null, { dryRun: flags.dryRun })
         if (flags.json) console.log(JSON.stringify(result, null, 2))
         else printResult('sync', result)
         return result.ok || result.dryRun ? 0 : 1
+      }
+      case 'brief': {
+        const result = await core.brief()
+        if (flags.json) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          printRows({ rows: result.rows, dot: result.dot, checkedAt: result.checkedAt })
+          if (result.warnings?.length) console.log(`warnings: ${result.warnings.map((warning) => warning.message).join('; ')}`)
+          if (result.events?.length) {
+            console.log('since the last brief:')
+            for (const event of result.events) console.log(`- ${event.bundle} ${event.kind}: ${event.text ?? ''}`)
+          } else {
+            console.log('nothing new since the last brief')
+          }
+        }
+        return 0
       }
       case 'switch': {
         const [name, track] = rest
