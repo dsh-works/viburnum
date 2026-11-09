@@ -300,7 +300,7 @@ window.__ModuleLoader__.load({
           ? h('style', { key: 'hide-label' }, `button[aria-label=${JSON.stringify(label)}] > span:last-child{display:none}`)
           : null,
         expanded
-          ? h('span', { key: 'label', style: { whiteSpace: 'nowrap', position: 'relative', top: '1px' } }, label)
+          ? h('span', { key: 'label', style: { whiteSpace: 'nowrap', position: 'relative', top: '1px', marginLeft: '4px' } }, label)
           : null,
         h('span', {
           'aria-hidden': 'true',
@@ -309,6 +309,8 @@ window.__ModuleLoader__.load({
             height: '5px',
             borderRadius: '50%',
             flex: '0 0 auto',
+            position: 'relative',
+            top: '2px',
             background: DOT_TOKEN[dot] || DOT_TOKEN.grey,
           },
         }),
