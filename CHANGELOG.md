@@ -36,6 +36,8 @@
 - The Linux directory picker falls back to `kdialog` when `zenity` is not installed.
 - The git command seam reads the process environment when it spawns, not once at module load, so a
   git identity set by the CLI or by the test suite on a bare runner reaches every commit.
+- The `vib` ownership check reads npm's global package root (`<prefix>/lib/node_modules` on POSIX,
+  `<prefix>/node_modules` on Windows), so the Command line card offers Remove for the link it created.
 - The install form's directory placeholder is platform-neutral instead of a Windows example path.
 
 ## 0.2.2 — 2026-11-09

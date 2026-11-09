@@ -199,15 +199,21 @@ The macOS path was made verifiable while 0.3.0 was in flight:
 
 Not run: the live Terminal action (it needs a profile reload) and the live page after the change.
 
-### CLI on PATH (2026-11-09, `dev`)
+### CLI on PATH (2026-11-10, `dev`)
 
 - `npm run check` — 161 tests, 0 failures; the 11 new CLI-path tests cover detection, shim
   ownership, install/remove and the Windows command shapes.
 - CI — the full gate is green on ubuntu, macOS and windows at `b46189f`.
-- Live detection on this Mac (read-only): `state: "missing"`, `npm: true`, shell `/bin/zsh`, bin dir
-  `/Users/vanish/.nvm/versions/node/v24.21.0/bin`, and the direct command reported; nothing installed.
-- Not run yet: the Settings card, the one-time notice, a real `npm link` install and `command -v vib`
-  in zsh/bash/sh — they need the profile reload that activates this code.
+- Live, after the profile reload, in the running GUI (light and dark): the missing state and the
+  one-time notice rendered; **Later** hid the notice for that page load and it returned after a
+  reload; **Install it → Run** ran `npm link`, the notice disappeared, and the card showed
+  **✓ Available at `/Users/vanish/.nvm/…/bin/vib`** with Check again, the direct command and Copy.
+  `command -v vib` then resolved in zsh, bash and sh, and `vib --help` ran.
+- Negative control: the `cli` install action without `confirm: true` is refused with
+  `confirmation-required`.
+- Found and fixed live: the ownership check read `<prefix>/node_modules` instead of npm's POSIX
+  global root `<prefix>/lib/node_modules`, so Remove was not offered. The fix is committed; the
+  Remove path is therefore **not yet verified live** — it needs the next profile reload.
 
 ### 0.1.0 verification (2026-11-06)
 

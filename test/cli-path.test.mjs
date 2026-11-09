@@ -105,7 +105,7 @@ function linkedSystem() {
     files: [shim],
     links: {
       [CHECKOUT]: CHECKOUT,
-      [join(POSIX_PREFIX, 'node_modules', CLI_PACKAGE)]: CHECKOUT,
+      [join(POSIX_PREFIX, 'lib', 'node_modules', CLI_PACKAGE)]: CHECKOUT,
     },
   })
   return { spawnImpl, fsImpl, probed, binDir }
@@ -170,7 +170,7 @@ test('a link the shell cannot see offers the PATH line', async () => {
   })
   const fsImpl = fsRules({
     files: [shim],
-    links: { [CHECKOUT]: CHECKOUT, [join(POSIX_PREFIX, 'node_modules', CLI_PACKAGE)]: CHECKOUT },
+    links: { [CHECKOUT]: CHECKOUT, [join(POSIX_PREFIX, 'lib', 'node_modules', CLI_PACKAGE)]: CHECKOUT },
   })
   const cli = createCli({ checkout: CHECKOUT, platform: 'linux', env: { SHELL: '/bin/zsh' }, spawnImpl, fsImpl })
 
@@ -246,7 +246,7 @@ test('install needs confirmation and then links the checkout', async () => {
     },
     async realpath(path) {
       if (path === CHECKOUT) return CHECKOUT
-      if (installed && path === join(POSIX_PREFIX, 'node_modules', CLI_PACKAGE)) return CHECKOUT
+      if (installed && path === join(POSIX_PREFIX, 'lib', 'node_modules', CLI_PACKAGE)) return CHECKOUT
       const error = new Error('ENOENT')
       error.code = 'ENOENT'
       throw error
@@ -301,7 +301,7 @@ test('remove refuses a foreign install', async () => {
   })
   const fsImpl = fsRules({
     files: [shim],
-    links: { [CHECKOUT]: CHECKOUT, [join(POSIX_PREFIX, 'node_modules', CLI_PACKAGE)]: '/other/viburnum' },
+    links: { [CHECKOUT]: CHECKOUT, [join(POSIX_PREFIX, 'lib', 'node_modules', CLI_PACKAGE)]: '/other/viburnum' },
   })
   const cli = createCli({ checkout: CHECKOUT, platform: 'linux', env: { SHELL: '/bin/zsh' }, spawnImpl, fsImpl })
 
@@ -335,7 +335,7 @@ test('remove unlinks our own install', async () => {
     },
     async realpath(path) {
       if (path === CHECKOUT) return CHECKOUT
-      if (installed && path === join(POSIX_PREFIX, 'node_modules', CLI_PACKAGE)) return CHECKOUT
+      if (installed && path === join(POSIX_PREFIX, 'lib', 'node_modules', CLI_PACKAGE)) return CHECKOUT
       const error = new Error('ENOENT')
       error.code = 'ENOENT'
       throw error
