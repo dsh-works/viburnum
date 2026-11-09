@@ -71,6 +71,7 @@ window.__ModuleLoader__.load({
         catalogOwnersHint: 'Comma-separated GitHub owner names the organisation door reads.',
         defaultOrg: 'Default organisation',
         noDefaultOrg: 'none',
+        terminalSetting: 'Terminal application',
         directoryPlaceholder: 'C:\\path\\to\\plugin',
         repositoryPlaceholder: 'owner/repo or https://github.com/owner/repo',
         installDirectoryHint: 'Link a checkout that already exists where it is.',
@@ -1444,7 +1445,11 @@ window.__ModuleLoader__.load({
       const [defaultOwner, setDefaultOwner] = React.useState(
         typeof settings.defaultOwner === 'string' ? settings.defaultOwner : '',
       )
+      const [terminal, setTerminal] = React.useState(
+        typeof settings.terminal === 'string' ? settings.terminal : 'auto',
+      )
       const ownerChoices = ownersText.split(',').map((owner) => owner.trim()).filter(Boolean)
+      const terminalChoices = Array.isArray(snapshot.terminalChoices) ? snapshot.terminalChoices : []
 
       React.useEffect(() => {
         setMinutes(String(settings.checkIntervalMinutes ?? 5))
@@ -1453,7 +1458,8 @@ window.__ModuleLoader__.load({
         setShelf(typeof settings.pluginsDir === 'string' ? settings.pluginsDir : '')
         setOwnersText(Array.isArray(settings.catalogOwners) ? settings.catalogOwners.join(', ') : '')
         setDefaultOwner(typeof settings.defaultOwner === 'string' ? settings.defaultOwner : '')
-      }, [settings.checkIntervalMinutes, settings.refreshOnStartup, settings.versionWarnings, settings.pluginsDir, settings.catalogOwners, settings.defaultOwner])
+        setTerminal(typeof settings.terminal === 'string' ? settings.terminal : 'auto')
+      }, [settings.checkIntervalMinutes, settings.refreshOnStartup, settings.versionWarnings, settings.pluginsDir, settings.catalogOwners, settings.defaultOwner, settings.terminal])
 
       const save = () => {
         void store.saveSettings({
@@ -1463,6 +1469,7 @@ window.__ModuleLoader__.load({
           pluginsDir: shelf.trim(),
           catalogOwners: ownerChoices,
           defaultOwner: defaultOwner.trim(),
+          terminal,
         })
       }
       const notes = Array.isArray(compat.warnings) ? compat.warnings : []
@@ -1540,6 +1547,20 @@ window.__ModuleLoader__.load({
           ),
         ),
         h('div', { style: styles.secondary }, t('catalogOwnersHint')),
+        h(
+          'label',
+          { style: styles.controls },
+          h('span', { style: styles.secondary }, t('terminalSetting')),
+          h(
+            'select',
+            {
+              style: styles.select,
+              value: terminal,
+              onChange: (event) => setTerminal(event.target.value),
+            },
+            terminalChoices.map((choice) => h('option', { key: choice.id, value: choice.id }, choice.label)),
+          ),
+        ),
         h(
           'div',
           { style: styles.controls },
