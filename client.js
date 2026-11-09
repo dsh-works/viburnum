@@ -61,11 +61,15 @@ window.__ModuleLoader__.load({
         organisation: 'Organisation',
         refreshCatalog: 'Refresh catalog',
         catalogEmpty: 'No repositories to show.',
+        catalogSearch: 'Filter repositories…',
+        catalogNoMatch: 'No repository matches this filter.',
+        repositories: 'repositories',
+        privateRepo: 'private',
         directoryPlaceholder: 'C:\\path\\to\\plugin',
         repositoryPlaceholder: 'owner/repo or https://github.com/owner/repo',
         installDirectoryHint: 'Link a checkout that already exists where it is.',
         installRepositoryHint: 'Clone into the shelf and link the fresh checkout.',
-        installOrganisationHint: 'Pick a repository of a configured owner; it clones into the shelf like the repository door.',
+        installOrganisationHint: 'Pick a repository of a configured owner; it clones into the shelf like the repository door. Private repositories appear when git has GitHub credentials stored on this machine.',
         hygiene: 'Hygiene',
         timeline: 'timeline',
         noHygieneFindings: 'No hygiene problems found.',
@@ -723,17 +727,29 @@ window.__ModuleLoader__.load({
       const catalogOwners = Array.isArray(snapshot.config?.catalogOwners) ? snapshot.config.catalogOwners : []
       const [catalogOwner, setCatalogOwner] = React.useState('')
       const [catalogRepo, setCatalogRepo] = React.useState('')
+      const [catalogSearch, setCatalogSearch] = React.useState('')
       const catalog = state.catalog
       const ownerEntry = catalog !== null && Array.isArray(catalog.owners)
         ? (catalog.owners.find((entry) => entry.owner === (catalogOwner || catalogOwners[0])) ?? null)
         : null
       const catalogRepos = ownerEntry !== null && Array.isArray(ownerEntry.repos) ? ownerEntry.repos : []
+      const catalogQuery = catalogSearch.trim().toLowerCase()
+      const catalogFiltered = catalogQuery === ''
+        ? catalogRepos
+        : catalogRepos.filter((entry) => entry.name.toLowerCase().includes(catalogQuery)
+          || entry.fullName.toLowerCase().includes(catalogQuery)
+          || (entry.description ?? '').toLowerCase().includes(catalogQuery))
       React.useEffect(() => {
         if (catalogOwner === '' && catalogOwners.length > 0) setCatalogOwner(catalogOwners[0])
       }, [catalogOwners, catalogOwner])
       React.useEffect(() => {
         if (installOpen && installDoor === 'organisation' && catalog === null) void store.loadCatalog(false)
       }, [installOpen, installDoor, catalog])
+      React.useEffect(() => {
+        if (catalogRepo !== '' && !catalogRepos.some((entry) => entry.fullName === catalogRepo)) {
+          setCatalogRepo('')
+        }
+      }, [catalogRepos, catalogRepo])
 
       const run = (action, payload) => {
         void store.act(action, payload)
@@ -1028,6 +1044,7 @@ window.__ModuleLoader__.load({
                       onChange: (event) => {
                         setCatalogOwner(event.target.value)
                         setCatalogRepo('')
+                        setCatalogSearch('')
                       },
                     },
                     catalogOwners.map((owner) => h('option', { key: owner, value: owner }, owner)),
@@ -1038,23 +1055,14 @@ window.__ModuleLoader__.load({
                     disabled: busy || catalog?.phase === 'loading',
                     onClick: () => void store.loadCatalog(true),
                   }, t('refreshCatalog')),
-                  h(
-                    'select',
-                    {
-                      key: 'repo',
-                      style: styles.select,
-                      value: catalogRepo,
-                      disabled: busy || catalogRepos.length === 0,
-                      onChange: (event) => setCatalogRepo(event.target.value),
-                    },
-                    catalogRepos.length === 0
-                      ? h('option', { value: '' }, catalog?.phase === 'loading' ? t('loading') : t('catalogEmpty'))
-                      : catalogRepos.map((entry) => h(
-                        'option',
-                        { key: entry.fullName, value: entry.fullName },
-                        entry.archived ? entry.name + ' · archived' : entry.name,
-                      )),
-                  ),
+                  h('input', {
+                    key: 'catalog-search',
+                    style: { ...styles.input, flex: '1 1 220px', minWidth: '160px' },
+                    value: catalogSearch,
+                    disabled: busy || catalogRepos.length === 0,
+                    placeholder: t('catalogSearch'),
+                    onChange: (event) => setCatalogSearch(event.target.value),
+                  }),
                   h('button', {
                     key: 'install-organisation',
                     style: styles.button,
@@ -1093,6 +1101,57 @@ window.__ModuleLoader__.load({
                   }, t('install')),
                 ],
             ),
+            installDoor === 'organisation'
+              ? h(
+                'div',
+                { style: { display: 'flex', flexDirection: 'column', gap: '4px', margin: '6px 0' } },
+                h(
+                  'div',
+                  { style: styles.secondary },
+                  catalogRepos.length + ' ' + t('repositories') + (catalogRepo !== '' ? ' · ' + catalogRepo : ''),
+                ),
+                h(
+                  'div',
+                  { style: { maxHeight: '260px', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' } },
+                  catalogFiltered.length === 0
+                    ? h(
+                      'div',
+                      { style: styles.secondary },
+                      catalog?.phase === 'loading'
+                        ? t('loading')
+                        : (catalogRepos.length === 0 ? t('catalogEmpty') : t('catalogNoMatch')),
+                    )
+                    : catalogFiltered.map((entry) => h(
+                      'button',
+                      {
+                        key: entry.fullName,
+                        style: {
+                          ...styles.button,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-start',
+                          gap: '2px',
+                          width: '100%',
+                          textAlign: 'left',
+                          background: entry.fullName === catalogRepo ? 'var(--dsw-alias-interactive-bg-hover)' : 'transparent',
+                          border: '1px solid '
+                            + (entry.fullName === catalogRepo ? 'var(--dsw-alias-border-l2)' : 'transparent'),
+                        },
+                        disabled: busy,
+                        onClick: () => setCatalogRepo(entry.fullName),
+                      },
+                      h(
+                        'span',
+                        { style: { color: 'var(--dsw-alias-label-primary)' } },
+                        entry.name
+                          + (entry.private === true ? ' · ' + t('privateRepo') : '')
+                          + (entry.archived === true ? ' · archived' : ''),
+                      ),
+                      entry.description ? h('span', { style: styles.secondary }, entry.description) : null,
+                    )),
+                ),
+              )
+              : null,
             h(
               'div',
               { style: styles.secondary },
