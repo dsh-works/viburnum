@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Added
+
+- The workbench detail view can hand a bundle's folder, README or CHANGELOG to the desktop through
+  the harness's verified native path opener (`sessionController.openWorkspacePath`), with the same
+  `missing-file` / `open-unavailable` refusals on the guarded page route.
+
 ### Fixed
 
 - The page transport now registers once the Web server is provided instead of reading it once at

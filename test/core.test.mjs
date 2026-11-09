@@ -198,3 +198,25 @@ test('detail reads branches, the incoming side and the reload class', async (t) 
 
   await assert.rejects(core.detail('nope'), (error) => error.code === 'unknown-bundle')
 })
+
+test('open targets resolve only inside the bundle', async (t) => {
+  const { world, core } = await setup(t)
+  await core.load()
+
+  const folder = await core.openTarget('dsh-plugin-work', 'folder')
+  assert.equal(folder.ok, true)
+  assert.equal(folder.path, world.work)
+
+  const readme = await core.openTarget('dsh-plugin-work', 'readme')
+  assert.equal(readme.ok, true)
+  assert.ok(readme.path.endsWith('README.md'))
+
+  const changelog = await core.openTarget('dsh-plugin-work', 'changelog')
+  assert.equal(changelog.ok, false)
+  assert.equal(changelog.code, 'missing-file')
+
+  const unknown = await core.openTarget('dsh-plugin-work', 'nope')
+  assert.equal(unknown.code, 'unknown-target')
+
+  await assert.rejects(core.openTarget('nope', 'folder'), (error) => error.code === 'unknown-bundle')
+})

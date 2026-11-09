@@ -68,8 +68,28 @@ export function apply(ctx, config) {
   // registered and the browser half reports "The Host did not answer."
   // `ctx.inject` waits for the service and re-runs when it changes.
   ctx.inject(['webServer'], (webCtx) => {
+    // The desktop opener is the session controller's verified path opener. It
+    // is read at use time because the API domain may activate after this row.
+    const openPath = async (path, target, signal) => {
+      void target
+      const sessionController = webCtx.get('sessionController')
+      const unavailable = (message) => {
+        const error = new Error(message)
+        error.code = 'open-unavailable'
+        return error
+      }
+      if (sessionController === undefined || sessionController === null
+        || typeof sessionController.openWorkspacePath !== 'function') {
+        throw unavailable('desktop opening is not available in this profile')
+      }
+      if (typeof sessionController.canOpenWorkspacePath === 'function'
+        && !sessionController.canOpenWorkspacePath()) {
+        throw unavailable('desktop opening is not available on this host')
+      }
+      await sessionController.openWorkspacePath({ path }, signal)
+    }
     webCtx.effect(
-      () => registerRoutes(webCtx.webServer, { core, ready }),
+      () => registerRoutes(webCtx.webServer, { core, ready, openPath }),
       'dsh-plugin-viburnum: routes',
     )
   })

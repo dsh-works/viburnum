@@ -46,6 +46,11 @@ window.__ModuleLoader__.load({
         rebased: 'rebased',
         on: 'on',
         noBundles: 'No linked bundles.',
+        opens: 'open',
+        folder: 'Folder',
+        readme: 'README',
+        changelog: 'CHANGELOG',
+        opened: 'opened',
         back: 'Back',
         version: 'version',
         incoming: 'incoming',
@@ -334,6 +339,7 @@ window.__ModuleLoader__.load({
         return t('dryRun') + ': ' + plan.action
       }
       if (result.ok === false) return t('refused') + ': ' + (result.code || 'error')
+      if (result.opened === true) return t('opened') + ' ' + (result.target || '')
       if (result.nothing === true) return (result.bundle || '') + ' ✓'
       const receipt = result.receipt
       if (receipt) {
@@ -456,6 +462,14 @@ window.__ModuleLoader__.load({
               },
               data.branches.map((track) => h('option', { key: track, value: track }, track)),
             ),
+          ),
+          h(
+            'div',
+            { style: styles.controls },
+            h('span', { style: styles.secondary }, t('opens')),
+            h('button', { style: styles.button, onClick: () => runDetail('open', { bundle: bundle.name, target: 'folder' }) }, t('folder')),
+            h('button', { style: styles.button, onClick: () => runDetail('open', { bundle: bundle.name, target: 'readme' }) }, t('readme')),
+            h('button', { style: styles.button, onClick: () => runDetail('open', { bundle: bundle.name, target: 'changelog' }) }, t('changelog')),
           ),
           banner !== null && banner !== '' ? h('div', { style: styles.banner }, banner) : null,
           h(
