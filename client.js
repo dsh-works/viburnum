@@ -300,7 +300,7 @@ window.__ModuleLoader__.load({
           ? h('style', { key: 'hide-label' }, `button[aria-label=${JSON.stringify(label)}] > span:last-child{display:none}`)
           : null,
         expanded
-          ? h('span', { key: 'label', style: { whiteSpace: 'nowrap', position: 'relative', top: '1px', marginLeft: '4px' } }, label)
+          ? h('span', { key: 'label', style: { whiteSpace: 'nowrap', position: 'relative', top: '3px', marginLeft: '4px' } }, label)
           : null,
         h('span', {
           'aria-hidden': 'true',
