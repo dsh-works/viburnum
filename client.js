@@ -256,20 +256,22 @@ window.__ModuleLoader__.load({
     const ICON_ASPECT = 52 / 46
 
     /**
-     * The sidebar glyph: the trimmed mark, drawn larger than the row cell and
-     * centred on the same axis as the shipped panel icons, with the status dot
-     * after it and before the label.
+     * The sidebar glyph: the trimmed mark, centred on the panel-icon axis, then
+     * the label and the status dot. The shell's own label is hidden on this row
+     * only and re-rendered here so the dot can follow the text.
      */
     function viburnumIcon(props) {
       const state = useStore(props.store)
       const size = typeof props.size === 'number' ? props.size : 18
       const dot = state.snapshot ? state.snapshot.dot : 'grey'
       const active = props.active === true
+      const expanded = size <= 16
       const height = size + 10
       const width = Math.round(height * ICON_ASPECT)
       const extra = width - size
       const half = extra / 2
       const vertical = Math.round((height - size) / 2)
+      const label = props.locale.bind(NS)('panel')
 
       return h(
         'span',
@@ -294,6 +296,12 @@ window.__ModuleLoader__.load({
             opacity: active ? 1 : 0.82,
           },
         }),
+        expanded
+          ? h('style', { key: 'hide-label' }, `button[aria-label=${JSON.stringify(label)}] > span:last-child{display:none}`)
+          : null,
+        expanded
+          ? h('span', { key: 'label', style: { whiteSpace: 'nowrap', position: 'relative', top: '1px' } }, label)
+          : null,
         h('span', {
           'aria-hidden': 'true',
           style: {
@@ -507,7 +515,7 @@ window.__ModuleLoader__.load({
             order: -10,
             locale: NS,
             label: () => ctx.locale.bind(NS)('panel'),
-            inject: () => ({ store }),
+            inject: () => ({ store, locale: ctx.locale }),
           },
           viburnumIcon,
         ))
