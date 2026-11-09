@@ -31,12 +31,12 @@ with one click, through the same verified native path opener the harness already
 
 | # | Trigger | Expected result | Observed by | Result |
 |---|---|---|---|---|
-| 1 | Click `Folder` in a bundle detail | the checkout directory opens in the desktop file manager | live page | not run |
+| 1 | Click `Folder` in a bundle detail | the checkout directory opens in the desktop file manager | live page | **pass (route)** — `POST /viburnum/action {"action":"open","bundle":"dsh-plugin-pixelart","target":"folder"}` returned `{ "opened": true }` and the desktop accepted the path; the button click itself is **not run** |
 | 2 | Click `README` / `CHANGELOG` | the file opens in its associated application | live page | not run |
-| 3 | Open a bundle without a CHANGELOG | readable refusal (`missing-file`), no crash | live page + route JSON | not run |
-| 4 | Route with an unknown target | `unknown-target` refusal, nothing opened | command transcript | not run |
+| 3 | Open a bundle without a CHANGELOG | readable refusal (`missing-file`), no crash | live page + route JSON | **partial** — `core.openTarget` returns `missing-file` in the fixture test; the live route was not exercised with a missing file |
+| 4 | Route with an unknown target | `unknown-target` refusal, nothing opened | command transcript | **pass** — the live route returned `unknown-target` |
 | 5 | Profile without a desktop opener | `open-unavailable` refusal | unit test / headless | not run |
-| 6 | `npm run check` | core open-target tests pass, 80+ tests green | command transcript | **pending** |
+| 6 | `npm run check` | core open-target tests pass, 80+ tests green | command transcript | **pass** — 81 tests, 0 failures |
 
 ## Risks and unknowns
 
