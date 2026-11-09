@@ -76,8 +76,10 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
 - **Hygiene scan**: duplicate checkouts, local branches never merged into `main`, and dirty trees,
   each with a suggestion. It reports; it never deletes, moves or checks anything out. `vib hygiene`.
 - **Settings → viburnum**: refresh interval, refresh on startup, the checkout directory
-  (**Browse…** / **Use default**), the organisation list and its default organisation, and
-  harness-drift warnings. Saved in the profile state and applied without a reload.
+  (**Browse…** / **Use default**), the organisation list and its default organisation, the
+  **terminal application** (Windows Terminal / PowerShell / iTerm2 / Terminal.app / x-terminal / GNOME
+  / xterm, or automatic), and harness-drift warnings. Saved in the profile state and applied without a
+  reload.
 - **Harness-drift tracking**: a warning when the running DSH version changes between runs, and one for
   every plugin whose `engines.dsh` range rejects the running harness.
 - **Six model-facing tools**: `vib_status`, `vib_brief`, `vib_update`, `vib_sync`, `vib_switch`,
