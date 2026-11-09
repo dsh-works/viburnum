@@ -251,19 +251,24 @@ window.__ModuleLoader__.load({
       return state
     }
 
-    /** The real blue-butterfly pixel art, embedded so the sidebar and the package share one mark. */
-    const ICON_DATA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACqElEQVR42u2aPU5DMQzHOQQT3AAhGBgQB2DpxAHYgIkrIHEBJGY2Ji6AuAHiFByACVY2UJ7kyrVsx8lL8tL3bMmiqkqb/y/+atKdHTc3t1a2u3f0F3yx4t9ujpcNYGwEzCKCckXMKoJyIJSIoO4gLL54xkTNvmto4hbTMiWRixEv+ewXHV7/+vIz/N/BycXau4YQFnV3/zH4/unVhofnrIsH8eAUAH7cnXgqnHOAIb1PEMeJp94NACr+8PpJdXgdFw149zXxXUEIi9DErx7foyBoBFjdOitULaQcgCBacg1CCQBYpJSCuCZVCX8NAAVBUyIHQEx0Tj1KjgAa9tRxZdcg5IinBdhah4pAsKRAEP35/bt2KRJgMVYAlvrDpR4FMQpCDgAcBbC4lFTQOo819YoB4NJAA0DFS1HAQYDnY3WHplpKIa4aBdKiuB1ZrR4Gp+3LIl6LNq3+FC2Glk6gRQEAwG7pODkAinUDWGAqBBqSnHgMINZtYgCK1wANQkphggWB4LPz2w0A1nmDa7lVw9/63cBakEB8LoAU2MV2nxtHrYMJHU5qAWgiXuoOGgw6mVkB5NSZpuLhQ6SDEmk2jwGwQkj5Kl49/HEflxxewwHImfm5CKt+hiDlPt0dPNzQ0ATxGACOptS0qr7ruWcDUn5q4Z+aUtVzvcQgRCFIAPAOaymF07DZsZm2++Hm9uv5cvgbPBVAalRVHXSsAKh48FwAY9te8/yfGgB9z8kKYAsA+DPw+zeNAq0IQu5bxOcAwIA5CN3NALGTGdr/twaA5aLEckkC0yBMgLEu0EUKpH4J0qY0AICBWCDQFJsMgPWyQhpPOSBjzxiaTYQpd3StzhgmFd/iKr7qzU/vv0SJnS3M/vdEW/lbIjc3Nzc3Nzc3Nzc3Nze3fu0fEatwChLGI+cAAAAASUVORK5CYII='
+    /** The trimmed blue-butterfly mark (52×46), embedded for the sidebar glyph. */
+    const ICON_DATA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADQAAAAuCAYAAABnNToWAAACpklEQVR4nN2ZMU4EMQxF5xBUcAOEoKBAHIBmKg5AB1RcAYkLIFHTUXEBxA0Qp+AAVNDSgTLIi8djO9+ZZHZF8bVoNZvkxd92MnRd133X0tb2/qCaYxaoHszz5cH/ApoboUoRrrtDpYuqGOH6YS+BqhHhZkC0wNZRXRQIgWpUFdcD1LDEtwPyoBqW97YwlhrO22YR6fmnx8/hc/fwdKUFoMaLuL55HbRzdD5S+g5dDMGQJBD/uxkQwUgQTQRnwaTFajBSzYAkzN7FvSt6TosWj44H0xDqdxEeTH/3kgWTEUKF9qpATutACcKSB1UDiC/asjzP6dHvLbt5QBJMWrAEKAcRyOe/CEmbSfHK5UGVwMiChOaxAoVZLkG8fXytZEWKBkeBkPzVrC7BGFQZEI8STRaxnldZUaubQJrtPCAJY0VJg6Lvc3krrR0oTGOgHJQ1ibZjfX87SJZbBMZzg5e/k6NPtNJ5USIgLqSilgBNLCerTRRKWkCD4UC5apoDyuaQBxVJVJqAAI5PrkZAaL/TWgRgtylQ7myHJijBlAJFNm/Sh7wzFNroZLNrBZSBsYG06ufByc6NApXkaeYa48PQj6yLn3W2ygGhUN4J3zhx43bjfcQSPaMBlZzZNAdkrhy+zbxd5M1SWoFgOBCPdtTGmajYQNG7keVvz25RC3tXfhdoTmOVUBYQj4BnYW774DUdi076z8D7w9nwmRQFikbdaZzlQBKGVAo0t0yDUJsLJMecDUSTLwHE5+DjF0QJKwqUOwhMCRDfMA2qCCjSg7ROzieV/WdtQB4U0sn5mxx+QshVuSaWs6AsOK+LExAHRKCkpasBdeDLP+s4ogHOvWOBJwasAwffL7tjROwchMGBago5dWtXEnD85YFQO5sv5DcRyIKbY+mkHwkkUGI2toJoAAAAAElFTkSuQmCC'
+    const ICON_ASPECT = 52 / 46
 
     /**
-     * The sidebar glyph: the chosen pixel art, drawn larger, with a larger dot
-     * and real space before the label.
+     * The sidebar glyph: the trimmed mark, drawn larger than the row cell and
+     * shifted slightly left, with the status dot after it and before the label.
      */
     function viburnumIcon(props) {
       const state = useStore(props.store)
       const size = typeof props.size === 'number' ? props.size : 18
       const dot = state.snapshot ? state.snapshot.dot : 'grey'
       const active = props.active === true
-      const art = size + 6
+      const height = size + 10
+      const width = Math.round(height * ICON_ASPECT)
+      const extra = width - size
+      const side = Math.ceil(extra / 2)
+      const vertical = Math.round((height - size) / 2)
 
       return h(
         'span',
@@ -272,17 +277,21 @@ window.__ModuleLoader__.load({
             position: 'relative',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '3px',
+            gap: '6px',
             flex: '0 0 auto',
           },
         },
         h('img', {
           src: ICON_DATA,
           alt: '',
-          width: art,
-          height: art,
+          width,
+          height,
           draggable: false,
-          style: { display: 'block', opacity: active ? 1 : 0.82 },
+          style: {
+            display: 'block',
+            margin: `${-vertical}px ${-(extra - side - 2)}px ${-vertical}px ${-(side + 2)}px`,
+            opacity: active ? 1 : 0.82,
+          },
         }),
         h('span', {
           'aria-hidden': 'true',

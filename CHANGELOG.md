@@ -7,8 +7,9 @@
 - The page transport now registers once the Web server is provided instead of reading it once at
   apply time, so a profile whose entries compose out of order no longer shows a grey sidebar dot
   with "The Host did not answer." and "refused: transport" on the viburnum page.
-- The sidebar glyph is the real `blue-butterfly` pixel art, rendered larger; the status dot now sits
-  centred in the gap between the icon and the label. The package icon is `blue-butterfly.png` too.
+- The sidebar glyph is the real `blue-butterfly` pixel art. Its 64×64 canvas carried 8/4/3/15 px of
+  transparent edge, so the mark is now shipped as a 52×46 trimmed crop and drawn much larger; the
+  status dot sits between the glyph and the label. The package icon is the same trimmed mark.
 
 ## 0.1.0 — 2026-11-06
 
