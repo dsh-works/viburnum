@@ -4,6 +4,12 @@
 
 ### Added
 
+- A **timeline**: what changed since the last look — incoming commits on a track (with their first
+  subject) plus viburnum's own moves. Shown above the rows, cleared by reading (`vib log`, or the page
+  on load/after an action); stored in the state file.
+- A **hygiene scan**: a read-only walk of the workspace and the shelf reporting duplicate checkouts,
+  local branches never merged into `main`, and dirty trees, each with a suggestion. `vib hygiene`
+  (exit 3 on findings) and a `Hygiene` button on the page; nothing is deleted, moved or checked out.
 - `vib new <name> [--dir <path>] [--git]` scaffolds a Host-only bundle that satisfies the taxonomy:
   package manifest, bundle patch row, entry module, a passing test and a README; names normalize to
   `dsh-plugin-<slug>`, a non-empty target is refused, and `--git` adds an initial local commit.

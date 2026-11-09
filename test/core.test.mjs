@@ -51,6 +51,21 @@ test('the core hydrates cached rows from the state file', async (t) => {
   assert.equal(hydrated.snapshot().rows[0].status, 'current')
 })
 
+test('the timeline records a move and clears when read', async (t) => {
+  const { world, core } = await setup(t)
+  await core.load()
+
+  await world.commit(world.laptop, 'a.txt', 'a\n', 'laptop one')
+  await world.push(world.laptop)
+  await core.sync('dsh-plugin-work')
+
+  const feed = await core.timeline()
+  assert.ok(feed.events.some((event) => event.kind === 'sync' && event.bundle === 'dsh-plugin-work'))
+
+  const cleared = await core.timeline()
+  assert.deepEqual(cleared.events, [])
+})
+
 test('update records a receipt and a snapshot, and revert restores it', async (t) => {
   const { world, stateDirectory, core } = await setup(t)
   await core.load()

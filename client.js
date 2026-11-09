@@ -66,6 +66,10 @@ window.__ModuleLoader__.load({
         installDirectoryHint: 'Link a checkout that already exists where it is.',
         installRepositoryHint: 'Clone into the shelf and link the fresh checkout.',
         installOrganisationHint: 'Pick a repository of a configured owner; it clones into the shelf like the repository door.',
+        hygiene: 'Hygiene',
+        timeline: 'timeline',
+        noHygieneFindings: 'No hygiene problems found.',
+        scan: 'Scan',
         close: 'Close',
         truncated: 'truncated',
         back: 'Back',
@@ -389,7 +393,7 @@ window.__ModuleLoader__.load({
 
     /** One client-local store: the status snapshot, the busy state and the last result. */
     function createStore() {
-      let state = { snapshot: null, phase: 'loading', error: null, busy: null, last: null, detail: null, doc: null, catalog: null }
+      let state = { snapshot: null, phase: 'loading', error: null, busy: null, last: null, detail: null, doc: null, catalog: null, timeline: null, hygiene: null }
       const listeners = new Set()
 
       const emit = () => {
@@ -434,6 +438,7 @@ window.__ModuleLoader__.load({
             })
             set({ last: result })
             await store.refresh()
+            void store.loadTimeline()
             return result
           } catch (error) {
             const failure = { ok: false, code: 'transport', message: error.message }
@@ -457,6 +462,37 @@ window.__ModuleLoader__.load({
         },
         closeDetail() {
           set({ detail: null, doc: null })
+        },
+        async loadTimeline() {
+          try {
+            const data = await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'timeline' }),
+            })
+            set({ timeline: { phase: 'ready', events: Array.isArray(data.events) ? data.events : [], error: data.ok === false ? data.message : null } })
+          } catch (error) {
+            set({ timeline: { phase: 'error', events: [], error: error.message } })
+          }
+        },
+        async loadHygiene(refresh = false) {
+          set({ hygiene: { phase: 'loading', findings: [], checkouts: [], roots: [], error: null } })
+          try {
+            const data = await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'hygiene', refresh }),
+            })
+            set({
+              hygiene: {
+                phase: 'ready',
+                findings: Array.isArray(data.findings) ? data.findings : [],
+                checkouts: Array.isArray(data.checkouts) ? data.checkouts : [],
+                roots: Array.isArray(data.roots) ? data.roots : [],
+                error: data.ok === false ? data.message : null,
+              },
+            })
+          } catch (error) {
+            set({ hygiene: { phase: 'error', findings: [], checkouts: [], roots: [], error: error.message } })
+          }
         },
         async loadCatalog(refresh = false) {
           set({ catalog: { phase: 'loading', owners: [], error: null } })
@@ -622,6 +658,12 @@ window.__ModuleLoader__.load({
       const banner = state.last ? describeResult(state.last, t) : null
       const detail = state.detail
       const doc = state.doc
+      const timeline = state.timeline
+      const hygiene = state.hygiene
+      const [hygieneOpen, setHygieneOpen] = React.useState(false)
+      React.useEffect(() => {
+        void store.loadTimeline()
+      }, [])
       const [installOpen, setInstallOpen] = React.useState(false)
       const [installDoor, setInstallDoor] = React.useState('directory')
       const [installSpec, setInstallSpec] = React.useState('')
@@ -837,9 +879,67 @@ window.__ModuleLoader__.load({
           h('span', { style: styles.spacer }),
           h('button', { style: styles.button, disabled: busy, onClick: () => run('refresh') }, t('refresh')),
           h('button', { style: styles.button, disabled: busy, onClick: () => run('sync') }, t('syncAll')),
+          h('button', {
+            style: styles.button,
+            disabled: busy,
+            onClick: () => {
+              const next = !hygieneOpen
+              setHygieneOpen(next)
+              if (next) void store.loadHygiene(false)
+            },
+          }, t('hygiene')),
           h('button', { style: styles.button, disabled: busy, onClick: () => setInstallOpen(!installOpen) }, '+ ' + t('install')),
         ),
         banner !== null && banner !== '' ? h('div', { style: styles.banner }, banner) : null,
+        timeline !== null && timeline.events.length > 0
+          ? h(
+            'div',
+            { style: styles.row },
+            h('div', { style: styles.rowTop }, h('span', { style: styles.secondary }, t('timeline'))),
+            ...timeline.events.slice(0, 6).map((event, index) => {
+              const time = new Date(event.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              const extra = event.kind === 'incoming' && Array.isArray(event.subjects) && event.subjects.length > 0
+                ? ' · ' + event.subjects[0]
+                : ''
+              return h(
+                'div',
+                { key: index, style: styles.secondary },
+                `${time} · ${event.bundle} · ${event.kind}: ${event.text ?? ''}${extra}`,
+              )
+            }),
+          )
+          : null,
+        hygieneOpen
+          ? h(
+            'div',
+            { style: styles.row },
+            h(
+              'div',
+              { style: styles.rowTop },
+              h('span', { style: styles.secondary }, t('hygiene')),
+              h('span', { style: styles.spacer }),
+              h('button', {
+                style: styles.button,
+                disabled: hygiene !== null && hygiene.phase === 'loading',
+                onClick: () => void store.loadHygiene(true),
+              }, t('scan')),
+              h('button', { style: styles.button, onClick: () => setHygieneOpen(false) }, t('close')),
+            ),
+            hygiene === null || hygiene.phase === 'loading' ? h('div', { style: styles.empty }, t('loading')) : null,
+            hygiene !== null && hygiene.error ? h('div', { style: styles.error }, hygiene.error) : null,
+            hygiene !== null && hygiene.phase === 'ready' && hygiene.findings.length === 0
+              ? h('div', { style: styles.secondary }, t('noHygieneFindings'))
+              : null,
+            hygiene !== null && hygiene.phase === 'ready'
+              ? hygiene.findings.map((finding, index) => {
+                const label = finding.kind === 'unmerged-branch'
+                  ? `${finding.kind}: ${finding.name} — ${(finding.branches || []).join(', ')}`
+                  : `${finding.kind}: ${finding.name}`
+                return h('div', { key: index, style: styles.secondary }, label + (finding.suggestion ? ' · ' + finding.suggestion : ''))
+              })
+              : null,
+          )
+          : null,
         state.phase === 'error' ? h('div', { style: styles.error }, t('transportError')) : null,
         state.phase === 'loading' ? h('div', { style: styles.empty }, t('loading')) : null,
         rows.length === 0 && state.phase === 'ready' ? h('div', { style: styles.empty }, t('noBundles')) : null,

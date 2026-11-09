@@ -59,7 +59,7 @@ test('save and load round-trip atomically', async (t) => {
 
   const names = await readdir(dir)
   assert.ok(!names.some((name) => name.endsWith('.tmp')), 'no temporary file survives the rename')
-  assert.match(await readFile(join(dir, 'state.json'), 'utf8'), /"version": 2/u)
+  assert.match(await readFile(join(dir, 'state.json'), 'utf8'), /"version": 3/u)
 })
 
 test('a corrupt state file reports the problem and falls back to empty', async (t) => {
@@ -78,10 +78,12 @@ test('older shapes migrate without losing what is still understood', () => {
     bundles: { 'dsh-plugin-a': { track: 'main' } },
     history: [{ bundle: 'dsh-plugin-a', kind: 'sync' }],
   })
-  assert.equal(migrated.version, 2)
+  assert.equal(migrated.version, 3)
   assert.deepEqual(migrated.bundles, { 'dsh-plugin-a': { track: 'main' } })
   assert.deepEqual(migrated.history, [{ bundle: 'dsh-plugin-a', kind: 'sync' }])
   assert.deepEqual(migrated.snapshots, [])
+  assert.deepEqual(migrated.timeline, [])
+  assert.deepEqual(migrated.seen, {})
 })
 
 test('retention prunes old entries and caps both lists', () => {

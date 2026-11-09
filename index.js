@@ -16,6 +16,7 @@ import { Config } from './lib/config.js'
 import { createCore } from './lib/core.js'
 import { fetchOwnerRepos } from './lib/catalog.js'
 import { must } from './lib/git.js'
+import { scanHygiene } from './lib/hygiene.js'
 import { pickDirectory } from './lib/picker.js'
 import { listMountedBundles } from './lib/profile.js'
 import { PROMPT } from './lib/prompt.js'
@@ -38,7 +39,13 @@ export const inject = ['tools', 'systemPrompt', 'pluginManager']
  */
 export function apply(ctx, config) {
   const log = ctx.logger('dsh-plugin-viburnum')
-  const core = createCore({
+  const directoryService = ctx.get('workingDirectory')
+  const workspaceDirectory = typeof directoryService?.defaultDirectory === 'string'
+    ? directoryService.defaultDirectory
+    : process.cwd()
+
+  let core
+  core = createCore({
     bundleSource: ({ env, argv }) => listMountedBundles(ctx.pluginManager, { env, argv }),
     config,
     log,
@@ -51,6 +58,7 @@ export function apply(ctx, config) {
     catalogFetcher: (owner) => fetchOwnerRepos(owner, {
       token: process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null,
     }),
+    hygieneScanner: () => scanHygiene({ roots: [workspaceDirectory, core.shelfDirectory] }),
   })
 
   /** The state load, as `null` or the error; every consumer awaits it. */

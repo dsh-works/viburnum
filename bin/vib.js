@@ -14,6 +14,7 @@
 import { resolve } from 'node:path'
 
 import { createCore } from '../lib/core.js'
+import { scanHygiene } from '../lib/hygiene.js'
 import { readProfileBundles } from '../lib/profile.js'
 import { scaffoldPlugin } from '../lib/scaffold.js'
 
@@ -28,6 +29,8 @@ Usage:
   vib sync [<bundle>] [--dry-run]     push, pull or rebase; --json for machines
   vib switch <bundle> <track>         switch one bundle to another branch
   vib revert <bundle>                 restore the latest update or switch snapshot
+  vib log [--json]                    show (and clear) what changed since the last look
+  vib hygiene [--json]                scan the workspace and shelf for drift; nothing is deleted
   vib install <path|url|owner/repo>   install through the running viburnum page route
   vib new <name> [--dir <path>] [--git]
                                        scaffold a Host-only bundle that satisfies the taxonomy
@@ -220,12 +223,14 @@ async function main(argv) {
     return 0
   }
 
-  const core = createCore({
+  let core
+  core = createCore({
     bundleSource: ({ env, argv: processArgv }) => readProfileBundles({
       explicit: flags.profile,
       env,
       argv: processArgv,
     }),
+    hygieneScanner: () => scanHygiene({ roots: [process.cwd(), core.shelfDirectory] }),
   })
 
   try {
@@ -271,6 +276,46 @@ async function main(argv) {
         if (flags.json) console.log(JSON.stringify(result, null, 2))
         else printResult('revert', result)
         return result.ok ? 0 : 1
+      }
+      case 'log': {
+        const feed = await core.timeline()
+        if (flags.json) {
+          console.log(JSON.stringify(feed, null, 2))
+        } else if (feed.events.length === 0) {
+          console.log('timeline: nothing new')
+        } else {
+          for (const event of feed.events) {
+            const time = new Date(event.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            const extra = event.kind === 'incoming' && Array.isArray(event.subjects) && event.subjects.length > 0
+              ? ` · ${event.subjects[0]}`
+              : ''
+            console.log(`${time} · ${event.bundle} · ${event.kind}: ${event.text ?? ''}${extra}`)
+          }
+        }
+        return 0
+      }
+      case 'hygiene': {
+        const result = await core.hygiene({ refresh: true })
+        if (flags.json) {
+          console.log(JSON.stringify(result, null, 2))
+        } else if (result.ok === false) {
+          console.error(`hygiene failed: ${result.code} — ${result.message}`)
+        } else if (result.findings.length === 0) {
+          console.log(`hygiene: clean (${result.checkouts.length} checkouts scanned)`)
+        } else {
+          for (const finding of result.findings) {
+            if (finding.kind === 'duplicate-checkout') {
+              console.log(`duplicate-checkout: ${finding.name}`)
+              for (const dir of finding.dirs) console.log(`  ${dir}`)
+            } else if (finding.kind === 'unmerged-branch') {
+              console.log(`unmerged-branch: ${finding.name} — ${finding.branches.join(', ')}`)
+            } else if (finding.kind === 'dirty-checkout') {
+              console.log(`dirty-checkout: ${finding.name} — ${finding.dirtyCount} changes`)
+            }
+            if (finding.suggestion) console.log(`  suggest: ${finding.suggestion}`)
+          }
+        }
+        return result.ok === false ? 1 : (result.findings.length > 0 ? 3 : 0)
       }
       default:
         console.error(`unknown command: ${command}`)

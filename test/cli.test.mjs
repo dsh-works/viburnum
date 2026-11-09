@@ -49,9 +49,10 @@ async function setup(t) {
 }
 
 /** Run the CLI and collect its exit code and streams. */
-function runCli(env, args) {
+function runCli(env, args, cwd) {
   return new Promise((resolvePromise, rejectPromise) => {
     const child = spawn(process.execPath, [CLI, ...args], {
+      cwd,
       env,
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -243,4 +244,31 @@ test('install without a reachable Host or an argument fails clearly', async (t) 
   const missing = await runCli(process.env, ['install'])
   assert.equal(missing.code, 1)
   assert.match(missing.stderr, /install needs a path/u)
+})
+
+test('vib log reports an empty timeline', async (t) => {
+  const { env } = await setup(t)
+  const result = await runCli(env, ['log'])
+  assert.equal(result.code, 0)
+  assert.match(result.stdout, /timeline: nothing new/u)
+})
+
+test('vib hygiene scans the working directory and exits 3 on findings', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'viburnum-cli-hygiene-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  const checkout = join(root, 'dsh-plugin-dirty')
+  await mkdir(checkout, { recursive: true })
+  await run(checkout, ['init', '-b', 'main'])
+  await writeFile(join(checkout, 'package.json'), JSON.stringify({ name: 'dsh-plugin-dirty', version: '0.1.0' }, null, 2))
+  await run(checkout, ['add', '-A'])
+  await run(checkout, ['commit', '-m', 'init'])
+  await writeFile(join(checkout, 'untracked.txt'), 'not committed\n')
+
+  const env = { ...process.env, DSH_HOME: join(root, 'home'), DSH_PROFILE: 'web' }
+  const result = await runCli(env, ['hygiene', '--json'], root)
+  assert.equal(result.code, 3)
+  const data = JSON.parse(result.stdout)
+  assert.equal(data.ok, true)
+  assert.ok(data.findings.some((finding) => finding.kind === 'dirty-checkout'))
+  assert.ok(data.checkouts.some((entry) => entry.name === 'dsh-plugin-dirty'))
 })
