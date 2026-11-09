@@ -610,7 +610,6 @@ window.__ModuleLoader__.load({
         'span',
         {
           style: {
-            position: 'relative',
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
@@ -652,12 +651,15 @@ window.__ModuleLoader__.load({
           ? h('span', {
             key: 'arrows',
             style: {
-              marginLeft: 'auto',
-              paddingLeft: '8px',
+              position: 'absolute',
+              right: '34px',
+              top: '50%',
+              transform: 'translateY(-50%)',
               color: 'var(--dsw-alias-label-secondary)',
               fontSize: '11px',
               fontVariantNumeric: 'tabular-nums',
               whiteSpace: 'nowrap',
+              pointerEvents: 'none',
             },
           }, arrows)
           : null,
