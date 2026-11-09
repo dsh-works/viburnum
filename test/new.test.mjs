@@ -10,6 +10,9 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 
+// Pin the git identity for commits made through the plugin and the CLI child
+// processes this suite spawns; CI runners have no user git configuration.
+import './env.mjs'
 import { pluginIdentity, scaffoldPlugin } from '../lib/scaffold.js'
 
 const CLI = fileURLToPath(new URL('../bin/vib.js', import.meta.url))
