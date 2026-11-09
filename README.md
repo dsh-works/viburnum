@@ -58,7 +58,8 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
   opens its workbench.
 - **The workbench detail**: the branch as the hero control, the incoming changelog rendered as
   Markdown, target/current versions, the reload class, README and CHANGELOG inline, the folder opened
-  in the desktop, and `Update` / `Sync` / `Revert` / track switch that re-fetch the detail after a move.
+  in the desktop or a **Terminal** started in the checkout, and `Update` / `Sync` / `Revert` / track
+  switch that re-fetch the detail after a move. A stopping conflict offers Agree / Guide / Myself.
 - **Install doors**: **Directory** (with the Host's native folder picker), **Repository URL**, and
   **Organisation** (a cached, paginated, searchable list of the configured GitHub owners'
   repositories — private ones included when git has GitHub credentials stored on the machine — with
@@ -82,7 +83,8 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
 - **Six model-facing tools**: `vib_status`, `vib_brief`, `vib_update`, `vib_sync`, `vib_switch`,
   `vib_revert`. Reads are free; every move asks for approval.
 - **A CLI**: `vib status | refresh | update | sync | switch | revert | log | hygiene | brief | install | new`,
-  plus `--json`, `--dry-run` and `vib sync --agree|--continue|--abort`.
+  plus `--json`, `--dry-run`, `vib sync --agree|--continue|--abort` and
+  `vib new --push --org <owner>` (creates the GitHub repository and pushes the first commit).
 - **State with the profile**: tracks, cached rows, receipts, snapshots, the timeline, the settings and
   the last seen harness version at `$DSH_HOME/profiles/<profile>/.viburnum/state.json`, written
   atomically and pruned on write.

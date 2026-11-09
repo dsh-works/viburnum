@@ -14,6 +14,8 @@
 import { resolve } from 'node:path'
 
 import { createCore } from '../lib/core.js'
+import { createRepository, publishScaffold } from '../lib/create.js'
+import { readGitCredentials } from '../lib/credentials.js'
 import { scanHygiene } from '../lib/hygiene.js'
 import { readProfileBundles } from '../lib/profile.js'
 import { scaffoldPlugin } from '../lib/scaffold.js'
@@ -35,8 +37,8 @@ Usage:
   vib log [--json]                    show (and clear) what changed since the last look
   vib hygiene [--json]                scan the workspace and shelf for drift; nothing is deleted
   vib install <path|url|owner/repo>   install through the running viburnum page route
-  vib new <name> [--dir <path>] [--git]
-                                       scaffold a Host-only bundle that satisfies the taxonomy
+  vib new <name> [--dir <path>] [--git] [--push --org <owner> [--public] [--description <text>]]
+                                       scaffold a Host-only bundle; --push creates the GitHub repo and pushes
 
 Options:
   --profile <name>   profile to read (default: $DSH_PROFILE or web)
@@ -62,6 +64,10 @@ function parse(argv) {
     agree: false,
     continue: false,
     abort: false,
+    push: false,
+    public: false,
+    org: undefined,
+    description: undefined,
   }
   const positional = []
 
@@ -73,6 +79,19 @@ function parse(argv) {
     else if (argument === '--agree') flags.agree = true
     else if (argument === '--continue') flags.continue = true
     else if (argument === '--abort') flags.abort = true
+    else if (argument === '--push') flags.push = true
+    else if (argument === '--public') flags.public = true
+    else if (argument === '--org') {
+      flags.org = argv[index + 1]
+      index += 1
+    } else if (argument.startsWith('--org=')) {
+      flags.org = argument.slice('--org='.length)
+    } else if (argument === '--description') {
+      flags.description = argv[index + 1]
+      index += 1
+    } else if (argument.startsWith('--description=')) {
+      flags.description = argument.slice('--description='.length)
+    }
     else if (argument === '-h' || argument === '--help') flags.help = true
     else if (argument === '--profile') {
       flags.profile = argv[index + 1]
@@ -229,19 +248,57 @@ async function main(argv) {
     return result?.ok === true ? 0 : 1
   }
 
+  if (flags.push === true && (flags.org === undefined || flags.org.trim() === '')) {
+    throw new Error('new --push needs --org <owner>')
+  }
+
   // Scaffolding is local: it needs no harness and no profile.
   if (command === 'new') {
-    const result = await scaffoldPlugin({ name: rest[0], dir: flags.dir, git: flags.git })
+    const result = await scaffoldPlugin({ name: rest[0], dir: flags.dir, git: flags.git || flags.push === true })
+    let repo = null
+    let published = null
+    if (flags.push === true) {
+      const owner = flags.org.trim()
+      const fromEnv = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN
+      const token = fromEnv !== undefined && fromEnv.trim() !== ''
+        ? fromEnv.trim()
+        : (await readGitCredentials()).token
+      repo = await createRepository(owner, result.package, {
+        private: flags.public !== true,
+        description: flags.description ?? null,
+        token,
+      })
+      if (repo.ok) {
+        published = await publishScaffold({
+          dir: result.dir,
+          repoUrl: repo.cloneUrl ?? `https://github.com/${owner}/${result.package}.git`,
+          name: result.package,
+        })
+      }
+    }
+
     if (flags.json) {
-      console.log(JSON.stringify(result, null, 2))
+      console.log(JSON.stringify({ ...result, repo, published }, null, 2))
     } else {
       console.log(`created ${result.package} in ${result.dir}`)
       for (const file of result.files) console.log(`  ${file}`)
       if (result.git) console.log('git: initial commit created')
       if (result.warning) console.error(result.warning)
-      console.log('next: cd into it and run `vib install .` with the Host running')
+      if (repo !== null && repo.ok) {
+        console.log(`github: created ${repo.fullName}${repo.private === true ? ' (private)' : ''}${repo.htmlUrl ? ` — ${repo.htmlUrl}` : ''}`)
+        if (published !== null && published.ok) {
+          console.log('github: first commit pushed to main')
+          console.log(`next: vib install ${repo.fullName}`)
+        } else if (published !== null) {
+          console.error(`github: push failed — ${published.message} (the repository exists; push it manually)`)
+        }
+      } else if (repo !== null) {
+        console.error(`github: repository was not created — ${repo.code}: ${repo.message}`)
+      } else {
+        console.log('next: cd into it and run `vib install .` with the Host running')
+      }
     }
-    return 0
+    return repo === null ? 0 : (repo.ok && (published === null || published.ok) ? 0 : 1)
   }
 
   let core
