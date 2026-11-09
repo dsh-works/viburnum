@@ -20,6 +20,18 @@
   bundle's state, harness-drift warnings, and what changed since the previous brief (the timeline feed,
   marked read), so a session starts informed.
 
+### Fixed
+
+- Cross-platform checks: the test suite and the terminal command builder now use the running and
+  target platform's path flavour instead of assuming Windows, so `npm run check` is green on macOS,
+  Linux and Windows; CI runs the gate on all three.
+- Terminal opening works on every desktop: a macOS path is shell-quoted inside AppleScript (spaces
+  and metacharacters no longer break `cd`); a launcher that exits non-zero falls through to the next
+  terminal instead of reporting a false success; and the xterm fallback uses `/bin/sh` when `$SHELL`
+  is unset.
+- The Linux directory picker falls back to `kdialog` when `zenity` is not installed.
+- The install form's directory placeholder is platform-neutral instead of a Windows example path.
+
 ## 0.2.2 — 2026-11-09
 
 Catalog completion: every organisation repository (private included) in a searchable list with icons,

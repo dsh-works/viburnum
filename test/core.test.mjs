@@ -303,7 +303,7 @@ test('documents are read from inside the bundle, capped and validated', async (t
   assert.equal(readme.target, 'readme')
   assert.match(readme.text, /# fixture/u)
   assert.equal(readme.truncated, false)
-  assert.equal(readme.path, world.work + '\\README.md')
+  assert.equal(readme.path, join(world.work, 'README.md'))
 
   const changelog = await core.readDocument('dsh-plugin-work', 'changelog')
   assert.equal(changelog.ok, false)

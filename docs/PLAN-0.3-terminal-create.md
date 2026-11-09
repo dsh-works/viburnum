@@ -50,4 +50,4 @@
 | 2 | `vib new demo --push --org dsh-works` | repository created (private), first commit pushed, next step printed | live command | not run — needs a real repository creation, deferred to the owner |
 | 3 | Creation refused (bad owner/exists/permission) | readable `create-http` failure; no push attempted | stubbed API test | not run |
 | 4 | Push fails after creation | the repository is reported as created and the push error is printed; nothing deleted | unit test (publish failure path is exercised by a local bare origin) | not run |
-| 5 | `npm run check` | terminal and create suites green with the rest | command transcript | **pending** |
+| 5 | `npm run check` | terminal and create suites green with the rest | command transcript | **pass** — 150 tests, 0 failures on macOS (2026-11-09); CI now runs the gate on Linux, macOS and Windows (Linux/Windows runs pending) |

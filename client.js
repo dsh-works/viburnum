@@ -72,7 +72,7 @@ window.__ModuleLoader__.load({
         defaultOrg: 'Default organisation',
         noDefaultOrg: 'none',
         terminalSetting: 'Terminal application',
-        directoryPlaceholder: 'C:\\path\\to\\plugin',
+        directoryPlaceholder: 'Absolute path to the plugin checkout',
         repositoryPlaceholder: 'owner/repo or https://github.com/owner/repo',
         installDirectoryHint: 'Link a checkout that already exists where it is.',
         installRepositoryHint: 'Clone into the shelf and link the fresh checkout.',

@@ -23,17 +23,21 @@ import {
 } from '../lib/state.js'
 
 test('the state directory is overridable and otherwise lives with the profile', () => {
+  // Platform-native absolute paths: the module uses the running platform's
+  // path flavour, so the fixture must speak the same flavour.
+  const root = join(tmpdir(), 'viburnum-state-fixtures')
+
   assert.equal(
-    stateDir({ env: { VIBURNUM_STATE_DIR: 'C:/tmp/state' } }),
-    resolve('C:/tmp/state'),
+    stateDir({ env: { VIBURNUM_STATE_DIR: join(root, 'state') } }),
+    resolve(join(root, 'state')),
   )
   assert.equal(
-    stateDir({ env: { DSH_PROFILE_DIR: 'C:/profiles/web' } }),
-    resolve('C:/profiles/web', '.viburnum'),
+    stateDir({ env: { DSH_PROFILE_DIR: join(root, 'profiles', 'web') } }),
+    resolve(join(root, 'profiles', 'web'), '.viburnum'),
   )
   assert.equal(
-    stateDir({ env: { DSH_HOME: 'C:/dsh', DSH_PROFILE: 'work' }, argv: [] }),
-    resolve('C:/dsh', 'profiles', 'work', '.viburnum'),
+    stateDir({ env: { DSH_HOME: root, DSH_PROFILE: 'work' }, argv: [] }),
+    resolve(root, 'profiles', 'work', '.viburnum'),
   )
 })
 

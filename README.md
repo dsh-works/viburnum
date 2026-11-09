@@ -93,15 +93,28 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
 
 ## Install
 
-The plugin is installed into a profile by the plugin manager, never by hand:
+The plugin is installed into a profile by the plugin manager, never by hand. Pass the absolute path
+of the checkout on this machine:
+
+```sh
+# macOS / Linux
+dsh plugin --profile web add ~/Documents/deepseek-harness/viburnum
+```
 
 ```powershell
+# Windows
 dsh plugin --profile web add C:\Users\<you>\Documents\deepseek-harness\viburnum
 ```
 
 The CLI needs `vib` on `PATH` only for terminal use:
 
+```sh
+# macOS / Linux
+cd ~/Documents/deepseek-harness/viburnum && npm link
+```
+
 ```powershell
+# Windows
 cd C:\Users\<you>\Documents\deepseek-harness\viburnum
 npm link
 ```
@@ -163,6 +176,24 @@ Verified live in the `web` profile for 0.2.0:
 Not claimed: a real install of a new plugin (the profile was not mutated for a test), a real track
 switch from the live detail, light/dark theme comparison, and the second machine.
 
+### Cross-platform check (2026-11-09, `dev`)
+
+The macOS path was made verifiable while 0.3.0 was in flight:
+
+- `npm run check` — 150 tests, 0 failures on macOS 26.7 (Darwin arm64, Node 24.21.0).
+- CI runs the same gate on `ubuntu-latest`, `macos-latest` and `windows-latest` (Node 22); the Linux
+  and Windows runs had not run yet when this note was written.
+- The live CLI ran on this Mac: `vib status` (exit 3 while a row is not current) and `vib brief`
+  (exit 0) both answered from the real profile.
+- The terminal command builder describes all three platforms from one Host (`wt.exe`/`powershell.exe`,
+  two `osascript` variants, `x-terminal-emulator`/`gnome-terminal`/`xterm`), shell-quotes macOS paths,
+  and falls through a launcher that exits non-zero instead of reporting a false success. The Linux
+  directory picker falls back to `kdialog` when `zenity` is absent; all of this is covered by unit
+  tests with an injected spawn.
+
+Not run: the live Terminal action (it needs a profile reload), the cross-platform CI runs themselves,
+and the live page after the change.
+
 ### 0.1.0 verification (2026-11-06)
 
 Verified live in the `web` profile:
@@ -185,6 +216,10 @@ machine.
 ## Limits
 
 - viburnum never commits and never force-pushes.
+- The desktop actions are OS-native: the terminal comes from the platform's candidate list (Windows
+  Terminal/PowerShell, iTerm2/Terminal.app, x-terminal/gnome-terminal/xterm), **Browse** needs
+  `zenity` or `kdialog` on Linux, and macOS may ask for Automation permission the first time a
+  terminal is opened. `vib new --push` needs git 2.28 or newer (`git init -b`).
 - 0.2.0 is accepted against the live local profile and offline fixture repositories. No second
   machine is available, so cross-machine sync is not verified in this release.
 - The page transport is a localhost-only JSON route pair; it stores no credentials and reads no

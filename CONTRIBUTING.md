@@ -21,13 +21,13 @@ please read this before opening either.
 
 ## The gate
 
-```powershell
+```sh
 npm run check
 ```
 
-That is the static bundle checks plus the full `node --test` suite (78 tests at 0.1.0). It must be
-green. The tests use real fixture git repositories under the operating system temp directory; no
-network and no harness are needed.
+That is the static bundle checks plus the full `node --test` suite. It must be green on macOS,
+Linux and Windows — CI runs it on all three, and the tests use real fixture git repositories under
+the operating system temp directory, so no network and no harness are needed.
 
 If you change behaviour, change the tests and the README in the same pull request. The README's
 **Limits** and **Verification** sections are part of the deliverable, not a footnote.

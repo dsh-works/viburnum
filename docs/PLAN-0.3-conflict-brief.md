@@ -54,4 +54,4 @@
 | 3 | Resolve by hand, stage, Retry | rebase continues and pushes | fixture test | **pass** — `Retry continues a rebase after a manual resolution` |
 | 4 | Myself | rebase aborts and the tree returns to the pre-rebase state | fixture test | **pass** — abort returns ahead 1/behind 1 and no rebase in progress |
 | 5 | `vib_brief` / `vib brief` | status + warnings + changed-since feed; a second brief has no events | tool + CLI tests | **pass** — tool render test and CLI `brief` test; core test proves the feed clears |
-| 6 | `npm run check` | all suites green | command transcript | **pass** — 132 tests, 0 failures |
+| 6 | `npm run check` | all suites green | command transcript | **pass** — 132 tests, 0 failures at this revision (the suite is 150 after the terminal-setting and cross-platform work) |
