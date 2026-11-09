@@ -253,6 +253,21 @@ test('vib log reports an empty timeline', async (t) => {
   assert.match(result.stdout, /timeline: nothing new/u)
 })
 
+test('vib brief reports the status and an empty change feed', async (t) => {
+  const { env } = await setup(t)
+  const result = await runCli(env, ['brief'])
+  assert.equal(result.code, 0)
+  assert.match(result.stdout, /dot: green/u)
+  assert.match(result.stdout, /nothing new since the last brief/u)
+})
+
+test('vib sync exits need a bundle name', async (t) => {
+  const { env } = await setup(t)
+  const result = await runCli(env, ['sync', '--abort'])
+  assert.equal(result.code, 1)
+  assert.match(result.stderr, /needs <bundle>/u)
+})
+
 test('vib hygiene scans the working directory and exits 3 on findings', async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'viburnum-cli-hygiene-'))
   t.after(() => rm(root, { recursive: true, force: true }))

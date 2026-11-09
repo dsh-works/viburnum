@@ -66,8 +66,10 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
   through `pluginManager.installBundle`; new clones land in the shelf (`pluginsDir`), while checkouts
   the profile already links are never moved.
 - **Moves**: `Update` is a fetch and a fast-forward. `Sync` pushes unpublished commits, fast-forwards,
-  or rebases private divergence and pushes it; it refuses to rebase published history and aborts a
-  conflicting rebase before reporting it. `Revert` restores the latest update or switch snapshot.
+  or rebases private divergence and pushes it; it refuses to rebase published history, and a
+  conflicting rebase **stays stopped** with three exits — **Agree** (union-merge append-only files),
+  **Guide** (open the files, fix, Retry) and **Myself** (abort). `Revert` restores the latest update
+  or switch snapshot.
 - **Timeline**: what changed since the last look — incoming commits (with their first subject) and
   viburnum's own moves — above the rows; `vib log` reads and clears it.
 - **Hygiene scan**: duplicate checkouts, local branches never merged into `main`, and dirty trees,
@@ -77,10 +79,10 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
   harness-drift warnings. Saved in the profile state and applied without a reload.
 - **Harness-drift tracking**: a warning when the running DSH version changes between runs, and one for
   every plugin whose `engines.dsh` range rejects the running harness.
-- **Five model-facing tools**: `vib_status`, `vib_update`, `vib_sync`, `vib_switch`, `vib_revert`.
-  Reads are free; every move asks for approval.
-- **A CLI**: `vib status | refresh | update | sync | switch | revert | log | hygiene | install | new`,
-  plus `--json` and `--dry-run`.
+- **Six model-facing tools**: `vib_status`, `vib_brief`, `vib_update`, `vib_sync`, `vib_switch`,
+  `vib_revert`. Reads are free; every move asks for approval.
+- **A CLI**: `vib status | refresh | update | sync | switch | revert | log | hygiene | brief | install | new`,
+  plus `--json`, `--dry-run` and `vib sync --agree|--continue|--abort`.
 - **State with the profile**: tracks, cached rows, receipts, snapshots, the timeline, the settings and
   the last seen harness version at `$DSH_HOME/profiles/<profile>/.viburnum/state.json`, written
   atomically and pruned on write.

@@ -109,6 +109,22 @@ test('compatibility warns when a bundle rejects the running harness', async (t) 
   assert.deepEqual(core.snapshot().compat.warnings.filter((warning) => warning.kind === 'engine-mismatch'), [])
 })
 
+test('the brief returns status and clears the timeline', async (t) => {
+  const { world, core } = await setup(t)
+  await core.load()
+  await world.commit(world.laptop, 'a.txt', 'a\n', 'laptop one')
+  await world.push(world.laptop)
+  await core.sync('dsh-plugin-work')
+
+  const first = await core.brief()
+  assert.equal(first.ok, true)
+  assert.equal(first.rows.length, 2)
+  assert.ok(first.events.some((event) => event.kind === 'sync'))
+
+  const second = await core.brief()
+  assert.deepEqual(second.events, [])
+})
+
 test('the timeline records a move and clears when read', async (t) => {
   const { world, core } = await setup(t)
   await core.load()

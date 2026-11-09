@@ -54,6 +54,7 @@ test('every tool declares its name, parameters and output contract', () => {
     'vib_status',
     'vib_update',
     'vib_sync',
+    'vib_brief',
     'vib_switch',
     'vib_revert',
   ])
@@ -76,6 +77,25 @@ test('vib_status reads the core cache without approval', async () => {
   assert.equal(value.dot, 'green')
   assert.equal(value.rows.length, 1)
   assert.match(status.output.render({}, value)[0].text, /a — main ✓ current/u)
+})
+
+test('vib_brief reads status and the timeline without approval', async () => {
+  const core = coreStub()
+  core.brief = async () => ({
+    ok: true,
+    dot: 'green',
+    checkedAt: null,
+    rows: [{ name: 'a', track: 'main', ahead: 0, behind: 0, status: 'current' }],
+    warnings: [],
+    events: [{ bundle: 'a', kind: 'sync', text: 'pulled 1' }],
+  })
+  const definitions = tools({ core })
+  const brief = definitions.find((tool) => tool.name === 'vib_brief')
+  const value = await brief.execute({}, { signal: new AbortController().signal })
+  assert.equal(value.ok, true)
+  const rendered = brief.output.render({}, value)[0].text
+  assert.match(rendered, /since the last brief/u)
+  assert.match(rendered, /- a sync: pulled 1/u)
 })
 
 test('mutating tools ask for approval and refuse when it is not granted', async () => {

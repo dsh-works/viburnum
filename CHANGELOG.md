@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Conflict exits.** A conflicting sync now leaves the rebase stopped instead of aborting it and
+  offers the design's three exits: **Agree** (a union merge, only for append-only files such as
+  `CHANGELOG.md`; disabled with the reason otherwise), **Guide** (open each conflicted file in the
+  desktop editor, then Retry to continue and push) and **Myself** (abort back to the pre-rebase tree).
+  The page shows the panel; the CLI spells it `vib sync --agree|--continue|--abort <bundle>`.
+- **`vib_brief`** — a read-only sixth tool (and `vib brief` CLI command): the aggregate dot, every
+  bundle's state, harness-drift warnings, and what changed since the previous brief (the timeline feed,
+  marked read), so a session starts informed.
+
 ## 0.2.2 — 2026-11-09
 
 Catalog completion: every organisation repository (private included) in a searchable list with icons,

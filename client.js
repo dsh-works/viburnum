@@ -79,6 +79,11 @@ window.__ModuleLoader__.load({
         timeline: 'timeline',
         noHygieneFindings: 'No hygiene problems found.',
         scan: 'Scan',
+        conflict: 'conflict',
+        agree: 'Agree',
+        retry: 'Retry',
+        myself: 'Myself',
+        open: 'Open',
         settingsTitle: 'viburnum settings',
         settingsHint: 'How often viburnum checks, and whether it warns when the harness drifts.',
         refreshInterval: 'Refresh interval (minutes)',
@@ -598,6 +603,16 @@ window.__ModuleLoader__.load({
         closeCatalogPreview() {
           set({ catalogPreview: null })
         },
+        async openConflict(bundle, path) {
+          try {
+            await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'open-conflict', bundle, path }),
+            })
+          } catch {
+            // Opening a file is best-effort; the conflict panel stays.
+          }
+        },
         async loadCatalog(refresh = false) {
           set({ catalog: { phase: 'loading', owners: [], error: null } })
           try {
@@ -866,6 +881,7 @@ window.__ModuleLoader__.load({
       const pullable = rows.filter((row) => row.status === 'remote-ahead').length
       const busy = state.busy !== null
       const banner = state.last ? describeResult(state.last, t) : null
+      const conflict = state.last !== null && state.last !== null && state.last.code === 'conflict' ? state.last : null
       const detail = state.detail
       const doc = state.doc
       const timeline = state.timeline
@@ -1121,6 +1137,57 @@ window.__ModuleLoader__.load({
           h('button', { style: styles.button, disabled: busy, onClick: () => setInstallOpen(!installOpen) }, '+ ' + t('install')),
         ),
         banner !== null && banner !== '' ? h('div', { style: styles.banner }, banner) : null,
+        conflict !== null
+          ? h(
+            'div',
+            { style: styles.row },
+            h(
+              'div',
+              { style: styles.rowTop },
+              h('span', { style: styles.error }, t('conflict') + ': ' + (conflict.bundle ?? '')),
+              h('span', { style: styles.spacer }),
+            ),
+            h(
+              'div',
+              { style: styles.secondary },
+              (conflict.message ?? '') + (Array.isArray(conflict.files) && conflict.files.length > 0
+                ? ' · ' + conflict.files.join(', ')
+                : ''),
+            ),
+            h(
+              'div',
+              { style: styles.controls },
+              h('button', {
+                style: styles.button,
+                disabled: busy || conflict.exits?.agree?.available !== true,
+                title: conflict.exits?.agree?.reason ?? '',
+                onClick: () => run('conflict', { bundle: conflict.bundle, exit: 'agree' }),
+              }, t('agree')),
+              h('button', {
+                style: styles.button,
+                disabled: busy,
+                onClick: () => run('conflict', { bundle: conflict.bundle, exit: 'continue' }),
+              }, t('retry')),
+              h('button', {
+                style: styles.button,
+                disabled: busy,
+                onClick: () => run('conflict', { bundle: conflict.bundle, exit: 'abort' }),
+              }, t('myself')),
+            ),
+            h(
+              'div',
+              { style: styles.controls },
+              ...(Array.isArray(conflict.files) ? conflict.files : []).map((file) => h('button', {
+                key: file,
+                style: styles.button,
+                onClick: () => void store.openConflict(conflict.bundle, file),
+              }, t('open') + ' ' + file)),
+              conflict.exits?.agree?.reason
+                ? h('span', { style: styles.secondary }, conflict.exits.agree.reason)
+                : null,
+            ),
+          )
+          : null,
         timeline !== null && timeline.events.length > 0
           ? h(
             'div',
