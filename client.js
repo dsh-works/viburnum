@@ -589,21 +589,52 @@ window.__ModuleLoader__.load({
       const rowView = (row) =>
         h(
           'div',
-          { key: row.name, style: styles.row },
+          {
+            key: row.name,
+            style: { ...styles.row, cursor: 'pointer' },
+            onClick: () => openDetail(row.name),
+          },
           h(
             'div',
             { style: styles.rowTop },
             h('span', { style: { ...styles.dot, background: DOT_TOKEN[row.dot] || DOT_TOKEN.grey } }),
-            h('button', { style: styles.nameLink, onClick: () => openDetail(row.name) }, row.name),
+            h('button', {
+              style: styles.nameLink,
+              onClick: (event) => {
+                event.stopPropagation()
+                openDetail(row.name)
+              },
+            }, row.name),
             row.version ? h('span', { style: styles.version }, 'v' + row.version) : null,
             h('span', { style: styles.track }, row.track || '-'),
             h('span', { style: styles.arrows }, arrows(row)),
             h('span', { style: styles.status }, t('status.' + row.status)),
             row.stale ? h('span', { style: styles.secondary }, '· ' + t('stale')) : null,
             h('span', { style: styles.spacer }),
-            h('button', { style: styles.button, disabled: busy, onClick: () => run('update', { bundle: row.name }) }, t('update')),
-            h('button', { style: styles.button, disabled: busy, onClick: () => run('sync', { bundle: row.name }) }, t('sync')),
-            h('button', { style: styles.button, disabled: busy, onClick: () => run('revert', { bundle: row.name }) }, t('revert')),
+            h('button', {
+              style: styles.button,
+              disabled: busy,
+              onClick: (event) => {
+                event.stopPropagation()
+                run('update', { bundle: row.name })
+              },
+            }, t('update')),
+            h('button', {
+              style: styles.button,
+              disabled: busy,
+              onClick: (event) => {
+                event.stopPropagation()
+                run('sync', { bundle: row.name })
+              },
+            }, t('sync')),
+            h('button', {
+              style: styles.button,
+              disabled: busy,
+              onClick: (event) => {
+                event.stopPropagation()
+                run('revert', { bundle: row.name })
+              },
+            }, t('revert')),
           ),
           h('div', { style: styles.secondary }, row.dir),
           h(
@@ -616,6 +647,7 @@ window.__ModuleLoader__.load({
                 style: styles.select,
                 value: row.track || '',
                 disabled: busy,
+                onClick: (event) => event.stopPropagation(),
                 onChange: (event) => run('switch', { bundle: row.name, track: event.target.value }),
               },
               trackOptions(row).map((track) => h('option', { key: track, value: track }, track)),
