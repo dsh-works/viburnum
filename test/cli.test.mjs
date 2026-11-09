@@ -151,7 +151,7 @@ test('switch moves one bundle to a track from the command line', async (t) => {
 
 test('the CLI banner is the lowercase backronym', async (t) => {
   const { env } = await setup(t)
-  const tagline = 'vib - keeps all linked installs neatly synced in two universes'
+  const tagline = 'viburnum - keeps all linked installs neatly synced in two universes'
 
   const help = await runCli(env, ['--help'])
   assert.equal(help.stdout.split(/\r?\n/u)[0], tagline)
