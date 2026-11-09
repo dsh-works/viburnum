@@ -149,6 +149,17 @@ test('switch moves one bundle to a track from the command line', async (t) => {
   assert.equal(await world.branch(world.work), 'dev')
 })
 
+test('the CLI banner is the lowercase backronym', async (t) => {
+  const { env } = await setup(t)
+  const tagline = 'vib - keeps all linked installs neatly synced in two universes'
+
+  const help = await runCli(env, ['--help'])
+  assert.equal(help.stdout.split(/\r?\n/u)[0], tagline)
+
+  const bare = await runCli(env, [])
+  assert.equal(bare.stdout.split(/\r?\n/u)[0], tagline)
+})
+
 test('an unknown command fails with usage', async (t) => {
   const { env } = await setup(t)
 

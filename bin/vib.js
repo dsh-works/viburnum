@@ -18,7 +18,7 @@ import { readProfileBundles } from '../lib/profile.js'
 
 const DEFAULT_HOST = 'http://127.0.0.1:3080'
 
-const USAGE = `vib — keep linked plugin checkouts current across two machines
+const USAGE = `vib - keeps all linked installs neatly synced in two universes
 
 Usage:
   vib status [--json]                 cached rows and directions (local read only)
