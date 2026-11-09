@@ -15,6 +15,7 @@ import { resolve } from 'node:path'
 
 import { createCore } from '../lib/core.js'
 import { readProfileBundles } from '../lib/profile.js'
+import { scaffoldPlugin } from '../lib/scaffold.js'
 
 const DEFAULT_HOST = 'http://127.0.0.1:3080'
 
@@ -28,10 +29,14 @@ Usage:
   vib switch <bundle> <track>         switch one bundle to another branch
   vib revert <bundle>                 restore the latest update or switch snapshot
   vib install <path|url|owner/repo>   install through the running viburnum page route
+  vib new <name> [--dir <path>] [--git]
+                                       scaffold a Host-only bundle that satisfies the taxonomy
 
 Options:
   --profile <name>   profile to read (default: $DSH_PROFILE or web)
   --host <url>       viburnum Host origin for install (default: $VIBURNUM_HOST, $DSH_WEB_URL, http://127.0.0.1:3080)
+  --dir <path>       target directory for new (default: ./<package name>)
+  --git              initialise the scaffolded bundle and make its first commit
   --json             print JSON instead of the table
   --dry-run          fetch, then print the sync plan without moving the tree or pushing
   -h, --help         show this help
@@ -40,13 +45,14 @@ Exit: 0 success, 1 failure, 3 pending (behind or ahead).`
 
 /** Parse command-line arguments into flags and positionals. */
 function parse(argv) {
-  const flags = { json: false, dryRun: false, help: false, profile: undefined, host: undefined }
+  const flags = { json: false, dryRun: false, help: false, profile: undefined, host: undefined, dir: undefined, git: false }
   const positional = []
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index]
     if (argument === '--json') flags.json = true
     else if (argument === '--dry-run') flags.dryRun = true
+    else if (argument === '--git') flags.git = true
     else if (argument === '-h' || argument === '--help') flags.help = true
     else if (argument === '--profile') {
       flags.profile = argv[index + 1]
@@ -58,6 +64,11 @@ function parse(argv) {
       index += 1
     } else if (argument.startsWith('--host=')) {
       flags.host = argument.slice('--host='.length)
+    } else if (argument === '--dir') {
+      flags.dir = argv[index + 1]
+      index += 1
+    } else if (argument.startsWith('--dir=')) {
+      flags.dir = argument.slice('--dir='.length)
     } else if (argument.startsWith('-')) {
       throw new Error(`unknown option: ${argument}`)
     } else {
@@ -67,6 +78,7 @@ function parse(argv) {
 
   if (flags.profile !== undefined && flags.profile.trim() === '') throw new Error('--profile needs a name')
   if (flags.host !== undefined && flags.host.trim() === '') throw new Error('--host needs a URL')
+  if (flags.dir !== undefined && flags.dir.trim() === '') throw new Error('--dir needs a path')
   return { flags, positional }
 }
 
@@ -191,6 +203,21 @@ async function main(argv) {
     if (flags.json) console.log(JSON.stringify(result, null, 2))
     else printInstall(result)
     return result?.ok === true ? 0 : 1
+  }
+
+  // Scaffolding is local: it needs no harness and no profile.
+  if (command === 'new') {
+    const result = await scaffoldPlugin({ name: rest[0], dir: flags.dir, git: flags.git })
+    if (flags.json) {
+      console.log(JSON.stringify(result, null, 2))
+    } else {
+      console.log(`created ${result.package} in ${result.dir}`)
+      for (const file of result.files) console.log(`  ${file}`)
+      if (result.git) console.log('git: initial commit created')
+      if (result.warning) console.error(result.warning)
+      console.log('next: cd into it and run `vib install .` with the Host running')
+    }
+    return 0
   }
 
   const core = createCore({

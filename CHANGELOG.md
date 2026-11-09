@@ -4,6 +4,9 @@
 
 ### Added
 
+- `vib new <name> [--dir <path>] [--git]` scaffolds a Host-only bundle that satisfies the taxonomy:
+  package manifest, bundle patch row, entry module, a passing test and a README; names normalize to
+  `dsh-plugin-<slug>`, a non-empty target is refused, and `--git` adds an initial local commit.
 - `vib install <path|url|owner/repo>` is the CLI spelling of the install doors: it posts to the
   running Host's guarded install action (`--host`, `$VIBURNUM_HOST`, `$DSH_WEB_URL`, default
   `http://127.0.0.1:3080`), resolves `.` to the current directory, and prints the same receipt or
