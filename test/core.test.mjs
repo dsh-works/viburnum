@@ -76,6 +76,11 @@ test('settings save, validate and appear in the snapshot', async (t) => {
   await assert.rejects(core.setSettings({ catalogOwners: ['bad owner!'] }), (error) => error.code === 'invalid-settings')
   await assert.rejects(core.setSettings({ defaultOwner: 'not-configured' }), (error) => error.code === 'invalid-settings')
 
+  assert.equal(core.snapshot().settings.terminal, 'auto')
+  assert.ok(Array.isArray(core.snapshot().terminalChoices))
+  assert.equal((await core.setSettings({ terminal: 'auto' })).settings.terminal, 'auto')
+  await assert.rejects(core.setSettings({ terminal: 'not-a-terminal' }), (error) => error.code === 'invalid-settings')
+
   await core.setSettings({ refreshOnStartup: true })
   assert.equal(core.snapshot().settings.refreshOnStartup, true)
   assert.equal(core.snapshot().settings.checkIntervalMinutes, 15)

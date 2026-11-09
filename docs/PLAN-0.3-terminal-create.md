@@ -19,7 +19,7 @@
 
 | Question | Decision |
 |---|---|
-| Terminal flavour | **OS terminal** for 0.3: Windows Terminal (fallback PowerShell), macOS Terminal via osascript, Linux x-terminal/gnome-terminal. An Agent-owned harness PTY needs a session picker and is deferred. |
+| Terminal flavour | **OS terminal** for 0.3: Windows Terminal (fallback PowerShell), macOS **iTerm2** (fallback Terminal.app), Linux x-terminal/gnome-terminal/xterm. A **default terminal** setting lets the user pick per machine (e.g. iTerm2 on macOS); `auto` follows the platform order. An Agent-owned harness PTY needs a session picker and is deferred. |
 | Creation confirmation | Explicit CLI flags are the confirmation: `--push --org <owner>`; **private by default**, `--public` opts out; no deletion path exists. |
 | Post-create install | Not automatic; the next step prints `vib install <owner>/<repo>` (the organisation door). |
 
@@ -46,6 +46,7 @@
 | # | Trigger | Expected result | Observed by | Result |
 |---|---|---|---|---|
 | 1 | Terminal action on a bundle | the desktop terminal opens in that checkout | live page | not run |
+| 1b | Settings → Terminal application | the choices match the Host platform (iTerm2/Terminal.app on macOS, wt/PowerShell on Windows, x-terminal/gnome/xterm on Linux); the chosen one launches first | route JSON + unit test | **pass (unit + route)** — choices per platform and preference ordering tested; setting validated |
 | 2 | `vib new demo --push --org dsh-works` | repository created (private), first commit pushed, next step printed | live command | not run — needs a real repository creation, deferred to the owner |
 | 3 | Creation refused (bad owner/exists/permission) | readable `create-http` failure; no push attempted | stubbed API test | not run |
 | 4 | Push fails after creation | the repository is reported as created and the push error is printed; nothing deleted | unit test (publish failure path is exercised by a local bare origin) | not run |

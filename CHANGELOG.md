@@ -5,7 +5,9 @@
 ### Added
 
 - A **Terminal** action in the workbench opens the Host desktop's terminal already in the bundle's
-  checkout (Windows Terminal → PowerShell fallback, macOS Terminal, Linux x-terminal/gnome-terminal).
+  checkout (Windows Terminal → PowerShell fallback, macOS iTerm2 → Terminal.app, Linux
+  x-terminal/gnome-terminal/xterm). Settings → viburnum gains a **Terminal application** choice per
+  machine (`auto` follows the platform order).
 - `vib new <name> --push --org <owner>` creates the GitHub repository (private by default, `--public`
   opts out) and pushes the first commit to `main`; the next step prints the `vib install owner/repo`
   command. Failures keep the created repository and report the push error.

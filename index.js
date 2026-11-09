@@ -128,7 +128,7 @@ export function apply(ctx, config) {
         ready,
         openPath,
         pickDirectory,
-        openTerminal: (dir) => openTerminalAt(dir),
+        openTerminal: (dir) => openTerminalAt(dir, { preferred: core.snapshot().settings.terminal }),
       }),
       'dsh-plugin-viburnum: routes',
     )
