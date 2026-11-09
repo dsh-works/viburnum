@@ -725,7 +725,7 @@ window.__ModuleLoader__.load({
       const [catalogRepo, setCatalogRepo] = React.useState('')
       const catalog = state.catalog
       const ownerEntry = catalog !== null && Array.isArray(catalog.owners)
-        ? catalog.owners.find((entry) => entry.owner === (catalogOwner || catalogOwners[0]))
+        ? (catalog.owners.find((entry) => entry.owner === (catalogOwner || catalogOwners[0])) ?? null)
         : null
       const catalogRepos = ownerEntry !== null && Array.isArray(ownerEntry.repos) ? ownerEntry.repos : []
       React.useEffect(() => {

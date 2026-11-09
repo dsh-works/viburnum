@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1 — 2026-11-09
+
+### Fixed
+
+- The page no longer goes blank when the install form switches to **Organisation** while the catalog
+  is still loading: a missing owner entry is treated as "no repository chosen" instead of being
+  dereferenced.
+
 ## 0.2.0 — 2026-11-09
 
 The adoption release: three install doors and a shelf, a workbench page per plugin, settings with
