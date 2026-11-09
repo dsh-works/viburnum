@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
@@ -155,4 +156,80 @@ test('an unknown command fails with usage', async (t) => {
   assert.equal(result.code, 1)
   assert.match(result.stderr, /unknown command/u)
   assert.match(result.stdout, /Usage/u)
+})
+
+/** Start one stub page route and return its origin plus the recorded requests. */
+async function makeHost(t, responder = () => ({ ok: true, installed: true, name: 'dsh-plugin-new', version: '0.1.0' })) {
+  const requests = []
+  const server = createServer((request, response) => {
+    let body = ''
+    request.setEncoding('utf8')
+    request.on('data', (chunk) => { body += chunk })
+    request.on('end', () => {
+      let parsed = null
+      try {
+        parsed = JSON.parse(body)
+      } catch {
+        parsed = null
+      }
+      requests.push({ url: request.url, method: request.method, headers: request.headers, body: parsed })
+      response.setHeader('content-type', 'application/json')
+      response.end(JSON.stringify(responder(parsed)))
+    })
+  })
+  await new Promise((resolveListen) => server.listen(0, '127.0.0.1', resolveListen))
+  t.after(() => new Promise((resolveClose) => server.close(resolveClose)))
+  const { port } = server.address()
+  return { origin: `http://127.0.0.1:${port}`, requests }
+}
+
+test('install sends the resolved directory door to the Host route', async (t) => {
+  const host = await makeHost(t)
+  const plugin = await mkdtemp(join(tmpdir(), 'viburnum-cli-plugin-'))
+  t.after(() => rm(plugin, { recursive: true, force: true }))
+
+  const env = { ...process.env, VIBURNUM_HOST: host.origin }
+  const result = await runCli(env, ['install', plugin])
+
+  assert.equal(result.code, 0)
+  assert.match(result.stdout, /installed dsh-plugin-new v0\.1\.0/u)
+  assert.equal(host.requests.length, 1)
+  assert.equal(host.requests[0].url, '/viburnum/action')
+  assert.equal(host.requests[0].method, 'POST')
+  assert.equal(host.requests[0].headers['x-viburnum'], '1')
+  assert.deepEqual(host.requests[0].body, { action: 'install', door: 'directory', spec: plugin })
+})
+
+test('install spells a repository and honours --host', async (t) => {
+  const host = await makeHost(t)
+  const env = { ...process.env, VIBURNUM_HOST: 'http://127.0.0.1:1' }
+
+  const result = await runCli(env, ['install', 'dsh-works/dsh-plugin-pip', '--host', host.origin])
+  assert.equal(result.code, 0)
+  assert.deepEqual(host.requests[0].body, {
+    action: 'install',
+    door: 'repository',
+    spec: 'dsh-works/dsh-plugin-pip',
+  })
+})
+
+test('install prints a refusal and exits 1', async (t) => {
+  const host = await makeHost(t, () => ({ ok: false, code: 'missing-directory', message: 'no package.json in C:\\nope' }))
+  const plugin = await mkdtemp(join(tmpdir(), 'viburnum-cli-plugin-'))
+  t.after(() => rm(plugin, { recursive: true, force: true }))
+
+  const result = await runCli({ ...process.env, VIBURNUM_HOST: host.origin }, ['install', plugin])
+  assert.equal(result.code, 1)
+  assert.match(result.stderr, /install refused: missing-directory/u)
+  assert.match(result.stderr, /no package\.json/u)
+})
+
+test('install without a reachable Host or an argument fails clearly', async (t) => {
+  const unreachable = await runCli({ ...process.env, VIBURNUM_HOST: 'http://127.0.0.1:1' }, ['install', '.'])
+  assert.equal(unreachable.code, 1)
+  assert.match(unreachable.stderr, /cannot reach the viburnum Host/u)
+
+  const missing = await runCli(process.env, ['install'])
+  assert.equal(missing.code, 1)
+  assert.match(missing.stderr, /install needs a path/u)
 })

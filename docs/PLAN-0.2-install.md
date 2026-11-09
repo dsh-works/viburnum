@@ -28,6 +28,10 @@ The page can **adopt a plugin**, not only watch what the profile already links:
   URL); the result banner reports `installed <name> v<version>` or the refusal code. In directory
   mode a **Browse…** button asks the Host for a native folder dialog and fills the path field with
   its absolute choice (typed paths keep working; Cancel leaves the field untouched).
+- **CLI:** `vib install <path|url|owner/repo>` is the directory/repository door from a terminal. The
+  CLI has no plugin manager, so it posts to the running Host's guarded install action and prints the
+  same receipt/refusal; the origin comes from `--host`, `$VIBURNUM_HOST`, `$DSH_WEB_URL`, else
+  `http://127.0.0.1:3080`. `.` resolves to the current directory (D20).
 - **Shelf:** `pluginsDir` configuration is honoured; a free shelf slot is created, an occupied slot is
   never overwritten (`shelf-collision`). An already-linked checkout is refused, never re-linked.
 
@@ -50,7 +54,8 @@ The page can **adopt a plugin**, not only watch what the profile already links:
 | 3 | Bad paths and specs | `missing-directory`, `invalid-repository`, `not-a-bundle`, `shelf-collision` refusals with no profile change | live page / route JSON | not run |
 | 4 | Already-linked checkout | `already-installed` refusal; the existing row is untouched | route JSON | not run |
 | 5 | Directory mode → **Browse…** | the Host opens its native folder dialog; a choice fills the path field, Cancel leaves the typed value alone, and a Host without a picker reports `browse-unavailable` | live page | not run |
-| 6 | `npm run check` | core install-door tests pass, suite green | command transcript | **pending** |
+| 6 | `vib install .` / `vib install owner/repo` with the Host running | the CLI posts the right door and prints `installed …`; a refusal exits 1; no Host → a clear “cannot reach” error | command transcript | not run |
+| 7 | `npm run check` | core install-door tests pass, suite green | command transcript | **pending** |
 
 ## Risks and unknowns
 

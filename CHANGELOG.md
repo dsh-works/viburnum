@@ -4,6 +4,10 @@
 
 ### Added
 
+- `vib install <path|url|owner/repo>` is the CLI spelling of the install doors: it posts to the
+  running Host's guarded install action (`--host`, `$VIBURNUM_HOST`, `$DSH_WEB_URL`, default
+  `http://127.0.0.1:3080`), resolves `.` to the current directory, and prints the same receipt or
+  refusal.
 - The install form's **Organisation** door lists the repositories of the configured GitHub owners
   (`catalogOwners`), marks archived ones, caches successful reads for ten minutes, offers a manual
   refresh, and installs a picked `owner/repo` through the repository door (shelf clone + link). A

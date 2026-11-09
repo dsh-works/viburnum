@@ -11,8 +11,12 @@
  * @module dsh-plugin-viburnum/bin/vib
  */
 
+import { resolve } from 'node:path'
+
 import { createCore } from '../lib/core.js'
 import { readProfileBundles } from '../lib/profile.js'
+
+const DEFAULT_HOST = 'http://127.0.0.1:3080'
 
 const USAGE = `vib — keep linked plugin checkouts current across two machines
 
@@ -23,9 +27,11 @@ Usage:
   vib sync [<bundle>] [--dry-run]     push, pull or rebase; --json for machines
   vib switch <bundle> <track>         switch one bundle to another branch
   vib revert <bundle>                 restore the latest update or switch snapshot
+  vib install <path|url|owner/repo>   install through the running viburnum page route
 
 Options:
   --profile <name>   profile to read (default: $DSH_PROFILE or web)
+  --host <url>       viburnum Host origin for install (default: $VIBURNUM_HOST, $DSH_WEB_URL, http://127.0.0.1:3080)
   --json             print JSON instead of the table
   --dry-run          fetch, then print the sync plan without moving the tree or pushing
   -h, --help         show this help
@@ -34,7 +40,7 @@ Exit: 0 success, 1 failure, 3 pending (behind or ahead).`
 
 /** Parse command-line arguments into flags and positionals. */
 function parse(argv) {
-  const flags = { json: false, dryRun: false, help: false, profile: undefined }
+  const flags = { json: false, dryRun: false, help: false, profile: undefined, host: undefined }
   const positional = []
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -47,6 +53,11 @@ function parse(argv) {
       index += 1
     } else if (argument.startsWith('--profile=')) {
       flags.profile = argument.slice('--profile='.length)
+    } else if (argument === '--host') {
+      flags.host = argv[index + 1]
+      index += 1
+    } else if (argument.startsWith('--host=')) {
+      flags.host = argument.slice('--host='.length)
     } else if (argument.startsWith('-')) {
       throw new Error(`unknown option: ${argument}`)
     } else {
@@ -55,7 +66,56 @@ function parse(argv) {
   }
 
   if (flags.profile !== undefined && flags.profile.trim() === '') throw new Error('--profile needs a name')
+  if (flags.host !== undefined && flags.host.trim() === '') throw new Error('--host needs a URL')
   return { flags, positional }
+}
+
+/** The viburnum Host origin: flag, environment, then the local default. */
+function hostOf(flags, env = process.env) {
+  const raw = flags.host ?? env.VIBURNUM_HOST ?? env.DSH_WEB_URL ?? DEFAULT_HOST
+  return String(raw).trim().replace(/\/+$/u, '')
+}
+
+/** Decide the door for an install spelling: a path, or a repository. */
+function installTarget(input, cwd = process.cwd()) {
+  const text = String(input ?? '').trim()
+  if (text === '') throw new Error('install needs a path, a repository URL or owner/repo')
+  if (/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(text) || /^(https?:\/\/|ssh:\/\/|git@)/u.test(text)) {
+    return { door: 'repository', spec: text }
+  }
+  return { door: 'directory', spec: resolve(cwd, text) }
+}
+
+/** Call one guarded page action on the running Host. */
+async function pageAction(host, body, fetchImpl = globalThis.fetch) {
+  let response
+  try {
+    response = await fetchImpl(`${host}/viburnum/action`, {
+      method: 'POST',
+      headers: { 'x-viburnum': '1', 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000),
+    })
+  } catch (error) {
+    throw new Error(`cannot reach the viburnum Host at ${host}; start the web profile or pass --host (${error.message})`)
+  }
+  let payload
+  try {
+    payload = await response.json()
+  } catch {
+    throw new Error(`the viburnum Host at ${host} returned a non-JSON answer (${response.status})`)
+  }
+  if (!response.ok && typeof payload?.message === 'string') throw new Error(payload.message)
+  return payload
+}
+
+/** Print one install receipt or refusal. */
+function printInstall(result) {
+  if (result?.ok === true && result.installed === true) {
+    console.log(`installed ${result.name ?? ''}${result.version ? ` v${result.version}` : ''}${result.cloned === true ? ' · cloned' : ''}`)
+    return
+  }
+  console.error(`install refused: ${result?.code ?? 'error'} — ${result?.message ?? 'unknown failure'}`)
 }
 
 /** `↑2 ↓3`, or `✓` when the row is level with its track. */
@@ -121,6 +181,16 @@ async function main(argv) {
   if (command === undefined) {
     console.log(USAGE)
     return 1
+  }
+
+  // Install is the CLI spelling of the directory door, and the guarded route is
+  // the only place with the plugin manager: the CLI calls the running page.
+  if (command === 'install') {
+    const target = installTarget(rest[0])
+    const result = await pageAction(hostOf(flags), { action: 'install', ...target })
+    if (flags.json) console.log(JSON.stringify(result, null, 2))
+    else printInstall(result)
+    return result?.ok === true ? 0 : 1
   }
 
   const core = createCore({
