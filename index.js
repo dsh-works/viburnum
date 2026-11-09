@@ -15,6 +15,7 @@ import { dirname } from 'node:path'
 import { Config } from './lib/config.js'
 import { createCore } from './lib/core.js'
 import { fetchOwnerRepos } from './lib/catalog.js'
+import { readGitCredentials } from './lib/credentials.js'
 import { must } from './lib/git.js'
 import { scanHygiene } from './lib/hygiene.js'
 import { pickDirectory } from './lib/picker.js'
@@ -43,6 +44,7 @@ export function apply(ctx, config) {
   const workspaceDirectory = typeof directoryService?.defaultDirectory === 'string'
     ? directoryService.defaultDirectory
     : process.cwd()
+  let gitHubToken = null
 
   let core
   core = createCore({
@@ -55,9 +57,15 @@ export function apply(ctx, config) {
       await mkdir(dirname(target), { recursive: true })
       await must(dirname(target), ['clone', '--', url, target], { timeoutMs: 120_000 })
     },
-    catalogFetcher: (owner) => fetchOwnerRepos(owner, {
-      token: process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null,
-    }),
+    catalogFetcher: async (owner) => {
+      // Ask git's own stored credentials once per process so private
+      // organisation repositories are visible without a second token store.
+      if (gitHubToken === null) {
+        gitHubToken = await readGitCredentials()
+      }
+      const fromEnv = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null
+      return fetchOwnerRepos(owner, { token: fromEnv ?? gitHubToken.token })
+    },
     hygieneScanner: () => scanHygiene({ roots: [workspaceDirectory, core.shelfDirectory] }),
   })
 

@@ -62,6 +62,28 @@ test('a user owner falls back from /orgs to /users', async () => {
   assert.match(calls[1], /\/users\/ivan\/repos/u)
 })
 
+test('catalog pages are followed until a short page', async () => {
+  const calls = []
+  const fullPage = Array.from({ length: 100 }, (_, index) => ({
+    name: 'repo-' + index,
+    full_name: 'dsh-works/repo-' + index,
+    description: null,
+    default_branch: 'main',
+    archived: false,
+    private: index === 0,
+  }))
+  const fetchImpl = async (url) => {
+    calls.push(url)
+    return jsonResponse(url.includes('page=2') ? [{ name: 'last', full_name: 'dsh-works/last', default_branch: 'main' }] : fullPage)
+  }
+
+  const repos = await fetchOwnerRepos('dsh-works', { fetchImpl })
+  assert.equal(repos.length, 101)
+  assert.equal(repos[0].private, true)
+  assert.equal(calls.length, 2)
+  assert.match(calls[1], /page=2/u)
+})
+
 test('catalog failures carry readable codes', async () => {
   await assert.rejects(
     fetchOwnerRepos('dsh-works', { fetchImpl: async () => jsonResponse({}, 403) }),
