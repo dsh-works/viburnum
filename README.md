@@ -203,6 +203,7 @@ Not run: the live Terminal action (it needs a profile reload) and the live page 
 
 - `npm run check` — 161 tests, 0 failures; the 11 new CLI-path tests cover detection, shim
   ownership, install/remove and the Windows command shapes.
+- CI — the full gate is green on ubuntu, macOS and windows at `b46189f`.
 - Live detection on this Mac (read-only): `state: "missing"`, `npm: true`, shell `/bin/zsh`, bin dir
   `/Users/vanish/.nvm/versions/node/v24.21.0/bin`, and the direct command reported; nothing installed.
 - Not run yet: the Settings card, the one-time notice, a real `npm link` install and `command -v vib`

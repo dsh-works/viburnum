@@ -70,9 +70,9 @@ dismissible notice on the viburnum page points at the card.
 | 3 | Shim exists, shell PATH lacks the bin | card shows linked-but-not-on-PATH and the copyable `export PATH=…` line | fixture test | **pass** — `a link the shell cannot see offers the PATH line` |
 | 4 | Remove | in-page confirm; only when the link resolves into this checkout; card returns to missing; a foreign `vib` is untouched | fixture test + live | **pass (fixture)** — `remove refuses a foreign install`, `remove unlinks our own install`; live not run |
 | 5 | Notice dismissal | Later hides for the page load; Don't show again persists across reload; no notice when available | live GUI | not run — needs a profile restart |
-| 6 | Cross-platform | POSIX and Windows prefix/shim/probe/PATH-line builders unit-tested from one Host; CI green on ubuntu, macOS, Windows | unit test + CI | **pass (unit)** — 11 tests; CI pending the push |
+| 6 | Cross-platform | POSIX and Windows prefix/shim/probe/PATH-line builders unit-tested from one Host; CI green on ubuntu, macOS, Windows | unit test + CI | **pass (unit + CI)** — 11 tests; CI green on all three at `b46189f` |
 | 7 | Write boundary | only the npm global bin (via `npm link`, after the in-page confirm) and the profile state (dismissal) change; no shell rc is touched | code review + helper test | **pass (review)** — the actions only spawn npm; no rc write exists in the code |
-| 8 | Gate | `npm run check` green; CI green on all three platforms | command transcript | **pass (local)** — 161 tests, 0 failures on macOS; CI pending the push |
+| 8 | Gate | `npm run check` green; CI green on all three platforms | command transcript | **pass (local + CI)** — 161 tests, 0 failures; CI green at `b46189f` |
 
 ## Verification plan
 
