@@ -1,6 +1,6 @@
 # catalog enrichment — plan delta
 
-- **Tier:** feature on a released plugin (viburnum 0.2.1)
+- **Tier:** feature on a released plugin (viburnum 0.2.1) — released in **0.2.2** as catalog completion
 - **Revision:** 1
 - **Branch:** `feature/catalog-enrichment`, cut from `dev`
 - **Parent plan:** [`PLAN-0.2.md`](PLAN-0.2.md), catalog section in `SCOPE.md`
@@ -40,12 +40,12 @@ The organisation door becomes useful for big orgs and for choosing before instal
 
 | # | Trigger | Expected result | Observed by | Result |
 |---|---|---|---|---|
-| 1 | Organisation door with several repos | every row shows an icon or a letter fallback, the description, and badges | live page | not run |
-| 2 | Click Preview on a private repo | README renders as Markdown and manifest facts show; nothing is cloned or installed | live page | not run |
-| 3 | Large owner | catalog pages stay complete; icons load lazily and are cached | route JSON + network count | not run |
-| 4 | Settings → owners field + default organisation | the field accepts a comma-separated owner list; the door opens on the default owner; bad names are refused | live page / route JSON | not run |
-| 5 | README over the cap | preview says truncated at 200 KB | unit test | not run |
-| 6 | `npm run check` | catalog helpers, settings validation and route wiring tests pass | command transcript | **pending** |
+| 1 | Organisation door with several repos | every row shows an icon or a letter fallback, the description, and badges | live page | **pass (visual)** — owner confirmed the catalog rows |
+| 2 | Click Preview on a private repo | README renders as Markdown and manifest facts show; nothing is cloned or installed | live page | **pass** — private `dsh-plugin-pip` preview returned `dsh-plugin-companion v1.3.0`, `engines.dsh ^0.2.1-rc.2`, 37 KB README; no clone |
+| 3 | Large owner | catalog pages stay complete; icons load lazily and are cached | route JSON + network count | **pass (unit)** — pagination test walks 101 repos over two pages; icons are fetched per row and cached 30 min |
+| 4 | Settings → owners field + default organisation | the field accepts a comma-separated owner list; the door opens on the default owner; bad names are refused | live page / route JSON | **pass (route + visual)** — `setSettings` accepts/refuses owners and default; the page was in the owner's visual pass |
+| 5 | README over the cap | preview says truncated at 200 KB | unit test | not run — the cap is enforced in code, no oversized fixture test yet |
+| 6 | `npm run check` | catalog helpers, settings validation and route wiring tests pass | command transcript | **pass** — 125 tests, 0 failures |
 
 ## Risks
 

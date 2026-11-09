@@ -61,9 +61,10 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
   in the desktop, and `Update` / `Sync` / `Revert` / track switch that re-fetch the detail after a move.
 - **Install doors**: **Directory** (with the Host's native folder picker), **Repository URL**, and
   **Organisation** (a cached, paginated, searchable list of the configured GitHub owners'
-  repositories — private ones included when git has GitHub credentials stored on the machine). Every
-  install goes through `pluginManager.installBundle`; new clones land in the shelf (`pluginsDir`),
-  while checkouts the profile already links are never moved.
+  repositories — private ones included when git has GitHub credentials stored on the machine — with
+  icons, descriptions and an in-place README **Preview** before installing). Every install goes
+  through `pluginManager.installBundle`; new clones land in the shelf (`pluginsDir`), while checkouts
+  the profile already links are never moved.
 - **Moves**: `Update` is a fetch and a fast-forward. `Sync` pushes unpublished commits, fast-forwards,
   or rebases private divergence and pushes it; it refuses to rebase published history and aborts a
   conflicting rebase before reporting it. `Revert` restores the latest update or switch snapshot.

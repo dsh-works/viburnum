@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-viburnum",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "type": "module",
   "description": "A workbench for your own DeepSeek Harness plugins: keeps linked checkouts current across two machines.",

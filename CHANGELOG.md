@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.2.2 — 2026-11-09
+
+Catalog completion: every organisation repository (private included) in a searchable list with icons,
+an in-place README preview, and Settings controls for the organisation list and its default.
 
 ### Added
 
@@ -19,6 +22,8 @@
 
 - The organisation form no longer goes blank while the catalog is loading (a missing owner entry is
   treated as "no repository chosen").
+- The icon and README reads default to the platform `fetch`, so previews work outside the bundled
+  catalog path.
 
 ## 0.2.1 — 2026-11-09
 
