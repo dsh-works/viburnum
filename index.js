@@ -62,10 +62,17 @@ export function apply(ctx, config) {
     'dsh-plugin-viburnum: prompt section',
   )
 
-  const webServer = ctx.get('webServer')
-  if (webServer !== undefined && webServer !== null) {
-    ctx.effect(() => registerRoutes(webServer, { core, ready }), 'dsh-plugin-viburnum: routes')
-  }
+  // Web profiles carry a browser server; CLI/headless ones do not. Profile
+  // entries are composed concurrently, so a one-shot `ctx.get('webServer')`
+  // can run before the carrier is provided — then the page transport is never
+  // registered and the browser half reports "The Host did not answer."
+  // `ctx.inject` waits for the service and re-runs when it changes.
+  ctx.inject(['webServer'], (webCtx) => {
+    webCtx.effect(
+      () => registerRoutes(webCtx.webServer, { core, ready }),
+      'dsh-plugin-viburnum: routes',
+    )
+  })
 
   const minutes = core.config.checkIntervalMinutes
   if (minutes > 0) {
