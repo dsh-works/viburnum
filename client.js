@@ -610,10 +610,11 @@ window.__ModuleLoader__.load({
         'span',
         {
           style: {
-            display: 'inline-flex',
+            display: 'flex',
             alignItems: 'center',
             gap: '8px',
             flex: '1 1 auto',
+            width: '100%',
             minWidth: 0,
           },
         },
@@ -630,7 +631,7 @@ window.__ModuleLoader__.load({
           },
         }),
         expanded
-          ? h('style', { key: 'hide-label' }, `button[aria-label=${JSON.stringify(label)}] > span:last-child{display:none}`)
+          ? h('style', { key: 'hide-label' }, `button[aria-label=${JSON.stringify(label)}] > span:last-child{display:none}button[aria-label=${JSON.stringify(label)}] > span:first-child{flex:1 1 auto;min-width:0;justify-content:flex-start}`)
           : null,
         expanded
           ? h('span', { key: 'label', style: { whiteSpace: 'nowrap', position: 'relative', top: '3px', marginLeft: '4px' } }, label)
@@ -651,10 +652,8 @@ window.__ModuleLoader__.load({
           ? h('span', {
             key: 'arrows',
             style: {
-              position: 'absolute',
-              right: '34px',
-              top: '50%',
-              transform: 'translateY(-50%)',
+              marginLeft: 'auto',
+              paddingLeft: '8px',
               color: 'var(--dsw-alias-label-secondary)',
               fontSize: '11px',
               fontVariantNumeric: 'tabular-nums',
