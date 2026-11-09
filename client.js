@@ -48,6 +48,7 @@ window.__ModuleLoader__.load({
         noBundles: 'No linked bundles.',
         opens: 'open',
         folder: 'Folder',
+        terminal: 'Terminal',
         readme: 'README',
         changelog: 'CHANGELOG',
         opened: 'opened',
@@ -1069,6 +1070,7 @@ window.__ModuleLoader__.load({
             h('button', { style: styles.button, onClick: () => void store.openDocument(bundle.name, 'readme') }, t('readme')),
             h('button', { style: styles.button, onClick: () => void store.openDocument(bundle.name, 'changelog') }, t('changelog')),
             h('button', { style: styles.button, onClick: () => runDetail('open', { bundle: bundle.name, target: 'folder' }) }, t('folder')),
+            h('button', { style: styles.button, onClick: () => runDetail('terminal', { bundle: bundle.name }) }, t('terminal')),
           ),
           doc !== null
             ? h(

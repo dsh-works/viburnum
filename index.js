@@ -20,6 +20,7 @@ import { must } from './lib/git.js'
 import { scanHygiene } from './lib/hygiene.js'
 import { pickDirectory } from './lib/picker.js'
 import { listMountedBundles } from './lib/profile.js'
+import { openTerminalAt } from './lib/terminal.js'
 import { PROMPT } from './lib/prompt.js'
 import { buildTools } from './lib/tools.js'
 import { registerRoutes } from './lib/web.js'
@@ -122,7 +123,13 @@ export function apply(ctx, config) {
       await sessionController.openWorkspacePath({ path }, signal)
     }
     webCtx.effect(
-      () => registerRoutes(webCtx.webServer, { core, ready, openPath, pickDirectory }),
+      () => registerRoutes(webCtx.webServer, {
+        core,
+        ready,
+        openPath,
+        pickDirectory,
+        openTerminal: (dir) => openTerminalAt(dir),
+      }),
       'dsh-plugin-viburnum: routes',
     )
   })

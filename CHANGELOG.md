@@ -4,6 +4,11 @@
 
 ### Added
 
+- A **Terminal** action in the workbench opens the Host desktop's terminal already in the bundle's
+  checkout (Windows Terminal → PowerShell fallback, macOS Terminal, Linux x-terminal/gnome-terminal).
+- `vib new <name> --push --org <owner>` creates the GitHub repository (private by default, `--public`
+  opts out) and pushes the first commit to `main`; the next step prints the `vib install owner/repo`
+  command. Failures keep the created repository and report the push error.
 - **Conflict exits.** A conflicting sync now leaves the rebase stopped instead of aborting it and
   offers the design's three exits: **Agree** (a union merge, only for append-only files such as
   `CHANGELOG.md`; disabled with the reason otherwise), **Guide** (open each conflicted file in the
