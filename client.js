@@ -75,6 +75,9 @@ window.__ModuleLoader__.load({
         refreshInterval: 'Refresh interval (minutes)',
         refreshOnStartup: 'Refresh on startup',
         versionWarnings: 'Warn about harness version drift',
+        shelfDir: 'Plugin checkout directory',
+        shelfDirHint: 'Where repository installs clone; checkouts that are already linked stay where they are.',
+        useDefault: 'Use default',
         save: 'Save',
         saved: 'saved',
         harnessCompat: 'Harness compatibility',
@@ -1125,18 +1128,21 @@ window.__ModuleLoader__.load({
       const [minutes, setMinutes] = React.useState(String(settings.checkIntervalMinutes ?? 5))
       const [startup, setStartup] = React.useState(settings.refreshOnStartup !== false)
       const [warnings, setWarnings] = React.useState(settings.versionWarnings !== false)
+      const [shelf, setShelf] = React.useState(typeof settings.pluginsDir === 'string' ? settings.pluginsDir : '')
 
       React.useEffect(() => {
         setMinutes(String(settings.checkIntervalMinutes ?? 5))
         setStartup(settings.refreshOnStartup !== false)
         setWarnings(settings.versionWarnings !== false)
-      }, [settings.checkIntervalMinutes, settings.refreshOnStartup, settings.versionWarnings])
+        setShelf(typeof settings.pluginsDir === 'string' ? settings.pluginsDir : '')
+      }, [settings.checkIntervalMinutes, settings.refreshOnStartup, settings.versionWarnings, settings.pluginsDir])
 
       const save = () => {
         void store.saveSettings({
           checkIntervalMinutes: Number.parseInt(minutes, 10),
           refreshOnStartup: startup,
           versionWarnings: warnings,
+          pluginsDir: shelf.trim(),
         })
       }
       const notes = Array.isArray(compat.warnings) ? compat.warnings : []
@@ -1171,6 +1177,28 @@ window.__ModuleLoader__.load({
           h('input', { type: 'checkbox', checked: warnings, onChange: (event) => setWarnings(event.target.checked) }),
           h('span', { style: styles.secondary }, t('versionWarnings')),
         ),
+        h(
+          'label',
+          { style: styles.controls },
+          h('span', { style: styles.secondary }, t('shelfDir')),
+          h('input', {
+            style: styles.input,
+            value: shelf,
+            placeholder: snapshot.shelfDirectory || '',
+            onChange: (event) => setShelf(event.target.value),
+          }),
+          h('button', {
+            style: styles.button,
+            disabled: state.busy !== null,
+            onClick: () => {
+              void store.act('browse').then((result) => {
+                if (result !== null && result.ok === true && typeof result.path === 'string') setShelf(result.path)
+              })
+            },
+          }, t('browse')),
+          h('button', { style: styles.button, onClick: () => setShelf('') }, t('useDefault')),
+        ),
+        h('div', { style: styles.secondary }, t('shelfDirHint') + ' ' + (snapshot.shelfDirectory || '')),
         h(
           'div',
           { style: styles.controls },

@@ -52,7 +52,7 @@ test('the core hydrates cached rows from the state file', async (t) => {
 })
 
 test('settings save, validate and appear in the snapshot', async (t) => {
-  const { core } = await setup(t)
+  const { world, core } = await setup(t)
   await core.load()
 
   const saved = await core.setSettings({ checkIntervalMinutes: 15, refreshOnStartup: false, versionWarnings: false })
@@ -60,12 +60,24 @@ test('settings save, validate and appear in the snapshot', async (t) => {
   assert.equal(saved.settings.refreshOnStartup, false)
   assert.equal(saved.settings.versionWarnings, false)
 
+  const customShelf = join(world.root, 'custom-shelf')
+  const shelfSaved = await core.setSettings({ pluginsDir: customShelf })
+  assert.equal(shelfSaved.settings.pluginsDir, customShelf)
+  assert.equal(shelfSaved.shelfDirectory, customShelf)
+  assert.equal(core.shelfDirectory, customShelf)
+
+  await core.setSettings({ pluginsDir: '' })
+  assert.equal(core.snapshot().settings.pluginsDir, '')
+  assert.notEqual(core.shelfDirectory, customShelf)
+
   await core.setSettings({ refreshOnStartup: true })
   assert.equal(core.snapshot().settings.refreshOnStartup, true)
   assert.equal(core.snapshot().settings.checkIntervalMinutes, 15)
 
   await assert.rejects(core.setSettings({ checkIntervalMinutes: -1 }), (error) => error.code === 'invalid-settings')
   await assert.rejects(core.setSettings({ versionWarnings: 'yes' }), (error) => error.code === 'invalid-settings')
+  await assert.rejects(core.setSettings({ pluginsDir: 'relative/shelf' }), (error) => error.code === 'invalid-settings')
+  await assert.rejects(core.setSettings({ pluginsDir: 42 }), (error) => error.code === 'invalid-settings')
   await assert.rejects(core.setSettings(null), (error) => error.code === 'invalid-settings')
 })
 

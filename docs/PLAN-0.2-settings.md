@@ -14,8 +14,10 @@ Four surfaces the workbench still lacked:
 - **Ahead/behind in the sidebar:** the viburnum row carries the aggregate `↑a ↑b` counts at its right
   edge, next to the dot.
 - **A Settings → viburnum page** (the `settings.section` seat the Alerts plugin uses): refresh interval,
-  refresh-on-startup, and version-drift warnings, saved with the profile state (no profile-file edit) and
-  applied without a reload (the Host ticks every minute and reads the saved settings).
+  refresh-on-startup, the plugin checkout directory (the shelf used by new repository installs, with
+  **Browse** and **Use default**), and version-drift warnings, saved with the profile state (no
+  profile-file edit) and applied without a reload (the Host ticks every minute and reads the saved
+  settings). Linked checkouts are never moved; the setting only decides where new clones land.
 - **Harness drift tracking:** the Host records the running `@deepseek-ai/dsh` version, warns when it
   changes between runs, and flags every mounted bundle whose `engines.dsh` range rejects the running
   harness — the "new harness dropped, bump and fix the plugins" warning.
@@ -47,6 +49,7 @@ Four surfaces the workbench still lacked:
 | 1 | Open the viburnum page | each row shows the plugin's icon left of the name; a plugin without one shows none | live page | not run |
 | 2 | Sidebar row with a behind/ahead bundle | `↑n`/`↓n` at the row's right edge, dot still after the label | live page | not run |
 | 3 | Settings → viburnum → change interval, toggle startup, Save | `saved`; the Host honours the interval on its next tick and skips the startup check when off | live page + logs | not run |
+| 3b | Change the checkout directory (absolute path, Browse, or Use default) → Save | the new shelf is used by the next repository install; linked checkouts stay where they are; a relative path is refused | live page / route JSON | not run |
 | 4 | A bundle whose `engines.dsh` rejects the running harness | warning on the settings page naming bundle, range and running version; toggling warnings off hides it | live page / route JSON | not run |
 | 5 | A harness version change between runs | a `harness-update` warning once, then only the stored new version | route JSON | not run |
 | 6 | `npm run check` | version-range, settings, compatibility, icon and sidebar-source tests pass | command transcript | **pending** |
