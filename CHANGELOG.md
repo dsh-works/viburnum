@@ -4,6 +4,12 @@
 
 ### Added
 
+- The organisation catalog rows now show each repository's **icon** (lazy, cached, letter fallback)
+  and a **Preview** action that renders the repo's README as Markdown with its version, description and
+  `engines.dsh` — without cloning or installing anything (200 KB readme/icon caps; text preview only,
+  private README images stay links).
+- Settings → viburnum now carries the **organisation list** (comma-separated owners, overriding the
+  Loader `catalogOwners` default) and a **default organisation** the door opens on.
 - The organisation catalog now shows **all** of an owner's repositories, including private ones: it
   asks git's own stored GitHub credentials (`git credential fill`) when no `GITHUB_TOKEN`/`GH_TOKEN`
   is set, follows pagination up to 500 repositories, marks private and archived entries, and replaces

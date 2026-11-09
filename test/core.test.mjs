@@ -70,6 +70,12 @@ test('settings save, validate and appear in the snapshot', async (t) => {
   assert.equal(core.snapshot().settings.pluginsDir, '')
   assert.notEqual(core.shelfDirectory, customShelf)
 
+  const owners = await core.setSettings({ catalogOwners: ['dsh-works', 'other-org'], defaultOwner: 'other-org' })
+  assert.deepEqual(owners.settings.catalogOwners, ['dsh-works', 'other-org'])
+  assert.equal(owners.settings.defaultOwner, 'other-org')
+  await assert.rejects(core.setSettings({ catalogOwners: ['bad owner!'] }), (error) => error.code === 'invalid-settings')
+  await assert.rejects(core.setSettings({ defaultOwner: 'not-configured' }), (error) => error.code === 'invalid-settings')
+
   await core.setSettings({ refreshOnStartup: true })
   assert.equal(core.snapshot().settings.refreshOnStartup, true)
   assert.equal(core.snapshot().settings.checkIntervalMinutes, 15)
