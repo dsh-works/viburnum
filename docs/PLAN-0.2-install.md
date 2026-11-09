@@ -25,7 +25,9 @@ The page can **adopt a plugin**, not only watch what the profile already links:
   (`git clone -- <url> <shelf>/<name>`, bounded at 120 s, no shell). New route action `install`
   on the guarded `/viburnum/action` pair.
 - **Browser:** an `Install` button on the list opens a two-door form (directory path or repository
-  URL); the result banner reports `installed <name> v<version>` or the refusal code.
+  URL); the result banner reports `installed <name> v<version>` or the refusal code. In directory
+  mode a **Browse…** button asks the Host for a native folder dialog and fills the path field with
+  its absolute choice (typed paths keep working; Cancel leaves the field untouched).
 - **Shelf:** `pluginsDir` configuration is honoured; a free shelf slot is created, an occupied slot is
   never overwritten (`shelf-collision`). An already-linked checkout is refused, never re-linked.
 
@@ -47,7 +49,8 @@ The page can **adopt a plugin**, not only watch what the profile already links:
 | 2 | Page → Install → Repository → `owner/repo` | clone appears under the shelf, then a linked row appears; banner says cloned | live page + filesystem | not run |
 | 3 | Bad paths and specs | `missing-directory`, `invalid-repository`, `not-a-bundle`, `shelf-collision` refusals with no profile change | live page / route JSON | not run |
 | 4 | Already-linked checkout | `already-installed` refusal; the existing row is untouched | route JSON | not run |
-| 5 | `npm run check` | core install-door tests pass, suite green | command transcript | **pending** |
+| 5 | Directory mode → **Browse…** | the Host opens its native folder dialog; a choice fills the path field, Cancel leaves the typed value alone, and a Host without a picker reports `browse-unavailable` | live page | not run |
+| 6 | `npm run check` | core install-door tests pass, suite green | command transcript | **pending** |
 
 ## Risks and unknowns
 

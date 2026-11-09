@@ -52,6 +52,8 @@ window.__ModuleLoader__.load({
         changelog: 'CHANGELOG',
         opened: 'opened',
         install: 'Install',
+        browse: 'Browse…',
+        selected: 'selected',
         installed: 'installed',
         cloned: 'cloned',
         directory: 'Directory',
@@ -574,6 +576,7 @@ window.__ModuleLoader__.load({
         return t('installed') + ' ' + (result.name || '') + (result.version ? ' v' + result.version : '')
           + (result.cloned === true ? ' · ' + t('cloned') : '')
       }
+      if (result.ok === true && typeof result.path === 'string') return t('selected') + ' ' + result.path
       if (result.opened === true) return t('opened') + ' ' + (result.target || '')
       if (result.nothing === true) return (result.bundle || '') + ' ✓'
       const receipt = result.receipt
@@ -829,6 +832,19 @@ window.__ModuleLoader__.load({
                 placeholder: installDoor === 'directory' ? t('directoryPlaceholder') : t('repositoryPlaceholder'),
                 onChange: (event) => setInstallSpec(event.target.value),
               }),
+              installDoor === 'directory'
+                ? h('button', {
+                  style: styles.button,
+                  disabled: busy,
+                  onClick: () => {
+                    void store.act('browse').then((result) => {
+                      if (result !== null && result.ok === true && typeof result.path === 'string') {
+                        setInstallSpec(result.path)
+                      }
+                    })
+                  },
+                }, t('browse'))
+                : null,
               h('button', {
                 style: styles.button,
                 disabled: busy || installSpec.trim() === '',

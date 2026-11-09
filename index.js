@@ -15,6 +15,7 @@ import { dirname } from 'node:path'
 import { Config } from './lib/config.js'
 import { createCore } from './lib/core.js'
 import { must } from './lib/git.js'
+import { pickDirectory } from './lib/picker.js'
 import { listMountedBundles } from './lib/profile.js'
 import { PROMPT } from './lib/prompt.js'
 import { buildTools } from './lib/tools.js'
@@ -99,7 +100,7 @@ export function apply(ctx, config) {
       await sessionController.openWorkspacePath({ path }, signal)
     }
     webCtx.effect(
-      () => registerRoutes(webCtx.webServer, { core, ready, openPath }),
+      () => registerRoutes(webCtx.webServer, { core, ready, openPath, pickDirectory }),
       'dsh-plugin-viburnum: routes',
     )
   })
