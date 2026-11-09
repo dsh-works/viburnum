@@ -257,7 +257,8 @@ window.__ModuleLoader__.load({
 
     /**
      * The sidebar glyph: the trimmed mark, drawn larger than the row cell and
-     * shifted slightly left, with the status dot after it and before the label.
+     * centred on the same axis as the shipped panel icons, with the status dot
+     * after it and before the label.
      */
     function viburnumIcon(props) {
       const state = useStore(props.store)
@@ -267,7 +268,7 @@ window.__ModuleLoader__.load({
       const height = size + 10
       const width = Math.round(height * ICON_ASPECT)
       const extra = width - size
-      const side = Math.ceil(extra / 2)
+      const half = extra / 2
       const vertical = Math.round((height - size) / 2)
 
       return h(
@@ -277,7 +278,7 @@ window.__ModuleLoader__.load({
             position: 'relative',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '8px',
             flex: '0 0 auto',
           },
         },
@@ -289,7 +290,7 @@ window.__ModuleLoader__.load({
           draggable: false,
           style: {
             display: 'block',
-            margin: `${-vertical}px ${-(extra - side - 2)}px ${-vertical}px ${-(side + 2)}px`,
+            margin: `${-vertical}px -${half}px ${-vertical}px -${half}px`,
             opacity: active ? 1 : 0.82,
           },
         }),
