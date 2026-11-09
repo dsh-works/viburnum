@@ -14,6 +14,7 @@ import { dirname } from 'node:path'
 
 import { Config } from './lib/config.js'
 import { createCore } from './lib/core.js'
+import { fetchOwnerRepos } from './lib/catalog.js'
 import { must } from './lib/git.js'
 import { pickDirectory } from './lib/picker.js'
 import { listMountedBundles } from './lib/profile.js'
@@ -47,6 +48,9 @@ export function apply(ctx, config) {
       await mkdir(dirname(target), { recursive: true })
       await must(dirname(target), ['clone', '--', url, target], { timeoutMs: 120_000 })
     },
+    catalogFetcher: (owner) => fetchOwnerRepos(owner, {
+      token: process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null,
+    }),
   })
 
   /** The state load, as `null` or the error; every consumer awaits it. */

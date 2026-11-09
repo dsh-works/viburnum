@@ -4,6 +4,10 @@
 
 ### Added
 
+- The install form's **Organisation** door lists the repositories of the configured GitHub owners
+  (`catalogOwners`), marks archived ones, caches successful reads for ten minutes, offers a manual
+  refresh, and installs a picked `owner/repo` through the repository door (shelf clone + link). A
+  `$GITHUB_TOKEN`/`$GH_TOKEN` is used when present.
 - Install doors on the page: **Directory** links an existing checkout through
   `pluginManager.installBundle` (with a **Browse…** button that opens the Host's native folder dialog for
   the absolute path), and **Repository URL** clones `owner/repo` or an https/ssh git URL into the

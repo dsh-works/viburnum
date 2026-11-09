@@ -58,10 +58,14 @@ window.__ModuleLoader__.load({
         cloned: 'cloned',
         directory: 'Directory',
         repository: 'Repository URL',
+        organisation: 'Organisation',
+        refreshCatalog: 'Refresh catalog',
+        catalogEmpty: 'No repositories to show.',
         directoryPlaceholder: 'C:\\path\\to\\plugin',
         repositoryPlaceholder: 'owner/repo or https://github.com/owner/repo',
         installDirectoryHint: 'Link a checkout that already exists where it is.',
         installRepositoryHint: 'Clone into the shelf and link the fresh checkout.',
+        installOrganisationHint: 'Pick a repository of a configured owner; it clones into the shelf like the repository door.',
         close: 'Close',
         truncated: 'truncated',
         back: 'Back',
@@ -385,7 +389,7 @@ window.__ModuleLoader__.load({
 
     /** One client-local store: the status snapshot, the busy state and the last result. */
     function createStore() {
-      let state = { snapshot: null, phase: 'loading', error: null, busy: null, last: null, detail: null, doc: null }
+      let state = { snapshot: null, phase: 'loading', error: null, busy: null, last: null, detail: null, doc: null, catalog: null }
       const listeners = new Set()
 
       const emit = () => {
@@ -453,6 +457,24 @@ window.__ModuleLoader__.load({
         },
         closeDetail() {
           set({ detail: null, doc: null })
+        },
+        async loadCatalog(refresh = false) {
+          set({ catalog: { phase: 'loading', owners: [], error: null } })
+          try {
+            const data = await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'catalog', refresh }),
+            })
+            set({
+              catalog: {
+                phase: 'ready',
+                owners: Array.isArray(data.owners) ? data.owners : [],
+                error: data.ok === false ? data.message : null,
+              },
+            })
+          } catch (error) {
+            set({ catalog: { phase: 'error', owners: [], error: error.message } })
+          }
         },
         async openDocument(bundle, target) {
           set({ doc: { name: bundle, target, phase: 'loading', text: null, error: null, truncated: false } })
@@ -603,6 +625,20 @@ window.__ModuleLoader__.load({
       const [installOpen, setInstallOpen] = React.useState(false)
       const [installDoor, setInstallDoor] = React.useState('directory')
       const [installSpec, setInstallSpec] = React.useState('')
+      const catalogOwners = Array.isArray(snapshot.config?.catalogOwners) ? snapshot.config.catalogOwners : []
+      const [catalogOwner, setCatalogOwner] = React.useState('')
+      const [catalogRepo, setCatalogRepo] = React.useState('')
+      const catalog = state.catalog
+      const ownerEntry = catalog !== null && Array.isArray(catalog.owners)
+        ? catalog.owners.find((entry) => entry.owner === (catalogOwner || catalogOwners[0]))
+        : null
+      const catalogRepos = ownerEntry !== null && Array.isArray(ownerEntry.repos) ? ownerEntry.repos : []
+      React.useEffect(() => {
+        if (catalogOwner === '' && catalogOwners.length > 0) setCatalogOwner(catalogOwners[0])
+      }, [catalogOwners, catalogOwner])
+      React.useEffect(() => {
+        if (installOpen && installDoor === 'organisation' && catalog === null) void store.loadCatalog(false)
+      }, [installOpen, installDoor, catalog])
 
       const run = (action, payload) => {
         void store.act(action, payload)
@@ -824,37 +860,91 @@ window.__ModuleLoader__.load({
                 },
                 h('option', { value: 'directory' }, t('directory')),
                 h('option', { value: 'repository' }, t('repository')),
+                h('option', { value: 'organisation' }, t('organisation')),
               ),
-              h('input', {
-                style: styles.input,
-                value: installSpec,
-                disabled: busy,
-                placeholder: installDoor === 'directory' ? t('directoryPlaceholder') : t('repositoryPlaceholder'),
-                onChange: (event) => setInstallSpec(event.target.value),
-              }),
-              installDoor === 'directory'
-                ? h('button', {
-                  style: styles.button,
-                  disabled: busy,
-                  onClick: () => {
-                    void store.act('browse').then((result) => {
-                      if (result !== null && result.ok === true && typeof result.path === 'string') {
-                        setInstallSpec(result.path)
-                      }
-                    })
-                  },
-                }, t('browse'))
-                : null,
-              h('button', {
-                style: styles.button,
-                disabled: busy || installSpec.trim() === '',
-                onClick: () => run('install', { door: installDoor, spec: installSpec.trim() }),
-              }, t('install')),
+              installDoor === 'organisation'
+                ? [
+                  h(
+                    'select',
+                    {
+                      key: 'owner',
+                      style: styles.select,
+                      value: catalogOwner,
+                      disabled: busy,
+                      onChange: (event) => {
+                        setCatalogOwner(event.target.value)
+                        setCatalogRepo('')
+                      },
+                    },
+                    catalogOwners.map((owner) => h('option', { key: owner, value: owner }, owner)),
+                  ),
+                  h('button', {
+                    key: 'refresh-catalog',
+                    style: styles.button,
+                    disabled: busy || catalog?.phase === 'loading',
+                    onClick: () => void store.loadCatalog(true),
+                  }, t('refreshCatalog')),
+                  h(
+                    'select',
+                    {
+                      key: 'repo',
+                      style: styles.select,
+                      value: catalogRepo,
+                      disabled: busy || catalogRepos.length === 0,
+                      onChange: (event) => setCatalogRepo(event.target.value),
+                    },
+                    catalogRepos.length === 0
+                      ? h('option', { value: '' }, catalog?.phase === 'loading' ? t('loading') : t('catalogEmpty'))
+                      : catalogRepos.map((entry) => h(
+                        'option',
+                        { key: entry.fullName, value: entry.fullName },
+                        entry.archived ? entry.name + ' · archived' : entry.name,
+                      )),
+                  ),
+                  h('button', {
+                    key: 'install-organisation',
+                    style: styles.button,
+                    disabled: busy || catalogRepo === '',
+                    onClick: () => run('install', { door: 'repository', spec: catalogRepo }),
+                  }, t('install')),
+                ]
+                : [
+                  h('input', {
+                    key: 'spec',
+                    style: styles.input,
+                    value: installSpec,
+                    disabled: busy,
+                    placeholder: installDoor === 'directory' ? t('directoryPlaceholder') : t('repositoryPlaceholder'),
+                    onChange: (event) => setInstallSpec(event.target.value),
+                  }),
+                  installDoor === 'directory'
+                    ? h('button', {
+                      key: 'browse',
+                      style: styles.button,
+                      disabled: busy,
+                      onClick: () => {
+                        void store.act('browse').then((result) => {
+                          if (result !== null && result.ok === true && typeof result.path === 'string') {
+                            setInstallSpec(result.path)
+                          }
+                        })
+                      },
+                    }, t('browse'))
+                    : null,
+                  h('button', {
+                    key: 'install',
+                    style: styles.button,
+                    disabled: busy || installSpec.trim() === '',
+                    onClick: () => run('install', { door: installDoor, spec: installSpec.trim() }),
+                  }, t('install')),
+                ],
             ),
             h(
               'div',
               { style: styles.secondary },
-              installDoor === 'directory' ? t('installDirectoryHint') : t('installRepositoryHint'),
+              installDoor === 'organisation'
+                ? (ownerEntry !== null && ownerEntry.error ? ownerEntry.error : t('installOrganisationHint'))
+                : installDoor === 'directory' ? t('installDirectoryHint') : t('installRepositoryHint'),
             ),
           )
           : null,
