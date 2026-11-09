@@ -5,6 +5,7 @@
 - **Branch:** `feature/workbench-page`, cut from `dev`
 - **Parent plan:** [`PLAN.md`](PLAN.md)
 - **Approved by:** the repository owner on 2026-11-06
+- **Release evidence:** [`EVIDENCE-0.2.md`](EVIDENCE-0.2.md)
 
 ## Outcome
 

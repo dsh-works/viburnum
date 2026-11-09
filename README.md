@@ -48,24 +48,40 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
 - **No telemetry, no network daemon, no account.** The only outbound traffic is git's own `fetch` and
   `push`, in the directories the profile already links.
 
-## What 0.1.0 does
+## What viburnum does
 
-- **One dot** in the sidebar, above Plugins: the worst state across every linked checkout — green
-  current, violet pullable, orange uncommitted, red unpushed or diverged, grey unknown.
-- **The viburnum page**: the mounted checkouts with their track, fresh/behind/ahead counts, directory,
-  the incoming changelog, and `Refresh` / `Sync all`; per bundle `Update`, `Sync`, `Revert` and a track
-  selector. Nothing is modal; a blocked row never stops the next one.
+- **One dot and the counts** in the sidebar, above Plugins: the worst state across every linked
+  checkout — green current, violet pullable, orange uncommitted, red unpushed or diverged, grey
+  unknown — plus the aggregate `↑ahead ↓behind` counts at the row's right edge.
+- **The viburnum page**: the mounted checkouts with each plugin's icon, declared version, track,
+  direction counts and directory, and `Refresh` / `Sync all` / `Install` / `Hygiene`. Clicking a row
+  opens its workbench.
+- **The workbench detail**: the branch as the hero control, the incoming changelog rendered as
+  Markdown, target/current versions, the reload class, README and CHANGELOG inline, the folder opened
+  in the desktop, and `Update` / `Sync` / `Revert` / track switch that re-fetch the detail after a move.
+- **Install doors**: **Directory** (with the Host's native folder picker), **Repository URL**, and
+  **Organisation** (a cached list of the configured GitHub owners' repositories). Every install goes
+  through `pluginManager.installBundle`; new clones land in the shelf (`pluginsDir`), while checkouts
+  the profile already links are never moved.
 - **Moves**: `Update` is a fetch and a fast-forward. `Sync` pushes unpublished commits, fast-forwards,
   or rebases private divergence and pushes it; it refuses to rebase published history and aborts a
   conflicting rebase before reporting it. `Revert` restores the latest update or switch snapshot.
+- **Timeline**: what changed since the last look — incoming commits (with their first subject) and
+  viburnum's own moves — above the rows; `vib log` reads and clears it.
+- **Hygiene scan**: duplicate checkouts, local branches never merged into `main`, and dirty trees,
+  each with a suggestion. It reports; it never deletes, moves or checks anything out. `vib hygiene`.
+- **Settings → viburnum**: refresh interval, refresh on startup, the checkout directory
+  (**Browse…** / **Use default**), and harness-drift warnings. Saved in the profile state and applied
+  without a reload.
+- **Harness-drift tracking**: a warning when the running DSH version changes between runs, and one for
+  every plugin whose `engines.dsh` range rejects the running harness.
 - **Five model-facing tools**: `vib_status`, `vib_update`, `vib_sync`, `vib_switch`, `vib_revert`.
   Reads are free; every move asks for approval.
-- **A CLI**: `vib status | refresh | update | sync | switch | revert`, plus `--json` and `--dry-run`.
-- **State with the profile**: tracks, cached rows, receipts and snapshots at
-  `$DSH_HOME/profiles/<profile>/.viburnum/state.json`, written atomically and pruned on write.
-
-Not in 0.1.0: install doors (directory, repository URL, organisation), the per-plugin workbench page,
-`vib new`, organisation catalog, timeline and hygiene. Those are scoped in [`SCOPE.md`](SCOPE.md).
+- **A CLI**: `vib status | refresh | update | sync | switch | revert | log | hygiene | install | new`,
+  plus `--json` and `--dry-run`.
+- **State with the profile**: tracks, cached rows, receipts, snapshots, the timeline, the settings and
+  the last seen harness version at `$DSH_HOME/profiles/<profile>/.viburnum/state.json`, written
+  atomically and pruned on write.
 
 ## Install
 
@@ -97,16 +113,21 @@ The row is `viburnum` in `cordis.patch.yml`; override any field by id:
 |---|---|---|
 | `checkIntervalMinutes` | `5` | Background check interval; `0` disables checks on start and on a timer (on-demand only). |
 | `fetchTimeoutMs` | `20000` | Bound on one git process, including a fetch. |
-| `catalogOwners` | `['dsh-works']` | GitHub owners the 0.2 organisation door will read. |
-| `pluginsDir` | `''` | Shelf directory for 0.2 installs; empty means `$DSH_HOME/viburnum/plugins`. |
+| `catalogOwners` | `['dsh-works']` | GitHub owners the organisation door reads. |
+| `pluginsDir` | `''` | Shelf directory for new repository installs; empty means `$DSH_HOME/viburnum/plugins`. |
+
+The **Settings → viburnum** page saves per-profile overrides in the state file for the check interval,
+refresh-on-startup, version warnings and the checkout directory. Loader configuration stays the
+deployment default; a saved setting takes precedence until it is changed again.
 
 Invalid configuration fails the plugin load with the field and range named.
 
 ## The state file
 
-`$DSH_HOME/profiles/<profile>/.viburnum/state.json` is owned by the plugin: `version: 2`, bundle
-records (track, last check, cached row), a 50-entry action history, and 20 update/switch snapshots
-kept for 30 days. The page, the tools and the CLI share it through the one core; writes are
+`$DSH_HOME/profiles/<profile>/.viburnum/state.json` is owned by the plugin: `version: 3`, bundle
+records (track, last check, cached row, `engines.dsh`), a 50-entry action history, 20 update/switch
+snapshots kept for 30 days, a 50-event timeline with seen marks, the saved settings, and the last seen
+harness version. The page, the tools and the CLI share it through the one core; writes are
 temp-file + rename.
 
 The page's data does not travel through a generated Remote endpoint — an out-of-tree bundle cannot add
@@ -114,7 +135,27 @@ one. It uses two same-origin JSON routes registered on the Host web server,
 `/viburnum/status` and `/viburnum/action`, which require the `x-viburnum: 1` header so a cross-site
 form cannot act. The browser half polls the status route every 30 seconds and after every action.
 
-## Verification (2026-11-06)
+## Verification (2026-11-09)
+
+Verified live in the `web` profile for 0.2.0:
+
+- `npm run check` — 121 tests, 0 failures.
+- The page transport, sidebar row, icons, counts, workbench detail, inline Markdown README/CHANGELOG,
+  install form (all three doors), Settings → viburnum, timeline feed and Hygiene panel were exercised
+  in the running GUI; the visual pass was confirmed by the repository owner.
+- The guarded routes were exercised directly: `detail`, `document`, `open` (folder accepted by the
+  desktop), `install` refusals (`invalid-directory`, `missing-directory`, `already-installed`,
+  `invalid-repository`), `catalog` (a live GitHub read of `dsh-works`), `timeline`, `hygiene`
+  (10 checkouts, 8 findings), and `settings` (set/reset the checkout directory; a relative path
+  refused).
+- CLI: `vib log`, `vib hygiene` (exit 3 on findings), `vib install .` through the live Host
+  (`already-installed` refusal), and `vib new` with its generated test passing.
+- Harness drift: the running version was detected as `0.2.2-rc.1`; all mounted plugins accepted it.
+
+Not claimed: a real install of a new plugin (the profile was not mutated for a test), a real track
+switch from the live detail, light/dark theme comparison, and the second machine.
+
+### 0.1.0 verification (2026-11-06)
 
 Verified live in the `web` profile:
 
@@ -136,8 +177,8 @@ machine.
 ## Limits
 
 - viburnum never commits and never force-pushes.
-- 0.1.0 is accepted against offline fixture repositories. No second machine is available, so
-  cross-machine sync is not verified in this release.
+- 0.2.0 is accepted against the live local profile and offline fixture repositories. No second
+  machine is available, so cross-machine sync is not verified in this release.
 - The page transport is a localhost-only JSON route pair; it stores no credentials and reads no
   secrets. Git inherits whatever the machine already uses.
 - Only `link:` and `file:` dependencies are watched. Registry bundles are the plugin manager's job.

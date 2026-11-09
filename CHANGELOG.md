@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-11-09
+
+The adoption release: three install doors and a shelf, a workbench page per plugin, settings with
+harness-drift tracking, a timeline, a hygiene scan, and the CLI spelling of the doors and scaffolder.
 
 ### Added
 
@@ -49,6 +52,22 @@
 - The sidebar glyph is the real `blue-butterfly` pixel art. Its 64×64 canvas carried 8/4/3/15 px of
   transparent edge, so the mark is now shipped as a 52×46 trimmed crop and drawn much larger; the
   status dot sits between the glyph and the label. The package icon is the same trimmed mark.
+
+### Verified (2026-11-09)
+
+- `npm run check`: 121 tests, 0 failures.
+- Live `web` profile: page transport, sidebar icons/counts, workbench detail, inline Markdown
+  README/CHANGELOG, all three install doors, Settings → viburnum, timeline and hygiene were exercised
+  and visually confirmed by the repository owner.
+- Route/CLI evidence: `detail`, `document`, `open` (folder accepted by the desktop), install refusals,
+  a live organisation catalog read, timeline and hygiene scans, settings set/reset, `vib log`,
+  `vib hygiene`, `vib install .` and a scaffolded bundle whose own test passes.
+- Harness drift: the running `0.2.2-rc.1` was detected; every mounted plugin's `engines.dsh` accepted it.
+
+### Not verified in 0.2.0
+
+- A real install of a brand-new plugin through the page (the profile was not mutated for a test), a
+  real track switch from the live detail, light/dark theme comparison, and the second machine.
 
 ## 0.1.0 — 2026-11-06
 
