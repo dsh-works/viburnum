@@ -9,8 +9,15 @@
  * @module dsh-plugin-viburnum
  */
 
+import { mkdir } from 'node:fs/promises'
+import { dirname } from 'node:path'
+
 import { Config } from './lib/config.js'
 import { createCore } from './lib/core.js'
+import { fetchOwnerRepos } from './lib/catalog.js'
+import { must } from './lib/git.js'
+import { scanHygiene } from './lib/hygiene.js'
+import { pickDirectory } from './lib/picker.js'
 import { listMountedBundles } from './lib/profile.js'
 import { PROMPT } from './lib/prompt.js'
 import { buildTools } from './lib/tools.js'
@@ -32,10 +39,26 @@ export const inject = ['tools', 'systemPrompt', 'pluginManager']
  */
 export function apply(ctx, config) {
   const log = ctx.logger('dsh-plugin-viburnum')
-  const core = createCore({
+  const directoryService = ctx.get('workingDirectory')
+  const workspaceDirectory = typeof directoryService?.defaultDirectory === 'string'
+    ? directoryService.defaultDirectory
+    : process.cwd()
+
+  let core
+  core = createCore({
     bundleSource: ({ env, argv }) => listMountedBundles(ctx.pluginManager, { env, argv }),
     config,
     log,
+    installer: (spec) => ctx.pluginManager.installBundle(spec),
+    inspector: (spec) => ctx.pluginManager.inspect(spec),
+    cloner: async (url, target) => {
+      await mkdir(dirname(target), { recursive: true })
+      await must(dirname(target), ['clone', '--', url, target], { timeoutMs: 120_000 })
+    },
+    catalogFetcher: (owner) => fetchOwnerRepos(owner, {
+      token: process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null,
+    }),
+    hygieneScanner: () => scanHygiene({ roots: [workspaceDirectory, core.shelfDirectory] }),
   })
 
   /** The state load, as `null` or the error; every consumer awaits it. */
@@ -62,32 +85,74 @@ export function apply(ctx, config) {
     'dsh-plugin-viburnum: prompt section',
   )
 
-  const webServer = ctx.get('webServer')
-  if (webServer !== undefined && webServer !== null) {
-    ctx.effect(() => registerRoutes(webServer, { core, ready }), 'dsh-plugin-viburnum: routes')
-  }
+  // Web profiles carry a browser server; CLI/headless ones do not. Profile
+  // entries are composed concurrently, so a one-shot `ctx.get('webServer')`
+  // can run before the carrier is provided — then the page transport is never
+  // registered and the browser half reports "The Host did not answer."
+  // `ctx.inject` waits for the service and re-runs when it changes.
+  ctx.inject(['webServer'], (webCtx) => {
+    // The desktop opener is the session controller's verified path opener. It
+    // is read at use time because the API domain may activate after this row.
+    const openPath = async (path, target, signal) => {
+      void target
+      const sessionController = webCtx.get('sessionController')
+      const unavailable = (message) => {
+        const error = new Error(message)
+        error.code = 'open-unavailable'
+        return error
+      }
+      if (sessionController === undefined || sessionController === null
+        || typeof sessionController.openWorkspacePath !== 'function') {
+        throw unavailable('desktop opening is not available in this profile')
+      }
+      if (typeof sessionController.canOpenWorkspacePath === 'function'
+        && !sessionController.canOpenWorkspacePath()) {
+        throw unavailable('desktop opening is not available on this host')
+      }
+      await sessionController.openWorkspacePath({ path }, signal)
+    }
+    webCtx.effect(
+      () => registerRoutes(webCtx.webServer, { core, ready, openPath, pickDirectory }),
+      'dsh-plugin-viburnum: routes',
+    )
+  })
 
-  const minutes = core.config.checkIntervalMinutes
-  if (minutes > 0) {
-    // A check on start and on the configured interval. Checks never move code;
-    // every move stays a click, a tool call or a CLI command (D9).
+  // One effect owns the whole check schedule: a startup check when the saved
+  // setting allows it, then a one-minute tick that refreshes when the saved
+  // interval is due. Checks never move code; every move stays a click, a tool
+  // call or a CLI command (D9). Changing the settings takes effect here.
+  ctx.effect(() => {
+    let disposed = false
+    let lastCheck = 0
+
+    const runCheck = () => {
+      lastCheck = Date.now()
+      void core.refresh().catch((failure) => log.warn(`dsh-plugin-viburnum: check failed: ${failure.message}`))
+    }
+
     void ready.then((error) => {
+      if (disposed) return
       if (error) {
         reportLoadError(error)
         return
       }
-      void core.refresh().catch((failure) => log.warn(`dsh-plugin-viburnum: check failed: ${failure.message}`))
+      if (core.snapshot().settings.refreshOnStartup === true) runCheck()
     })
 
-    ctx.effect(() => {
-      const timer = setInterval(() => {
-        void core
-          .refresh()
-          .catch((failure) => log.warn(`dsh-plugin-viburnum: check failed: ${failure.message}`))
-      }, minutes * 60 * 1000)
-      return () => clearInterval(timer)
-    }, 'dsh-plugin-viburnum: check interval')
-  }
+    const timer = setInterval(() => {
+      if (disposed) return
+      const minutes = core.snapshot().settings.checkIntervalMinutes
+      if (!Number.isInteger(minutes) || minutes <= 0) return
+      if (Date.now() - lastCheck < minutes * 60 * 1000) return
+      runCheck()
+    }, 60_000)
+    timer.unref?.()
+
+    return () => {
+      disposed = true
+      clearInterval(timer)
+    }
+  }, 'dsh-plugin-viburnum: checks')
 
   log.info(
     `ready — ${core.config.checkIntervalMinutes > 0 ? `checking every ${core.config.checkIntervalMinutes} min` : 'checks on demand'}`,

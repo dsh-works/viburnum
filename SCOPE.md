@@ -17,13 +17,16 @@ decisions live in [`DESIGN.md`](DESIGN.md); the approved build plan and its acce
 
 ## 0.2.0 — adoption and the workbench
 
-- Install doors: directory picker, repository URL, GitHub organisation and the shelf (`pluginsDir`),
-  all through the plugin manager's `installBundle`.
-- The per-plugin workbench page: branch as the hero control, incoming changelog, version drift,
-  reload class, and "opens" (folder, README, CHANGELOG, terminal).
-- `vib new`, the three-door CLI spelling, `vib install .`, organisation repository creation.
-- Organisation catalog with configured owners (`catalogOwners`), cached and refreshed on request.
-- Timeline and hygiene scan.
+- Install doors: directory (native Browse), repository URL, GitHub organisation with a cached catalog
+  (the shared `$GITHUB_TOKEN`/`$GH_TOKEN` when present), and the shelf (`pluginsDir`), all through the
+  plugin manager's `installBundle`.
+- The per-plugin workbench page: branch hero control, incoming changelog rendered as Markdown, version
+  drift and reload class, inline README/CHANGELOG, folder open in the desktop, and whole-row entry.
+- Page polish: plugin icons per row, versions, timeline feed, hygiene scan, sidebar ahead/behind counts.
+- `vib new`, the CLI spelling of the install doors (`vib install`), `vib log`, `vib hygiene`.
+- A Settings → viburnum page (refresh schedule, startup refresh, checkout directory, version warnings)
+  and harness-drift tracking against `engines.dsh`.
+- Organisation repository creation (`vib new --push`) and `vib_brief` move to 0.3.
 
 ## Not planned
 
