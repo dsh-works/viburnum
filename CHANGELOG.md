@@ -30,6 +30,8 @@
   terminal instead of reporting a false success; and the xterm fallback uses `/bin/sh` when `$SHELL`
   is unset.
 - The Linux directory picker falls back to `kdialog` when `zenity` is not installed.
+- The git command seam reads the process environment when it spawns, not once at module load, so a
+  git identity set by the CLI or by the test suite on a bare runner reaches every commit.
 - The install form's directory placeholder is platform-neutral instead of a Windows example path.
 
 ## 0.2.2 — 2026-11-09
