@@ -14,7 +14,7 @@ import { dirname } from 'node:path'
 
 import { Config } from './lib/config.js'
 import { createCore } from './lib/core.js'
-import { fetchOwnerRepos } from './lib/catalog.js'
+import { fetchOwnerRepos, fetchRepoIcon, fetchRepoPreview } from './lib/catalog.js'
 import { readGitCredentials } from './lib/credentials.js'
 import { must } from './lib/git.js'
 import { scanHygiene } from './lib/hygiene.js'
@@ -46,6 +46,14 @@ export function apply(ctx, config) {
     : process.cwd()
   let gitHubToken = null
 
+  /** The token for GitHub reads: environment first, then git's stored credentials. */
+  const tokenOf = async () => {
+    const fromEnv = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null
+    if (fromEnv !== null && fromEnv.trim() !== '') return fromEnv.trim()
+    if (gitHubToken === null) gitHubToken = await readGitCredentials()
+    return gitHubToken.token
+  }
+
   let core
   core = createCore({
     bundleSource: ({ env, argv }) => listMountedBundles(ctx.pluginManager, { env, argv }),
@@ -57,15 +65,9 @@ export function apply(ctx, config) {
       await mkdir(dirname(target), { recursive: true })
       await must(dirname(target), ['clone', '--', url, target], { timeoutMs: 120_000 })
     },
-    catalogFetcher: async (owner) => {
-      // Ask git's own stored credentials once per process so private
-      // organisation repositories are visible without a second token store.
-      if (gitHubToken === null) {
-        gitHubToken = await readGitCredentials()
-      }
-      const fromEnv = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null
-      return fetchOwnerRepos(owner, { token: fromEnv ?? gitHubToken.token })
-    },
+    catalogFetcher: async (owner) => fetchOwnerRepos(owner, { token: await tokenOf() }),
+    repoIconFetcher: async (owner, repo) => fetchRepoIcon(owner, repo, { token: await tokenOf() }),
+    repoPreviewFetcher: async (owner, repo) => fetchRepoPreview(owner, repo, { token: await tokenOf() }),
     hygieneScanner: () => scanHygiene({ roots: [workspaceDirectory, core.shelfDirectory] }),
   })
 
