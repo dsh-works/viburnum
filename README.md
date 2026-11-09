@@ -181,8 +181,9 @@ switch from the live detail, light/dark theme comparison, and the second machine
 The macOS path was made verifiable while 0.3.0 was in flight:
 
 - `npm run check` — 150 tests, 0 failures on macOS 26.7 (Darwin arm64, Node 24.21.0).
-- CI runs the same gate on `ubuntu-latest`, `macos-latest` and `windows-latest` (Node 22); the Linux
-  and Windows runs had not run yet when this note was written.
+- CI runs the same gate on `ubuntu-latest`, `macos-latest` and `windows-latest` (Node 22), and all
+  three are green at `c8b43fb`; the ubuntu and windows runs also prove the suite needs no machine git
+  identity (it pins its own).
 - The live CLI ran on this Mac: `vib status` (exit 3 while a row is not current) and `vib brief`
   (exit 0) both answered from the real profile.
 - The terminal command builder describes all three platforms from one Host (`wt.exe`/`powershell.exe`,
@@ -191,8 +192,7 @@ The macOS path was made verifiable while 0.3.0 was in flight:
   directory picker falls back to `kdialog` when `zenity` is absent; all of this is covered by unit
   tests with an injected spawn.
 
-Not run: the live Terminal action (it needs a profile reload), the cross-platform CI runs themselves,
-and the live page after the change.
+Not run: the live Terminal action (it needs a profile reload) and the live page after the change.
 
 ### 0.1.0 verification (2026-11-06)
 
