@@ -51,6 +51,8 @@ window.__ModuleLoader__.load({
         readme: 'README',
         changelog: 'CHANGELOG',
         opened: 'opened',
+        close: 'Close',
+        truncated: 'truncated',
         back: 'Back',
         version: 'version',
         incoming: 'incoming',
@@ -166,6 +168,44 @@ window.__ModuleLoader__.load({
         fontSize: '12px',
       },
       empty: { color: 'var(--dsw-alias-label-secondary)', padding: '12px 0' },
+      documentScroll: { maxHeight: '420px', overflow: 'auto', paddingRight: '4px' },
+      markdown: { display: 'flex', flexDirection: 'column', gap: '2px', color: 'var(--dsw-alias-label-primary)' },
+      mdP: { margin: '4px 0', lineHeight: '1.55' },
+      mdH1: { fontSize: '18px', margin: '10px 0 4px' },
+      mdH2: { fontSize: '16px', margin: '10px 0 4px' },
+      mdH3: { fontSize: '14px', margin: '8px 0 3px' },
+      mdH4: { fontSize: '13px', margin: '8px 0 3px' },
+      mdH5: { fontSize: '13px', margin: '8px 0 3px' },
+      mdH6: { fontSize: '13px', margin: '8px 0 3px' },
+      mdList: { margin: '4px 0', paddingLeft: '20px' },
+      mdItem: { margin: '2px 0', lineHeight: '1.5' },
+      mdPre: {
+        background: 'var(--dsw-alias-bg-layer-2)',
+        padding: '8px 10px',
+        borderRadius: '6px',
+        overflow: 'auto',
+        fontSize: '12px',
+        maxHeight: '260px',
+        margin: '6px 0',
+      },
+      inlineCode: {
+        background: 'var(--dsw-alias-bg-layer-2)',
+        padding: '1px 4px',
+        borderRadius: '4px',
+        fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
+        fontSize: '12px',
+      },
+      link: { color: 'var(--dsw-alias-brand-primary)' },
+      mdQuote: {
+        margin: '4px 0',
+        paddingLeft: '10px',
+        borderLeft: '2px solid var(--dsw-alias-border-l2)',
+        color: 'var(--dsw-alias-label-secondary)',
+      },
+      mdHr: { border: 'none', borderTop: '1px solid var(--dsw-alias-border-l1)', margin: '8px 0' },
+      mdTable: { borderCollapse: 'collapse', margin: '6px 0', fontSize: '12px' },
+      mdTh: { textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--dsw-alias-border-l2)' },
+      mdTd: { padding: '4px 8px', borderBottom: '1px solid var(--dsw-alias-border-l1)', verticalAlign: 'top' },
     }
 
     /** `↑2 ↓3`, or `✓`. */
@@ -182,9 +222,148 @@ window.__ModuleLoader__.load({
       return names.filter((name, index) => names.indexOf(name) === index)
     }
 
+    /** Inline markdown spans as React nodes; text stays escaped by React. */
+    function renderInline(text) {
+      const pattern = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|\*[^*]+\*)/u
+      const parts = []
+      let rest = String(text ?? '')
+      let key = 0
+
+      while (rest.length > 0) {
+        const match = pattern.exec(rest)
+        if (match === null) {
+          parts.push(rest)
+          break
+        }
+        if (match.index > 0) parts.push(rest.slice(0, match.index))
+        const token = match[0]
+        if (token.startsWith('**')) parts.push(h('strong', { key: key++ }, token.slice(2, -2)))
+        else if (token.startsWith('`')) {
+          parts.push(h('code', { key: key++, style: styles.inlineCode }, token.slice(1, -1)))
+        } else if (token.startsWith('*')) parts.push(h('em', { key: key++ }, token.slice(1, -1)))
+        else {
+          const link = /^\[([^\]]+)\]\(([^)]+)\)/u.exec(token)
+          if (link !== null && /^(https?:|mailto:)/u.test(link[2])) {
+            parts.push(h('a', {
+              key: key++,
+              href: link[2],
+              target: '_blank',
+              rel: 'noreferrer noopener',
+              style: styles.link,
+            }, link[1]))
+          } else {
+            parts.push(link !== null ? link[1] : token)
+          }
+        }
+        rest = rest.slice(match.index + token.length)
+      }
+      return parts
+    }
+
+    /** A small, safe markdown renderer: headings, lists, tables, quotes, code. */
+    function renderMarkdown(text) {
+      const lines = String(text ?? '').split(/\r?\n/u)
+      const blocks = []
+      let index = 0
+      let key = 0
+
+      while (index < lines.length) {
+        const line = lines[index]
+        if (line.trim() === '') {
+          index += 1
+          continue
+        }
+
+        if (/^```/u.test(line)) {
+          const body = []
+          index += 1
+          while (index < lines.length && !/^```/u.test(lines[index])) {
+            body.push(lines[index])
+            index += 1
+          }
+          index += 1
+          blocks.push(h('pre', { key: key++, style: styles.mdPre }, h('code', null, body.join('\n'))))
+          continue
+        }
+
+        const heading = /^(#{1,6})\s+(.*)$/u.exec(line)
+        if (heading !== null) {
+          const level = heading[1].length
+          blocks.push(h(`h${level}`, { key: key++, style: styles[`mdH${level}`] }, renderInline(heading[2])))
+          index += 1
+          continue
+        }
+
+        if (/^\s*([-*_])\1{2,}\s*$/u.test(line)) {
+          blocks.push(h('hr', { key: key++, style: styles.mdHr }))
+          index += 1
+          continue
+        }
+
+        if (/^>\s?/u.test(line)) {
+          const quote = []
+          while (index < lines.length && /^>\s?/u.test(lines[index])) {
+            quote.push(lines[index].replace(/^>\s?/u, ''))
+            index += 1
+          }
+          blocks.push(h('blockquote', { key: key++, style: styles.mdQuote }, renderMarkdown(quote.join('\n'))))
+          continue
+        }
+
+        if (/^\s*[-*+]\s+/u.test(line)) {
+          const items = []
+          while (index < lines.length && /^\s*[-*+]\s+/u.test(lines[index])) {
+            items.push(lines[index].replace(/^\s*[-*+]\s+/u, ''))
+            index += 1
+          }
+          blocks.push(h('ul', { key: key++, style: styles.mdList },
+            items.map((item, itemIndex) => h('li', { key: itemIndex, style: styles.mdItem }, renderInline(item)))))
+          continue
+        }
+
+        if (/^\s*\d+\.\s+/u.test(line)) {
+          const items = []
+          while (index < lines.length && /^\s*\d+\.\s+/u.test(lines[index])) {
+            items.push(lines[index].replace(/^\s*\d+\.\s+/u, ''))
+            index += 1
+          }
+          blocks.push(h('ol', { key: key++, style: styles.mdList },
+            items.map((item, itemIndex) => h('li', { key: itemIndex, style: styles.mdItem }, renderInline(item)))))
+          continue
+        }
+
+        if (line.includes('|') && index + 1 < lines.length && /^\s*\|?\s*:?-{3,}/u.test(lines[index + 1])) {
+          const parseRow = (row) => row.trim().replace(/^\|/u, '').replace(/\|$/u, '').split('|').map((cell) => cell.trim())
+          const head = parseRow(line)
+          index += 2
+          const rows = []
+          while (index < lines.length && lines[index].includes('|') && lines[index].trim() !== '') {
+            rows.push(parseRow(lines[index]))
+            index += 1
+          }
+          blocks.push(h('table', { key: key++, style: styles.mdTable },
+            h('thead', null, h('tr', null, head.map((cell, cellIndex) =>
+              h('th', { key: cellIndex, style: styles.mdTh }, renderInline(cell))))),
+            h('tbody', null, rows.map((row, rowIndex) =>
+              h('tr', { key: rowIndex }, row.map((cell, cellIndex) =>
+                h('td', { key: cellIndex, style: styles.mdTd }, renderInline(cell))))))))
+          continue
+        }
+
+        const paragraph = []
+        while (index < lines.length && lines[index].trim() !== ''
+          && !/^(#{1,6}\s|```|>|\s*[-*+]\s+|\s*\d+\.\s+)/u.test(lines[index])) {
+          paragraph.push(lines[index])
+          index += 1
+        }
+        blocks.push(h('p', { key: key++, style: styles.mdP }, renderInline(paragraph.join(' '))))
+      }
+      return blocks
+    }
+
     /** One client-local store: the status snapshot, the busy state and the last result. */
     function createStore() {
-      let state = { snapshot: null, phase: 'loading', error: null, busy: null, last: null, detail: null }
+      let state = { snapshot: null, phase: 'loading', error: null, busy: null, last: null, detail: null, doc: null }
       const listeners = new Set()
 
       const emit = () => {
@@ -239,7 +418,7 @@ window.__ModuleLoader__.load({
           }
         },
         async openDetail(name) {
-          set({ detail: { name, phase: 'loading', data: null, error: null } })
+          set({ detail: { name, phase: 'loading', data: null, error: null }, doc: null })
           try {
             const data = await request('/viburnum/action', {
               method: 'POST',
@@ -251,7 +430,31 @@ window.__ModuleLoader__.load({
           }
         },
         closeDetail() {
-          set({ detail: null })
+          set({ detail: null, doc: null })
+        },
+        async openDocument(bundle, target) {
+          set({ doc: { name: bundle, target, phase: 'loading', text: null, error: null, truncated: false } })
+          try {
+            const data = await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'document', bundle, target }),
+            })
+            set({
+              doc: {
+                name: bundle,
+                target,
+                phase: 'ready',
+                text: data.ok === false ? null : data.text,
+                error: data.ok === false ? data.message : null,
+                truncated: data.truncated === true,
+              },
+            })
+          } catch (error) {
+            set({ doc: { name: bundle, target, phase: 'error', text: null, error: error.message, truncated: false } })
+          }
+        },
+        closeDocument() {
+          set({ doc: null })
         },
       }
       return store
@@ -369,6 +572,7 @@ window.__ModuleLoader__.load({
       const busy = state.busy !== null
       const banner = state.last ? describeResult(state.last, t) : null
       const detail = state.detail
+      const doc = state.doc
 
       const run = (action, payload) => {
         void store.act(action, payload)
@@ -476,10 +680,30 @@ window.__ModuleLoader__.load({
             'div',
             { style: styles.controls },
             h('span', { style: styles.secondary }, t('opens')),
+            h('button', { style: styles.button, onClick: () => void store.openDocument(bundle.name, 'readme') }, t('readme')),
+            h('button', { style: styles.button, onClick: () => void store.openDocument(bundle.name, 'changelog') }, t('changelog')),
             h('button', { style: styles.button, onClick: () => runDetail('open', { bundle: bundle.name, target: 'folder' }) }, t('folder')),
-            h('button', { style: styles.button, onClick: () => runDetail('open', { bundle: bundle.name, target: 'readme' }) }, t('readme')),
-            h('button', { style: styles.button, onClick: () => runDetail('open', { bundle: bundle.name, target: 'changelog' }) }, t('changelog')),
           ),
+          doc !== null
+            ? h(
+              'div',
+              { style: styles.row },
+              h(
+                'div',
+                { style: styles.rowTop },
+                h('span', { style: styles.status }, doc.name + ' · ' + doc.target),
+                h('span', { style: styles.spacer }),
+                h('button', { style: styles.button, onClick: () => store.closeDocument() }, t('close')),
+              ),
+              doc.phase === 'loading' ? h('div', { style: styles.empty }, t('loading')) : null,
+              doc.error ? h('div', { style: styles.error }, doc.error) : null,
+              doc.text
+                ? h('div', { style: styles.documentScroll },
+                  h('div', { style: styles.markdown }, renderMarkdown(doc.text)))
+                : null,
+              doc.truncated ? h('div', { style: styles.secondary }, t('truncated')) : null,
+            )
+            : null,
           banner !== null && banner !== '' ? h('div', { style: styles.banner }, banner) : null,
           h(
             'div',
@@ -491,7 +715,11 @@ window.__ModuleLoader__.load({
               h('span', { style: styles.status }, '↓' + (incoming ? incoming.behind : 0) + ' ' + t('incoming')),
               incoming && incoming.nextVersion ? h('span', { style: styles.arrows }, 'next ' + incoming.nextVersion) : null,
             ),
-            h('pre', { style: styles.changelog }, incoming && incoming.changelog ? incoming.changelog : t('noIncoming')),
+            h('div', { style: styles.documentScroll },
+              h('div', { style: styles.markdown },
+                incoming && incoming.changelog
+                  ? renderMarkdown(incoming.changelog)
+                  : h('div', { style: styles.secondary }, t('noIncoming')))),
             incoming && incoming.reloadLabel ? h('div', { style: styles.secondary }, incoming.reloadLabel) : null,
           ),
         )

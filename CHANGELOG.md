@@ -4,6 +4,9 @@
 
 ### Added
 
+- A bundle's README and CHANGELOG open **inside** the detail view, rendered as Markdown (headings,
+  lists, tables, code, links) by a small safe renderer; the incoming changelog uses it too. Only the
+  folder still opens externally.
 - The viburnum page header shows its own version, and every bundle row shows the linked plugin's
   declared version next to its name; the detail already showed the target version.
 - The workbench detail view can hand a bundle's folder, README or CHANGELOG to the desktop through
