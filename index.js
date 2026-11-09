@@ -9,8 +9,12 @@
  * @module dsh-plugin-viburnum
  */
 
+import { mkdir } from 'node:fs/promises'
+import { dirname } from 'node:path'
+
 import { Config } from './lib/config.js'
 import { createCore } from './lib/core.js'
+import { must } from './lib/git.js'
 import { listMountedBundles } from './lib/profile.js'
 import { PROMPT } from './lib/prompt.js'
 import { buildTools } from './lib/tools.js'
@@ -36,6 +40,12 @@ export function apply(ctx, config) {
     bundleSource: ({ env, argv }) => listMountedBundles(ctx.pluginManager, { env, argv }),
     config,
     log,
+    installer: (spec) => ctx.pluginManager.installBundle(spec),
+    inspector: (spec) => ctx.pluginManager.inspect(spec),
+    cloner: async (url, target) => {
+      await mkdir(dirname(target), { recursive: true })
+      await must(dirname(target), ['clone', '--', url, target], { timeoutMs: 120_000 })
+    },
   })
 
   /** The state load, as `null` or the error; every consumer awaits it. */

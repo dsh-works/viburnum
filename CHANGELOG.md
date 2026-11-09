@@ -4,6 +4,11 @@
 
 ### Added
 
+- Install doors on the page: **Directory** links an existing checkout through
+  `pluginManager.installBundle`, and **Repository URL** clones `owner/repo` or an https/ssh git URL into the
+  configurable shelf (`pluginsDir`, default `$DSH_HOME/viburnum/plugins`) before linking it. Refusals cover
+  bad paths, non-bundles, already-linked checkouts, occupied shelf slots and clone failures; nothing is
+  overwritten or auto-removed.
 - A bundle's README and CHANGELOG open **inside** the detail view, rendered as Markdown (headings,
   lists, tables, code, links) by a small safe renderer; the incoming changelog uses it too. Only the
   folder still opens externally.

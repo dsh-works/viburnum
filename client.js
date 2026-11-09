@@ -51,6 +51,15 @@ window.__ModuleLoader__.load({
         readme: 'README',
         changelog: 'CHANGELOG',
         opened: 'opened',
+        install: 'Install',
+        installed: 'installed',
+        cloned: 'cloned',
+        directory: 'Directory',
+        repository: 'Repository URL',
+        directoryPlaceholder: 'C:\\path\\to\\plugin',
+        repositoryPlaceholder: 'owner/repo or https://github.com/owner/repo',
+        installDirectoryHint: 'Link a checkout that already exists where it is.',
+        installRepositoryHint: 'Clone into the shelf and link the fresh checkout.',
         close: 'Close',
         truncated: 'truncated',
         back: 'Back',
@@ -159,6 +168,17 @@ window.__ModuleLoader__.load({
         background: 'var(--dsw-alias-bg-layer-1)',
         color: 'var(--dsw-alias-label-primary)',
         fontSize: '12px',
+      },
+      input: {
+        flex: '1 1 360px',
+        minWidth: '220px',
+        padding: '4px 8px',
+        borderRadius: '6px',
+        border: '1px solid var(--dsw-alias-border-l1)',
+        background: 'var(--dsw-alias-bg-layer-1)',
+        color: 'var(--dsw-alias-label-primary)',
+        font: 'inherit',
+        fontSize: '13px',
       },
       banner: {
         padding: '6px 10px',
@@ -550,6 +570,10 @@ window.__ModuleLoader__.load({
         return t('dryRun') + ': ' + plan.action
       }
       if (result.ok === false) return t('refused') + ': ' + (result.code || 'error')
+      if (result.installed === true) {
+        return t('installed') + ' ' + (result.name || '') + (result.version ? ' v' + result.version : '')
+          + (result.cloned === true ? ' · ' + t('cloned') : '')
+      }
       if (result.opened === true) return t('opened') + ' ' + (result.target || '')
       if (result.nothing === true) return (result.bundle || '') + ' ✓'
       const receipt = result.receipt
@@ -573,6 +597,9 @@ window.__ModuleLoader__.load({
       const banner = state.last ? describeResult(state.last, t) : null
       const detail = state.detail
       const doc = state.doc
+      const [installOpen, setInstallOpen] = React.useState(false)
+      const [installDoor, setInstallDoor] = React.useState('directory')
+      const [installSpec, setInstallSpec] = React.useState('')
 
       const run = (action, payload) => {
         void store.act(action, payload)
@@ -771,11 +798,50 @@ window.__ModuleLoader__.load({
           h('span', { style: styles.spacer }),
           h('button', { style: styles.button, disabled: busy, onClick: () => run('refresh') }, t('refresh')),
           h('button', { style: styles.button, disabled: busy, onClick: () => run('sync') }, t('syncAll')),
+          h('button', { style: styles.button, disabled: busy, onClick: () => setInstallOpen(!installOpen) }, '+ ' + t('install')),
         ),
         banner !== null && banner !== '' ? h('div', { style: styles.banner }, banner) : null,
         state.phase === 'error' ? h('div', { style: styles.error }, t('transportError')) : null,
         state.phase === 'loading' ? h('div', { style: styles.empty }, t('loading')) : null,
         rows.length === 0 && state.phase === 'ready' ? h('div', { style: styles.empty }, t('noBundles')) : null,
+        installOpen
+          ? h(
+            'div',
+            { style: styles.row },
+            h(
+              'div',
+              { style: styles.controls },
+              h(
+                'select',
+                {
+                  style: styles.select,
+                  value: installDoor,
+                  disabled: busy,
+                  onChange: (event) => setInstallDoor(event.target.value),
+                },
+                h('option', { value: 'directory' }, t('directory')),
+                h('option', { value: 'repository' }, t('repository')),
+              ),
+              h('input', {
+                style: styles.input,
+                value: installSpec,
+                disabled: busy,
+                placeholder: installDoor === 'directory' ? t('directoryPlaceholder') : t('repositoryPlaceholder'),
+                onChange: (event) => setInstallSpec(event.target.value),
+              }),
+              h('button', {
+                style: styles.button,
+                disabled: busy || installSpec.trim() === '',
+                onClick: () => run('install', { door: installDoor, spec: installSpec.trim() }),
+              }, t('install')),
+            ),
+            h(
+              'div',
+              { style: styles.secondary },
+              installDoor === 'directory' ? t('installDirectoryHint') : t('installRepositoryHint'),
+            ),
+          )
+          : null,
         rows.map(rowView),
       )
     }
