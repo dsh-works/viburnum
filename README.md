@@ -1,6 +1,6 @@
 # viburnum
 
-*A manager that Keeps All Linked Installs Neatly Synced In Two Universes.*
+*a manager that keeps all linked installs neatly synced in two universes.*
 
 A workbench for your own DeepSeek Harness plugins: create them, mount them, choose which version runs,
 and keep two machines in sync. It watches the clones your profile is linked to, and one click fetches,
