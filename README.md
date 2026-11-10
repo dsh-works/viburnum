@@ -211,9 +211,11 @@ Not run: the live Terminal action (it needs a profile reload) and the live page 
   `command -v vib` then resolved in zsh, bash and sh, and `vib --help` ran.
 - Negative control: the `cli` install action without `confirm: true` is refused with
   `confirmation-required`.
-- Found and fixed live: the ownership check read `<prefix>/node_modules` instead of npm's POSIX
-  global root `<prefix>/lib/node_modules`, so Remove was not offered. The fix is committed; the
-  Remove path is therefore **not yet verified live** — it needs the next profile reload.
+- Remove verified live after the next reload: **Remove → confirm → Run** removed the link
+  (`command -v vib` gone in zsh, bash and sh, and the card returned to "not on your PATH"), then
+  **Install → Run** restored it with `owned: true`. The ownership bug this exposed — the check read
+  `<prefix>/node_modules` instead of npm's POSIX global root `<prefix>/lib/node_modules` — is fixed
+  in `92ccd2c`.
 
 ### 0.1.0 verification (2026-11-06)
 

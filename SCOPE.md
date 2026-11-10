@@ -40,6 +40,8 @@ decisions live in [`DESIGN.md`](DESIGN.md); the approved build plan and its acce
 ## Not planned
 
 - Registry bundles, dependency installation, multi-profile, notifications, diff stat, tray integration.
+- Publishing to npm, or distribution outside `link:` and git installs. Recorded as a future idea in
+  [`docs/IDEAS.md`](docs/IDEAS.md); not scheduled.
 - Commits, force-push, rebase of published commits, any automatic move without a click or a command.
 
 ## Boundaries
