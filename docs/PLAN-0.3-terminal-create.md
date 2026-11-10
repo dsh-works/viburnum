@@ -45,7 +45,7 @@
 
 | # | Trigger | Expected result | Observed by | Result |
 |---|---|---|---|---|
-| 1 | Terminal action on a bundle | the desktop terminal opens in that checkout | live page | not run |
+| 1 | Terminal action on a bundle | the desktop terminal opens in that checkout | live page | **fail → fixed (2026-11-10)** — the live iTerm2 attempt crashed ("A session ended very soon after starting"): AppleScript ran `cd` as the session command and closed it. Replaced with LaunchServices `open -a iTerm`/`iTerm2`/`Terminal <dir>`; verified directly that both iTerm2 and Terminal.app open a shell with cwd at the checkout. Retest through the workbench after the next reload. |
 | 1b | Settings → Terminal application | the choices match the Host platform (iTerm2/Terminal.app on macOS, wt/PowerShell on Windows, x-terminal/gnome/xterm on Linux); the chosen one launches first | route JSON + unit test | **pass (unit + route)** — choices per platform and preference ordering tested; setting validated |
 | 2 | `vib new demo --push --org dsh-works` | repository created (private), first commit pushed, next step printed | live command | not run — needs a real repository creation, deferred to the owner |
 | 3 | Creation refused (bad owner/exists/permission) | readable `create-http` failure; no push attempted | stubbed API test | not run |

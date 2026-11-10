@@ -37,10 +37,10 @@ test('a preferred terminal is tried first', () => {
   assert.equal(win[1].command, 'wt.exe')
 
   const mac = terminalCommand('darwin', '/plugins/demo', 'iterm2')
-  assert.equal(mac[0].command, 'osascript')
-  assert.match(mac[0].args[1], /iTerm2/u)
+  assert.equal(mac[0].command, 'open')
+  assert.deepEqual(mac[0].args, ['-a', 'iTerm', '/plugins/demo'])
   const macTerminal = terminalCommand('darwin', '/plugins/demo', 'terminal')
-  assert.match(macTerminal[0].args[1], /Terminal/u)
+  assert.deepEqual(macTerminal[0].args, ['-a', 'Terminal', '/plugins/demo'])
 
   const linux = terminalCommand('linux', '/plugins/demo', 'gnome-terminal')
   assert.equal(linux[0].command, 'gnome-terminal')
@@ -48,7 +48,7 @@ test('a preferred terminal is tried first', () => {
 
 test('an unknown preference falls back to the platform order', () => {
   const list = terminalCommand('darwin', '/plugins/demo', 'not-a-terminal')
-  assert.match(list[0].args[1], /iTerm2/u)
+  assert.deepEqual(list[0].args, ['-a', 'iTerm', '/plugins/demo'])
 })
 
 test('the platform ids are the settings values', () => {
@@ -56,11 +56,22 @@ test('the platform ids are the settings values', () => {
   assert.deepEqual(terminalIds('win32'), ['auto', 'wt', 'powershell'])
 })
 
-test('macOS uses Terminal through osascript', () => {
+test('macOS opens the app through LaunchServices, newest iTerm name first', () => {
   const list = terminalCommand('darwin', '/plugins/demo')
-  assert.equal(list.length, 2)
-  assert.equal(list[0].command, 'osascript')
-  assert.match(list[0].args[1], /iTerm2/u)
+  assert.deepEqual(list, [
+    { command: 'open', args: ['-a', 'iTerm', '/plugins/demo'] },
+    { command: 'open', args: ['-a', 'iTerm2', '/plugins/demo'] },
+    { command: 'open', args: ['-a', 'Terminal', '/plugins/demo'] },
+  ])
+})
+
+test('a macOS directory with spaces is one launch argument, not a shell string', () => {
+  for (const id of ['iterm2', 'terminal']) {
+    const [command] = terminalCommand('darwin', '/Users/me/My Plugins', id)
+    assert.equal(command.command, 'open')
+    assert.equal(command.args.at(-1), '/Users/me/My Plugins')
+    assert.ok(!command.args.some((argument) => argument.includes('&&')), 'no shell chaining is involved')
+  }
 })
 
 test('Linux tries an x-terminal first', () => {
@@ -71,14 +82,6 @@ test('Linux tries an x-terminal first', () => {
 
 test('a relative directory is refused', () => {
   assert.throws(() => terminalCommand('win32', 'plugins/demo'), /absolute directory/u)
-})
-
-test('a macOS path with spaces is shell-quoted inside AppleScript', () => {
-  for (const id of ['iterm2', 'terminal']) {
-    const command = terminalCommand('darwin', '/Users/me/My Plugins', id)[0]
-    assert.equal(command.command, 'osascript')
-    assert.ok(command.args[1].includes("cd '/Users/me/My Plugins'"), command.args[1])
-  }
 })
 
 test('the xterm fallback runs a shell when $SHELL is unset', () => {
@@ -106,8 +109,8 @@ test('a failed launcher falls through to the next terminal', async () => {
 
   assert.deepEqual(result, { ok: true })
   assert.equal(calls.length, 2)
-  assert.match(calls[0].args[1], /iTerm2/u)
-  assert.match(calls[1].args[1], /Terminal/u)
+  assert.equal(calls[0].args[1], 'iTerm')
+  assert.equal(calls[1].args[1], 'iTerm2')
 })
 
 test('every failed launcher reports the terminal unavailable', async () => {

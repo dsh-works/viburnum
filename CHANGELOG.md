@@ -29,10 +29,11 @@
 - Cross-platform checks: the test suite and the terminal command builder now use the running and
   target platform's path flavour instead of assuming Windows, so `npm run check` is green on macOS,
   Linux and Windows; CI runs the gate on all three.
-- Terminal opening works on every desktop: a macOS path is shell-quoted inside AppleScript (spaces
-  and metacharacters no longer break `cd`); a launcher that exits non-zero falls through to the next
-  terminal instead of reporting a false success; and the xterm fallback uses `/bin/sh` when `$SHELL`
-  is unset.
+- Terminal opening works on every desktop: macOS launches the terminal app through LaunchServices
+  (`open -a iTerm` / `open -a Terminal <dir>`) instead of an AppleScript `command`, which made iTerm2
+  close the session immediately ("A session ended very soon after starting") and asked for
+  automation/API permission; a launcher that exits non-zero falls through to the next terminal
+  instead of reporting a false success; and the xterm fallback uses `/bin/sh` when `$SHELL` is unset.
 - The Linux directory picker falls back to `kdialog` when `zenity` is not installed.
 - The git command seam reads the process environment when it spawns, not once at module load, so a
   git identity set by the CLI or by the test suite on a bare runner reaches every commit.
