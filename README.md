@@ -177,15 +177,19 @@ Verified on macOS (Darwin arm64, Node 24.21.0) in the `web` profile at release:
   AppleScript `command` that closed the iTerm2 session immediately.
 - **Terminal application setting**: per-platform choices, preference ordering and validation are
   unit/route tested.
-- **Repository creation**: the GitHub API and first-push paths are unit-tested against stubs and a
-  local bare origin. A real `vib new --push` creation was **not run** (it creates a real repository;
-  deferred to the owner), so the "push fails after creation" path is not run either.
+- **Repository creation**: verified live on 2026-11-11 — `vib new vib-smoke --push --org dsh-works`
+  created a private `dsh-works/dsh-plugin-vib-smoke`, committed the scaffold and pushed it to `main`
+  (the remote `main` SHA equalled the local `HEAD`), then printed the `vib install` next step; a
+  second run of the same name was refused with `create-http` 422 and pushed nothing. The throwaway
+  repository was left for the owner to delete
+  ([dsh-plugin-vib-smoke](https://github.com/dsh-works/dsh-plugin-vib-smoke)). The "push fails after
+  creation" path is still not run.
 - **CLI on PATH**: verified live end to end — see [CLI on PATH](#cli-on-path-2026-11-10-dev).
 - **Cross-platform**: the same suite runs on ubuntu, macOS and windows, and needs no machine git
   identity.
 
-Not run, and therefore not claimed: a real repository creation, a real install through each of the
-three doors, a live conflict resolution in the page, and cross-machine sync.
+Not run, and therefore not claimed: a real install through each of the three doors, a live conflict
+resolution in the page, and cross-machine sync.
 
 ### 0.2.0 verification (2026-11-09)
 
