@@ -1,6 +1,6 @@
 # viburnum — a workbench for your own plugins
 
-*A manager that Keeps All Linked Installs Neatly Synced In Two Universes.*
+*a manager that keeps all linked installs neatly synced in two universes.*
 
 **Status:** design, revision 6, v0 not started
 **Date:** 2026-11-06

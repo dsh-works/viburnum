@@ -1,6 +1,6 @@
 # viburnum
 
-*A manager that Keeps All Linked Installs Neatly Synced In Two Universes.*
+*a manager that keeps all linked installs neatly synced in two universes.*
 
 A workbench for your own DeepSeek Harness plugins: create them, mount them, choose which version runs,
 and keep two machines in sync. It watches the clones your profile is linked to, and one click fetches,
@@ -9,7 +9,7 @@ without you remembering which one pushed last.
 
 A row in the sidebar carries one dot: green when everything is current, violet when something can be
 pulled, orange when work is uncommitted, red when it is unpushed or diverged. Installing from a
-directory, a repository URL or a GitHub organisation follows in 0.2.
+directory, a repository URL or a GitHub organisation is one action, from the page or `vib install`.
 
 viburnum began as one person's two-machine workshop, and it is public now because that problem is not
 unique to one person: everyone who develops a harness plugin on more than one machine has the same
@@ -29,7 +29,7 @@ there is no pnpm run, no lockfile write, and no profile edit.
 viburnum never commits and never force-pushes. When a rebase would rewrite something already
 published, it stops and shows both sides; when the rebase conflicts, it aborts and hands you the files.
 
-**Status: 0.1.0 released (tag `v0.1.0`), public under the MIT licence.**
+**Status: 0.3.0 released (tag `v0.3.0`), public under the MIT licence.**
 [`docs/PLAN.md`](docs/PLAN.md) is the approved plan and carries the gate-3 evidence;
 [`DESIGN.md`](DESIGN.md) carries the premise and decisions. `main` is the stable line (see
 [Branches](#branches)).
@@ -58,7 +58,8 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
   opens its workbench.
 - **The workbench detail**: the branch as the hero control, the incoming changelog rendered as
   Markdown, target/current versions, the reload class, README and CHANGELOG inline, the folder opened
-  in the desktop, and `Update` / `Sync` / `Revert` / track switch that re-fetch the detail after a move.
+  in the desktop or a **Terminal** started in the checkout, and `Update` / `Sync` / `Revert` / track
+  switch that re-fetch the detail after a move. A stopping conflict offers Agree / Guide / Myself.
 - **Install doors**: **Directory** (with the Host's native folder picker), **Repository URL**, and
   **Organisation** (a cached, paginated, searchable list of the configured GitHub owners'
   repositories — private ones included when git has GitHub credentials stored on the machine — with
@@ -66,36 +67,59 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
   through `pluginManager.installBundle`; new clones land in the shelf (`pluginsDir`), while checkouts
   the profile already links are never moved.
 - **Moves**: `Update` is a fetch and a fast-forward. `Sync` pushes unpublished commits, fast-forwards,
-  or rebases private divergence and pushes it; it refuses to rebase published history and aborts a
-  conflicting rebase before reporting it. `Revert` restores the latest update or switch snapshot.
+  or rebases private divergence and pushes it; it refuses to rebase published history, and a
+  conflicting rebase **stays stopped** with three exits — **Agree** (union-merge append-only files),
+  **Guide** (open the files, fix, Retry) and **Myself** (abort). `Revert` restores the latest update
+  or switch snapshot.
 - **Timeline**: what changed since the last look — incoming commits (with their first subject) and
   viburnum's own moves — above the rows; `vib log` reads and clears it.
 - **Hygiene scan**: duplicate checkouts, local branches never merged into `main`, and dirty trees,
   each with a suggestion. It reports; it never deletes, moves or checks anything out. `vib hygiene`.
 - **Settings → viburnum**: refresh interval, refresh on startup, the checkout directory
-  (**Browse…** / **Use default**), the organisation list and its default organisation, and
-  harness-drift warnings. Saved in the profile state and applied without a reload.
+  (**Browse…** / **Use default**), the organisation list and its default organisation, the
+  **terminal application** (Windows Terminal / PowerShell / iTerm2 / Terminal.app / x-terminal / GNOME
+  / xterm, or automatic), a **Command line** card that reports whether the user's own shell finds
+  `vib`, installs or removes our `npm link` after an in-page confirmation, and copies the PATH line or
+  the direct `node bin/vib.js` command when the shell cannot see it, and harness-drift warnings. Saved
+  in the profile state and applied without a reload.
 - **Harness-drift tracking**: a warning when the running DSH version changes between runs, and one for
   every plugin whose `engines.dsh` range rejects the running harness.
-- **Five model-facing tools**: `vib_status`, `vib_update`, `vib_sync`, `vib_switch`, `vib_revert`.
-  Reads are free; every move asks for approval.
-- **A CLI**: `vib status | refresh | update | sync | switch | revert | log | hygiene | install | new`,
-  plus `--json` and `--dry-run`.
+- **Six model-facing tools**: `vib_status`, `vib_brief`, `vib_update`, `vib_sync`, `vib_switch`,
+  `vib_revert`. Reads are free; every move asks for approval.
+- **A CLI**: `vib status | refresh | update | sync | switch | revert | log | hygiene | brief | install | new`,
+  plus `--json`, `--dry-run`, `vib sync --agree|--continue|--abort` and
+  `vib new --push --org <owner>` (creates the GitHub repository and pushes the first commit). The page
+  can put it on your PATH: **Settings → viburnum → Command line** reports where it resolves, runs the
+  `npm link` install/remove after an in-page confirmation, and copies the fallback PATH line; a
+  one-time notice points there while the command is missing.
 - **State with the profile**: tracks, cached rows, receipts, snapshots, the timeline, the settings and
   the last seen harness version at `$DSH_HOME/profiles/<profile>/.viburnum/state.json`, written
   atomically and pruned on write.
 
 ## Install
 
-The plugin is installed into a profile by the plugin manager, never by hand:
+The plugin is installed into a profile by the plugin manager, never by hand. Pass the absolute path
+of the checkout on this machine:
+
+```sh
+# macOS / Linux
+dsh plugin --profile web add ~/Documents/deepseek-harness/viburnum
+```
 
 ```powershell
+# Windows
 dsh plugin --profile web add C:\Users\<you>\Documents\deepseek-harness\viburnum
 ```
 
 The CLI needs `vib` on `PATH` only for terminal use:
 
+```sh
+# macOS / Linux
+cd ~/Documents/deepseek-harness/viburnum && npm link
+```
+
 ```powershell
+# Windows
 cd C:\Users\<you>\Documents\deepseek-harness\viburnum
 npm link
 ```
@@ -137,7 +161,33 @@ one. It uses two same-origin JSON routes registered on the Host web server,
 `/viburnum/status` and `/viburnum/action`, which require the `x-viburnum: 1` header so a cross-site
 form cannot act. The browser half polls the status route every 30 seconds and after every action.
 
-## Verification (2026-11-09)
+## Verification
+
+### 0.3.0 verification (2026-11-11)
+
+Verified on macOS (Darwin arm64, Node 24.21.0) in the `web` profile at release:
+
+- `npm run check` — 161 tests, 0 failures; the GitHub Actions gate is green on ubuntu, macOS and
+  windows.
+- **Conflict exits and `vib_brief`**: Agree / Guide / Myself and the brief feed are covered by the
+  fixture and tool tests; the live page panel was not re-exercised for this release.
+- **Terminal opener**: the live Host action returned `opened: true` and a new shell whose working
+  directory is the bundle checkout (verified with `lsof`, and by clicking **Terminal** in the
+  workbench); iTerm2 and Terminal.app are opened through LaunchServices (`open -a`), replacing an
+  AppleScript `command` that closed the iTerm2 session immediately.
+- **Terminal application setting**: per-platform choices, preference ordering and validation are
+  unit/route tested.
+- **Repository creation**: the GitHub API and first-push paths are unit-tested against stubs and a
+  local bare origin. A real `vib new --push` creation was **not run** (it creates a real repository;
+  deferred to the owner), so the "push fails after creation" path is not run either.
+- **CLI on PATH**: verified live end to end — see [CLI on PATH](#cli-on-path-2026-11-10-dev).
+- **Cross-platform**: the same suite runs on ubuntu, macOS and windows, and needs no machine git
+  identity.
+
+Not run, and therefore not claimed: a real repository creation, a real install through each of the
+three doors, a live conflict resolution in the page, and cross-machine sync.
+
+### 0.2.0 verification (2026-11-09)
 
 Verified live in the `web` profile for 0.2.0:
 
@@ -156,6 +206,42 @@ Verified live in the `web` profile for 0.2.0:
 
 Not claimed: a real install of a new plugin (the profile was not mutated for a test), a real track
 switch from the live detail, light/dark theme comparison, and the second machine.
+
+### Cross-platform check (2026-11-09, `dev`)
+
+The macOS path was made verifiable while 0.3.0 was in flight:
+
+- `npm run check` — 150 tests, 0 failures on macOS 26.7 (Darwin arm64, Node 24.21.0).
+- CI runs the same gate on `ubuntu-latest`, `macos-latest` and `windows-latest` (Node 22), and all
+  three are green at `c8b43fb`; the ubuntu and windows runs also prove the suite needs no machine git
+  identity (it pins its own).
+- The live CLI ran on this Mac: `vib status` (exit 3 while a row is not current) and `vib brief`
+  (exit 0) both answered from the real profile.
+- The terminal command builder describes all three platforms from one Host (`wt.exe`/`powershell.exe`,
+  LaunchServices `open -a iTerm`/`iTerm2`/`Terminal`, `x-terminal-emulator`/`gnome-terminal`/`xterm`),
+  passes the checkout as one launch argument, and falls through a launcher that exits non-zero
+  instead of reporting a false success. The Linux directory picker falls back to `kdialog` when
+  `zenity` is absent; all of this is covered by unit tests with an injected spawn.
+
+The live Terminal action was verified after a later reload (see 0.3.0 verification).
+
+### CLI on PATH (2026-11-10, `dev`)
+
+- `npm run check` — 161 tests, 0 failures; the 11 new CLI-path tests cover detection, shim
+  ownership, install/remove and the Windows command shapes.
+- CI — the full gate is green on ubuntu, macOS and windows at `b46189f`.
+- Live, after the profile reload, in the running GUI (light and dark): the missing state and the
+  one-time notice rendered; **Later** hid the notice for that page load and it returned after a
+  reload; **Install it → Run** ran `npm link`, the notice disappeared, and the card showed
+  **✓ Available at `/Users/vanish/.nvm/…/bin/vib`** with Check again, the direct command and Copy.
+  `command -v vib` then resolved in zsh, bash and sh, and `vib --help` ran.
+- Negative control: the `cli` install action without `confirm: true` is refused with
+  `confirmation-required`.
+- Remove verified live after the next reload: **Remove → confirm → Run** removed the link
+  (`command -v vib` gone in zsh, bash and sh, and the card returned to "not on your PATH"), then
+  **Install → Run** restored it with `owned: true`. The ownership bug this exposed — the check read
+  `<prefix>/node_modules` instead of npm's POSIX global root `<prefix>/lib/node_modules` — is fixed
+  in `92ccd2c`.
 
 ### 0.1.0 verification (2026-11-06)
 
@@ -179,7 +265,15 @@ machine.
 ## Limits
 
 - viburnum never commits and never force-pushes.
-- 0.2.0 is accepted against the live local profile and offline fixture repositories. No second
+- Installing the `vib` command runs `npm link` in this checkout after an in-page confirmation; it
+  writes only into npm's global bin, and the link belongs to the active Node version (after an nvm
+  version switch, install again). Page buttons do not use the harness approval service — that service
+  is turn-bound, so a browser click cannot route a decision through it.
+- The desktop actions are OS-native: the terminal comes from the platform's candidate list (Windows
+  Terminal/PowerShell, iTerm2/Terminal.app through LaunchServices, x-terminal/gnome-terminal/xterm),
+  **Browse** needs `zenity` or `kdialog` on Linux, and `vib new --push` needs git 2.28 or newer
+  (`git init -b`).
+- 0.3.0 is accepted against the live local profile and offline fixture repositories. No second
   machine is available, so cross-machine sync is not verified in this release.
 - The page transport is a localhost-only JSON route pair; it stores no credentials and reads no
   secrets. Git inherits whatever the machine already uses.

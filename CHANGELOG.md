@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.3.0 — 2026-11-11
+
+The workbench grows: a stopping conflict now has three exits and a brief, the desktop terminal opens
+from a checkout, a new plugin can be created on GitHub in one command, and the page can put `vib` on
+your PATH.
+
+### Added
+
+- A **Terminal** action in the workbench opens the Host desktop's terminal already in the bundle's
+  checkout (Windows Terminal → PowerShell fallback, macOS iTerm2 → Terminal.app, Linux
+  x-terminal/gnome-terminal/xterm). Settings → viburnum gains a **Terminal application** choice per
+  machine (`auto` follows the platform order).
+- `vib new <name> --push --org <owner>` creates the GitHub repository (private by default, `--public`
+  opts out) and pushes the first commit to `main`; the next step prints the `vib install owner/repo`
+  command. Failures keep the created repository and report the push error.
+- **Conflict exits.** A conflicting sync now leaves the rebase stopped instead of aborting it and
+  offers the design's three exits: **Agree** (a union merge, only for append-only files such as
+  `CHANGELOG.md`; disabled with the reason otherwise), **Guide** (open each conflicted file in the
+  desktop editor, then Retry to continue and push) and **Myself** (abort back to the pre-rebase tree).
+  The page shows the panel; the CLI spells it `vib sync --agree|--continue|--abort <bundle>`.
+- **`vib_brief`** — a read-only sixth tool (and `vib brief` CLI command): the aggregate dot, every
+  bundle's state, harness-drift warnings, and what changed since the previous brief (the timeline feed,
+  marked read), so a session starts informed.
+- A **Command line** card in Settings → viburnum (with a one-time notice while the command is
+  missing): reports whether the user's own shell finds `vib`, installs the command with `npm link` in
+  this checkout after an explicit in-page confirmation, removes our own link again, and shows the
+  copyable PATH line or the direct `node bin/vib.js` command when the shell cannot see it.
+
+### Fixed
+
+- Cross-platform checks: the test suite and the terminal command builder now use the running and
+  target platform's path flavour instead of assuming Windows, so `npm run check` is green on macOS,
+  Linux and Windows; CI runs the gate on all three.
+- Terminal opening works on every desktop: macOS launches the terminal app through LaunchServices
+  (`open -a iTerm` / `open -a Terminal <dir>`) instead of an AppleScript `command`, which made iTerm2
+  close the session immediately ("A session ended very soon after starting") and asked for
+  automation/API permission; a launcher that exits non-zero falls through to the next terminal
+  instead of reporting a false success; and the xterm fallback uses `/bin/sh` when `$SHELL` is unset.
+- The Linux directory picker falls back to `kdialog` when `zenity` is not installed.
+- The git command seam reads the process environment when it spawns, not once at module load, so a
+  git identity set by the CLI or by the test suite on a bare runner reaches every commit.
+- The `vib` ownership check reads npm's global package root (`<prefix>/lib/node_modules` on POSIX,
+  `<prefix>/node_modules` on Windows), so the Command line card offers Remove for the link it created.
+- The install form's directory placeholder is platform-neutral instead of a Windows example path.
+
 ## 0.2.2 — 2026-11-09
 
 Catalog completion: every organisation repository (private included) in a searchable list with icons,

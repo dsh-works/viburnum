@@ -76,6 +76,16 @@ test('settings save, validate and appear in the snapshot', async (t) => {
   await assert.rejects(core.setSettings({ catalogOwners: ['bad owner!'] }), (error) => error.code === 'invalid-settings')
   await assert.rejects(core.setSettings({ defaultOwner: 'not-configured' }), (error) => error.code === 'invalid-settings')
 
+  assert.equal(core.snapshot().settings.terminal, 'auto')
+  assert.ok(Array.isArray(core.snapshot().terminalChoices))
+  assert.equal((await core.setSettings({ terminal: 'auto' })).settings.terminal, 'auto')
+  await assert.rejects(core.setSettings({ terminal: 'not-a-terminal' }), (error) => error.code === 'invalid-settings')
+
+  // The CLI notice dismissal is a saved boolean setting.
+  assert.equal(core.snapshot().settings.cliNoticeHidden, false)
+  assert.equal((await core.setSettings({ cliNoticeHidden: true })).settings.cliNoticeHidden, true)
+  await assert.rejects(core.setSettings({ cliNoticeHidden: 'yes' }), (error) => error.code === 'invalid-settings')
+
   await core.setSettings({ refreshOnStartup: true })
   assert.equal(core.snapshot().settings.refreshOnStartup, true)
   assert.equal(core.snapshot().settings.checkIntervalMinutes, 15)
@@ -107,6 +117,22 @@ test('compatibility warns when a bundle rejects the running harness', async (t) 
 
   await core.setSettings({ versionWarnings: false })
   assert.deepEqual(core.snapshot().compat.warnings.filter((warning) => warning.kind === 'engine-mismatch'), [])
+})
+
+test('the brief returns status and clears the timeline', async (t) => {
+  const { world, core } = await setup(t)
+  await core.load()
+  await world.commit(world.laptop, 'a.txt', 'a\n', 'laptop one')
+  await world.push(world.laptop)
+  await core.sync('dsh-plugin-work')
+
+  const first = await core.brief()
+  assert.equal(first.ok, true)
+  assert.equal(first.rows.length, 2)
+  assert.ok(first.events.some((event) => event.kind === 'sync'))
+
+  const second = await core.brief()
+  assert.deepEqual(second.events, [])
 })
 
 test('the timeline records a move and clears when read', async (t) => {
@@ -282,7 +308,7 @@ test('documents are read from inside the bundle, capped and validated', async (t
   assert.equal(readme.target, 'readme')
   assert.match(readme.text, /# fixture/u)
   assert.equal(readme.truncated, false)
-  assert.equal(readme.path, world.work + '\\README.md')
+  assert.equal(readme.path, join(world.work, 'README.md'))
 
   const changelog = await core.readDocument('dsh-plugin-work', 'changelog')
   assert.equal(changelog.ok, false)

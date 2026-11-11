@@ -14,16 +14,14 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
+import { GIT_TEST_IDENTITY } from './env.mjs'
+
 /** Fixed identity and config, so tests do not depend on the machine's git setup. */
 const FIXED_ENV = {
   ...process.env,
   GIT_TERMINAL_PROMPT: '0',
   GIT_OPTIONAL_LOCKS: '0',
-  GIT_CONFIG_NOSYSTEM: '1',
-  GIT_AUTHOR_NAME: 'viburnum Test',
-  GIT_AUTHOR_EMAIL: 'viburnum@example.invalid',
-  GIT_COMMITTER_NAME: 'viburnum Test',
-  GIT_COMMITTER_EMAIL: 'viburnum@example.invalid',
+  ...GIT_TEST_IDENTITY,
   LC_ALL: 'C',
 }
 

@@ -48,6 +48,7 @@ window.__ModuleLoader__.load({
         noBundles: 'No linked bundles.',
         opens: 'open',
         folder: 'Folder',
+        terminal: 'Terminal',
         readme: 'README',
         changelog: 'CHANGELOG',
         opened: 'opened',
@@ -70,7 +71,30 @@ window.__ModuleLoader__.load({
         catalogOwnersHint: 'Comma-separated GitHub owner names the organisation door reads.',
         defaultOrg: 'Default organisation',
         noDefaultOrg: 'none',
-        directoryPlaceholder: 'C:\\path\\to\\plugin',
+        terminalSetting: 'Terminal application',
+        cliTitle: 'Command line',
+        cliHint: 'Use the vib command in your terminal, or run the CLI directly.',
+        cliAvailable: 'Available at',
+        cliNotAvailable: 'The vib command is not on your PATH.',
+        cliLinked: 'The command is linked, but your terminal PATH does not include its folder.',
+        cliUnknown: 'Could not determine the command state.',
+        cliInstall: 'Install vib command',
+        cliRemove: 'Remove vib command',
+        cliCheck: 'Check again',
+        cliCopy: 'Copy',
+        cliCopied: 'Copied',
+        cliDirectHint: 'Or run it directly:',
+        cliNoticeTitle: 'The vib command is not on your PATH.',
+        cliNoticeHint: 'Install it to use vib status, vib sync and the rest from any terminal.',
+        cliNoticeInstall: 'Install it',
+        cliNoticeLater: 'Later',
+        cliNoticeNever: "Don't show again",
+        cliNvmNote: 'The npm link belongs to the active Node version; switching Node versions needs a re-install.',
+        cliConfirmInstall: 'Run npm link in this checkout to install the vib command?',
+        cliConfirmRemove: 'Remove the vib command from your PATH?',
+        cliRun: 'Run',
+        cliCancel: 'Cancel',
+        directoryPlaceholder: 'Absolute path to the plugin checkout',
         repositoryPlaceholder: 'owner/repo or https://github.com/owner/repo',
         installDirectoryHint: 'Link a checkout that already exists where it is.',
         installRepositoryHint: 'Clone into the shelf and link the fresh checkout.',
@@ -79,6 +103,11 @@ window.__ModuleLoader__.load({
         timeline: 'timeline',
         noHygieneFindings: 'No hygiene problems found.',
         scan: 'Scan',
+        conflict: 'conflict',
+        agree: 'Agree',
+        retry: 'Retry',
+        myself: 'Myself',
+        open: 'Open',
         settingsTitle: 'viburnum settings',
         settingsHint: 'How often viburnum checks, and whether it warns when the harness drifts.',
         refreshInterval: 'Refresh interval (minutes)',
@@ -430,6 +459,7 @@ window.__ModuleLoader__.load({
         catalogPreview: null,
         timeline: null,
         hygiene: null,
+        cli: null,
       }
       const listeners = new Set()
 
@@ -518,6 +548,45 @@ window.__ModuleLoader__.load({
             set({ busy: null })
           }
         },
+        async loadCli() {
+          set({ cli: { phase: 'loading', data: null, error: null } })
+          try {
+            const data = await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'cli', sub: 'status' }),
+            })
+            set({
+              cli: data.ok === false
+                ? { phase: 'error', data, error: data.message ?? 'cli status failed' }
+                : { phase: 'ready', data, error: null },
+            })
+          } catch (error) {
+            set({ cli: { phase: 'error', data: null, error: error.message } })
+          }
+        },
+        async actCli(sub) {
+          set({ busy: 'cli', last: null })
+          try {
+            const body = { action: 'cli', sub, confirm: sub === 'status' ? undefined : true }
+            const result = await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify(body),
+            })
+            set({ last: result })
+            await store.refresh()
+            await store.loadCli()
+            return result
+          } catch (error) {
+            const failure = { ok: false, code: 'transport', message: error.message }
+            set({ last: failure })
+            return failure
+          } finally {
+            set({ busy: null })
+          }
+        },
+        async dismissCliNotice() {
+          await store.saveSettings({ cliNoticeHidden: true })
+        },
         async loadTimeline() {
           try {
             const data = await request('/viburnum/action', {
@@ -597,6 +666,16 @@ window.__ModuleLoader__.load({
         },
         closeCatalogPreview() {
           set({ catalogPreview: null })
+        },
+        async openConflict(bundle, path) {
+          try {
+            await request('/viburnum/action', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'open-conflict', bundle, path }),
+            })
+          } catch {
+            // Opening a file is best-effort; the conflict panel stays.
+          }
         },
         async loadCatalog(refresh = false) {
           set({ catalog: { phase: 'loading', owners: [], error: null } })
@@ -866,6 +945,7 @@ window.__ModuleLoader__.load({
       const pullable = rows.filter((row) => row.status === 'remote-ahead').length
       const busy = state.busy !== null
       const banner = state.last ? describeResult(state.last, t) : null
+      const conflict = state.last !== null && state.last !== null && state.last.code === 'conflict' ? state.last : null
       const detail = state.detail
       const doc = state.doc
       const timeline = state.timeline
@@ -874,6 +954,18 @@ window.__ModuleLoader__.load({
       React.useEffect(() => {
         void store.loadTimeline()
       }, [])
+      const cli = state.cli
+      const [noticeDismissed, setNoticeDismissed] = React.useState(false)
+      const [pendingConfirm, setPendingConfirm] = React.useState(null)
+      React.useEffect(() => {
+        if (store.getSnapshot().cli === null) void store.loadCli()
+      }, [])
+      const cliData = cli !== null && cli.phase === 'ready' && cli.data !== null ? cli.data : null
+      const noticeVisible = state.snapshot !== null
+        && noticeDismissed !== true
+        && cliData !== null
+        && cliData.state !== 'available'
+        && snapshot.settings?.cliNoticeHidden !== true
       const [installOpen, setInstallOpen] = React.useState(false)
       const [installDoor, setInstallDoor] = React.useState('directory')
       const [installSpec, setInstallSpec] = React.useState('')
@@ -1053,6 +1145,7 @@ window.__ModuleLoader__.load({
             h('button', { style: styles.button, onClick: () => void store.openDocument(bundle.name, 'readme') }, t('readme')),
             h('button', { style: styles.button, onClick: () => void store.openDocument(bundle.name, 'changelog') }, t('changelog')),
             h('button', { style: styles.button, onClick: () => runDetail('open', { bundle: bundle.name, target: 'folder' }) }, t('folder')),
+            h('button', { style: styles.button, onClick: () => runDetail('terminal', { bundle: bundle.name }) }, t('terminal')),
           ),
           doc !== null
             ? h(
@@ -1120,7 +1213,107 @@ window.__ModuleLoader__.load({
           }, t('hygiene')),
           h('button', { style: styles.button, disabled: busy, onClick: () => setInstallOpen(!installOpen) }, '+ ' + t('install')),
         ),
+        noticeVisible
+          ? h(
+            'div',
+            { style: styles.row },
+            h('div', { style: styles.rowTop }, h('span', { style: styles.name }, t('cliNoticeTitle'))),
+            h('div', { style: styles.secondary }, t('cliNoticeHint')),
+            h(
+              'div',
+              { style: styles.controls },
+              h('button', {
+                style: styles.button,
+                disabled: busy,
+                onClick: () => setPendingConfirm('install'),
+              }, t('cliNoticeInstall')),
+              h('button', {
+                style: styles.button,
+                onClick: () => setNoticeDismissed(true),
+              }, t('cliNoticeLater')),
+              h('button', {
+                style: styles.button,
+                onClick: () => void store.dismissCliNotice(),
+              }, t('cliNoticeNever')),
+            ),
+          )
+          : null,
+        pendingConfirm !== null && noticeVisible
+          ? h(
+            'div',
+            { style: styles.row },
+            h('div', { style: styles.secondary }, t(pendingConfirm === 'install' ? 'cliConfirmInstall' : 'cliConfirmRemove')),
+            h(
+              'div',
+              { style: styles.controls },
+              h('button', {
+                style: styles.button,
+                disabled: busy,
+                onClick: () => {
+                  const kind = pendingConfirm
+                  setPendingConfirm(null)
+                  void store.actCli(kind)
+                },
+              }, t('cliRun')),
+              h('button', {
+                style: styles.button,
+                onClick: () => setPendingConfirm(null),
+              }, t('cliCancel')),
+            ),
+          )
+          : null,
         banner !== null && banner !== '' ? h('div', { style: styles.banner }, banner) : null,
+        conflict !== null
+          ? h(
+            'div',
+            { style: styles.row },
+            h(
+              'div',
+              { style: styles.rowTop },
+              h('span', { style: styles.error }, t('conflict') + ': ' + (conflict.bundle ?? '')),
+              h('span', { style: styles.spacer }),
+            ),
+            h(
+              'div',
+              { style: styles.secondary },
+              (conflict.message ?? '') + (Array.isArray(conflict.files) && conflict.files.length > 0
+                ? ' · ' + conflict.files.join(', ')
+                : ''),
+            ),
+            h(
+              'div',
+              { style: styles.controls },
+              h('button', {
+                style: styles.button,
+                disabled: busy || conflict.exits?.agree?.available !== true,
+                title: conflict.exits?.agree?.reason ?? '',
+                onClick: () => run('conflict', { bundle: conflict.bundle, exit: 'agree' }),
+              }, t('agree')),
+              h('button', {
+                style: styles.button,
+                disabled: busy,
+                onClick: () => run('conflict', { bundle: conflict.bundle, exit: 'continue' }),
+              }, t('retry')),
+              h('button', {
+                style: styles.button,
+                disabled: busy,
+                onClick: () => run('conflict', { bundle: conflict.bundle, exit: 'abort' }),
+              }, t('myself')),
+            ),
+            h(
+              'div',
+              { style: styles.controls },
+              ...(Array.isArray(conflict.files) ? conflict.files : []).map((file) => h('button', {
+                key: file,
+                style: styles.button,
+                onClick: () => void store.openConflict(conflict.bundle, file),
+              }, t('open') + ' ' + file)),
+              conflict.exits?.agree?.reason
+                ? h('span', { style: styles.secondary }, conflict.exits.agree.reason)
+                : null,
+            ),
+          )
+          : null,
         timeline !== null && timeline.events.length > 0
           ? h(
             'div',
@@ -1375,7 +1568,39 @@ window.__ModuleLoader__.load({
       const [defaultOwner, setDefaultOwner] = React.useState(
         typeof settings.defaultOwner === 'string' ? settings.defaultOwner : '',
       )
+      const [terminal, setTerminal] = React.useState(
+        typeof settings.terminal === 'string' ? settings.terminal : 'auto',
+      )
       const ownerChoices = ownersText.split(',').map((owner) => owner.trim()).filter(Boolean)
+      const terminalChoices = Array.isArray(snapshot.terminalChoices) ? snapshot.terminalChoices : []
+      const cli = state.cli
+      const cliData = cli !== null && cli.phase === 'ready' && cli.data !== null ? cli.data : null
+      const [pendingConfirm, setPendingConfirm] = React.useState(null)
+      const [cliCopied, setCliCopied] = React.useState(false)
+      const copiedTimer = React.useRef(null)
+      React.useEffect(() => {
+        void store.loadCli()
+      }, [])
+      React.useEffect(() => () => {
+        if (copiedTimer.current !== null) clearTimeout(copiedTimer.current)
+      }, [])
+      const copyText = (text) => {
+        try {
+          const clipboard = navigator.clipboard
+          if (clipboard === undefined || clipboard === null || typeof clipboard.writeText !== 'function') return
+          void clipboard.writeText(String(text)).then(() => {
+            setCliCopied(true)
+            if (copiedTimer.current !== null) clearTimeout(copiedTimer.current)
+            copiedTimer.current = setTimeout(() => setCliCopied(false), 1500)
+          }).catch(() => {})
+        } catch {
+          // Clipboard access is optional; the text stays selectable in the input.
+        }
+      }
+      const cliCopyButton = (text) => h('button', {
+        style: styles.button,
+        onClick: () => copyText(text),
+      }, cliCopied ? t('cliCopied') : t('cliCopy'))
 
       React.useEffect(() => {
         setMinutes(String(settings.checkIntervalMinutes ?? 5))
@@ -1384,7 +1609,8 @@ window.__ModuleLoader__.load({
         setShelf(typeof settings.pluginsDir === 'string' ? settings.pluginsDir : '')
         setOwnersText(Array.isArray(settings.catalogOwners) ? settings.catalogOwners.join(', ') : '')
         setDefaultOwner(typeof settings.defaultOwner === 'string' ? settings.defaultOwner : '')
-      }, [settings.checkIntervalMinutes, settings.refreshOnStartup, settings.versionWarnings, settings.pluginsDir, settings.catalogOwners, settings.defaultOwner])
+        setTerminal(typeof settings.terminal === 'string' ? settings.terminal : 'auto')
+      }, [settings.checkIntervalMinutes, settings.refreshOnStartup, settings.versionWarnings, settings.pluginsDir, settings.catalogOwners, settings.defaultOwner, settings.terminal])
 
       const save = () => {
         void store.saveSettings({
@@ -1394,9 +1620,80 @@ window.__ModuleLoader__.load({
           pluginsDir: shelf.trim(),
           catalogOwners: ownerChoices,
           defaultOwner: defaultOwner.trim(),
+          terminal,
         })
       }
       const notes = Array.isArray(compat.warnings) ? compat.warnings : []
+      const cliBusy = state.busy !== null
+      const cliCheckButton = h('button', { style: styles.button, onClick: () => void store.loadCli() }, t('cliCheck'))
+      const cliInstallButton = h('button', {
+        style: styles.button,
+        disabled: cliBusy,
+        onClick: () => setPendingConfirm('install'),
+      }, t('cliInstall'))
+      const cliRemoveButton = cliData !== null && cliData.owned === true
+        ? h('button', {
+          style: styles.button,
+          disabled: cliBusy,
+          onClick: () => setPendingConfirm('remove'),
+        }, t('cliRemove'))
+        : null
+      const cliBody = []
+      if (cli === null || cli.phase === 'loading') {
+        cliBody.push(h('div', { key: 'loading', style: styles.empty }, t('loading')))
+      } else if (cli.phase === 'error') {
+        cliBody.push(h('div', { key: 'error', style: styles.error }, (cli !== null && cli.error) || t('cliUnknown')))
+      } else if (cliData !== null) {
+        if (cliData.state === 'available') {
+          cliBody.push(h('div', { key: 'available', style: styles.secondary }, '✓ ' + t('cliAvailable') + ' ' + (cliData.path ?? '')))
+          cliBody.push(h('div', { key: 'available-controls', style: styles.controls }, cliCheckButton, cliRemoveButton))
+        } else if (cliData.state === 'linked') {
+          cliBody.push(h('div', { key: 'linked', style: styles.secondary }, t('cliLinked')))
+          cliBody.push(h('div', { key: 'linked-path', style: styles.controls },
+            h('input', { style: styles.input, readOnly: true, value: cliData.pathLine ?? '' }),
+            cliCopyButton(cliData.pathLine)))
+          cliBody.push(h('div', { key: 'linked-controls', style: styles.controls }, cliCheckButton, cliRemoveButton))
+        } else if (cliData.state === 'missing') {
+          cliBody.push(h('div', { key: 'missing', style: styles.secondary }, t('cliNotAvailable')))
+          cliBody.push(h('div', { key: 'missing-controls', style: styles.controls }, cliInstallButton, cliCheckButton))
+        } else {
+          cliBody.push(h('div', { key: 'unknown', style: styles.secondary }, cliData.message || t('cliUnknown')))
+          cliBody.push(h('div', { key: 'unknown-controls', style: styles.controls }, cliCheckButton))
+        }
+        cliBody.push(h('div', { key: 'direct-hint', style: styles.secondary }, t('cliDirectHint')))
+        cliBody.push(h('div', { key: 'direct', style: styles.controls },
+          h('input', {
+            style: styles.input,
+            readOnly: true,
+            value: typeof cliData.direct === 'string' ? cliData.direct : '',
+          }),
+          cliCopyButton(cliData.direct)))
+        if (cliData.npm === true) cliBody.push(h('div', { key: 'nvm', style: styles.secondary }, t('cliNvmNote')))
+      }
+      const cliConfirm = pendingConfirm === null
+        ? null
+        : h(
+          'div',
+          { style: styles.row },
+          h('div', { style: styles.secondary }, t(pendingConfirm === 'install' ? 'cliConfirmInstall' : 'cliConfirmRemove')),
+          h(
+            'div',
+            { style: styles.controls },
+            h('button', {
+              style: styles.button,
+              disabled: cliBusy,
+              onClick: () => {
+                const kind = pendingConfirm
+                setPendingConfirm(null)
+                void store.actCli(kind)
+              },
+            }, t('cliRun')),
+            h('button', {
+              style: styles.button,
+              onClick: () => setPendingConfirm(null),
+            }, t('cliCancel')),
+          ),
+        )
 
       return h(
         'div',
@@ -1471,6 +1768,28 @@ window.__ModuleLoader__.load({
           ),
         ),
         h('div', { style: styles.secondary }, t('catalogOwnersHint')),
+        h(
+          'label',
+          { style: styles.controls },
+          h('span', { style: styles.secondary }, t('terminalSetting')),
+          h(
+            'select',
+            {
+              style: styles.select,
+              value: terminal,
+              onChange: (event) => setTerminal(event.target.value),
+            },
+            terminalChoices.map((choice) => h('option', { key: choice.id, value: choice.id }, choice.label)),
+          ),
+        ),
+        h(
+          'div',
+          { style: styles.row },
+          h('div', { style: styles.rowTop }, h('span', { style: styles.name }, t('cliTitle'))),
+          h('div', { style: styles.secondary }, t('cliHint')),
+          ...cliBody,
+        ),
+        cliConfirm,
         h(
           'div',
           { style: styles.controls },
