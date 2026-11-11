@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 — 2026-11-11
+
+The workbench grows: a stopping conflict now has three exits and a brief, the desktop terminal opens
+from a checkout, a new plugin can be created on GitHub in one command, and the page can put `vib` on
+your PATH.
 
 ### Added
 

@@ -45,9 +45,9 @@
 
 | # | Trigger | Expected result | Observed by | Result |
 |---|---|---|---|---|
-| 1 | Terminal action on a bundle | the desktop terminal opens in that checkout | live page | **fail → fixed (2026-11-10)** — the live iTerm2 attempt crashed ("A session ended very soon after starting"): AppleScript ran `cd` as the session command and closed it. Replaced with LaunchServices `open -a iTerm`/`iTerm2`/`Terminal <dir>`; verified directly that both iTerm2 and Terminal.app open a shell with cwd at the checkout. Retest through the workbench after the next reload. |
+| 1 | Terminal action on a bundle | the desktop terminal opens in that checkout | live page | **pass (live, 2026-11-11)** — the live Host action returned `opened: true` and a new shell with cwd at the bundle checkout (verified with `lsof`); clicking **Terminal** in the workbench opened another. macOS launches iTerm2/Terminal.app through LaunchServices (`open -a`), replacing the AppleScript `command` that closed the iTerm2 session immediately. |
 | 1b | Settings → Terminal application | the choices match the Host platform (iTerm2/Terminal.app on macOS, wt/PowerShell on Windows, x-terminal/gnome/xterm on Linux); the chosen one launches first | route JSON + unit test | **pass (unit + route)** — choices per platform and preference ordering tested; setting validated |
 | 2 | `vib new demo --push --org dsh-works` | repository created (private), first commit pushed, next step printed | live command | not run — needs a real repository creation, deferred to the owner |
 | 3 | Creation refused (bad owner/exists/permission) | readable `create-http` failure; no push attempted | stubbed API test | not run |
 | 4 | Push fails after creation | the repository is reported as created and the push error is printed; nothing deleted | unit test (publish failure path is exercised by a local bare origin) | not run |
-| 5 | `npm run check` | terminal and create suites green with the rest | command transcript | **pass** — 150 tests, 0 failures on macOS (2026-11-09); the CI gate is green on ubuntu, macOS and Windows at `c8b43fb` |
+| 5 | `npm run check` | terminal and create suites green with the rest | command transcript | **pass** — 161 tests, 0 failures on macOS (2026-11-11); the CI gate is green on ubuntu, macOS and Windows at `307d4aa` |

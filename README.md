@@ -9,7 +9,7 @@ without you remembering which one pushed last.
 
 A row in the sidebar carries one dot: green when everything is current, violet when something can be
 pulled, orange when work is uncommitted, red when it is unpushed or diverged. Installing from a
-directory, a repository URL or a GitHub organisation follows in 0.2.
+directory, a repository URL or a GitHub organisation is one action, from the page or `vib install`.
 
 viburnum began as one person's two-machine workshop, and it is public now because that problem is not
 unique to one person: everyone who develops a harness plugin on more than one machine has the same
@@ -29,7 +29,7 @@ there is no pnpm run, no lockfile write, and no profile edit.
 viburnum never commits and never force-pushes. When a rebase would rewrite something already
 published, it stops and shows both sides; when the rebase conflicts, it aborts and hands you the files.
 
-**Status: 0.1.0 released (tag `v0.1.0`), public under the MIT licence.**
+**Status: 0.3.0 released (tag `v0.3.0`), public under the MIT licence.**
 [`docs/PLAN.md`](docs/PLAN.md) is the approved plan and carries the gate-3 evidence;
 [`DESIGN.md`](DESIGN.md) carries the premise and decisions. `main` is the stable line (see
 [Branches](#branches)).
@@ -161,7 +161,33 @@ one. It uses two same-origin JSON routes registered on the Host web server,
 `/viburnum/status` and `/viburnum/action`, which require the `x-viburnum: 1` header so a cross-site
 form cannot act. The browser half polls the status route every 30 seconds and after every action.
 
-## Verification (2026-11-09)
+## Verification
+
+### 0.3.0 verification (2026-11-11)
+
+Verified on macOS (Darwin arm64, Node 24.21.0) in the `web` profile at release:
+
+- `npm run check` — 161 tests, 0 failures; the GitHub Actions gate is green on ubuntu, macOS and
+  windows.
+- **Conflict exits and `vib_brief`**: Agree / Guide / Myself and the brief feed are covered by the
+  fixture and tool tests; the live page panel was not re-exercised for this release.
+- **Terminal opener**: the live Host action returned `opened: true` and a new shell whose working
+  directory is the bundle checkout (verified with `lsof`, and by clicking **Terminal** in the
+  workbench); iTerm2 and Terminal.app are opened through LaunchServices (`open -a`), replacing an
+  AppleScript `command` that closed the iTerm2 session immediately.
+- **Terminal application setting**: per-platform choices, preference ordering and validation are
+  unit/route tested.
+- **Repository creation**: the GitHub API and first-push paths are unit-tested against stubs and a
+  local bare origin. A real `vib new --push` creation was **not run** (it creates a real repository;
+  deferred to the owner), so the "push fails after creation" path is not run either.
+- **CLI on PATH**: verified live end to end — see [CLI on PATH](#cli-on-path-2026-11-10-dev).
+- **Cross-platform**: the same suite runs on ubuntu, macOS and windows, and needs no machine git
+  identity.
+
+Not run, and therefore not claimed: a real repository creation, a real install through each of the
+three doors, a live conflict resolution in the page, and cross-machine sync.
+
+### 0.2.0 verification (2026-11-09)
 
 Verified live in the `web` profile for 0.2.0:
 
@@ -192,12 +218,12 @@ The macOS path was made verifiable while 0.3.0 was in flight:
 - The live CLI ran on this Mac: `vib status` (exit 3 while a row is not current) and `vib brief`
   (exit 0) both answered from the real profile.
 - The terminal command builder describes all three platforms from one Host (`wt.exe`/`powershell.exe`,
-  two `osascript` variants, `x-terminal-emulator`/`gnome-terminal`/`xterm`), shell-quotes macOS paths,
-  and falls through a launcher that exits non-zero instead of reporting a false success. The Linux
-  directory picker falls back to `kdialog` when `zenity` is absent; all of this is covered by unit
-  tests with an injected spawn.
+  LaunchServices `open -a iTerm`/`iTerm2`/`Terminal`, `x-terminal-emulator`/`gnome-terminal`/`xterm`),
+  passes the checkout as one launch argument, and falls through a launcher that exits non-zero
+  instead of reporting a false success. The Linux directory picker falls back to `kdialog` when
+  `zenity` is absent; all of this is covered by unit tests with an injected spawn.
 
-Not run: the live Terminal action (it needs a profile reload) and the live page after the change.
+The live Terminal action was verified after a later reload (see 0.3.0 verification).
 
 ### CLI on PATH (2026-11-10, `dev`)
 
@@ -244,10 +270,10 @@ machine.
   version switch, install again). Page buttons do not use the harness approval service — that service
   is turn-bound, so a browser click cannot route a decision through it.
 - The desktop actions are OS-native: the terminal comes from the platform's candidate list (Windows
-  Terminal/PowerShell, iTerm2/Terminal.app, x-terminal/gnome-terminal/xterm), **Browse** needs
-  `zenity` or `kdialog` on Linux, and macOS may ask for Automation permission the first time a
-  terminal is opened. `vib new --push` needs git 2.28 or newer (`git init -b`).
-- 0.2.0 is accepted against the live local profile and offline fixture repositories. No second
+  Terminal/PowerShell, iTerm2/Terminal.app through LaunchServices, x-terminal/gnome-terminal/xterm),
+  **Browse** needs `zenity` or `kdialog` on Linux, and `vib new --push` needs git 2.28 or newer
+  (`git init -b`).
+- 0.3.0 is accepted against the live local profile and offline fixture repositories. No second
   machine is available, so cross-machine sync is not verified in this release.
 - The page transport is a localhost-only JSON route pair; it stores no credentials and reads no
   secrets. Git inherits whatever the machine already uses.
