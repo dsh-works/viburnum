@@ -35,8 +35,8 @@ README in one command, with an optional first git commit.
 
 | # | Trigger | Expected result | Observed by | Result |
 |---|---|---|---|---|
-| 1 | `vib new demo` | `dsh-plugin-demo/` contains manifest, patch, entry, test, README; stdout names the files | command transcript | not run |
-| 2 | `--git` | the bundle has `.git` and an initial commit; a git failure warns but keeps the files | command transcript | not run |
-| 3 | `vib new demo` twice | the second run refuses with “already exists and is not empty”, exit 1 | command transcript | not run |
-| 4 | The scaffolded test | `node --test test/plugin.test.mjs` inside the new bundle passes | command transcript | not run |
-| 5 | `npm run check` | identity, files, git, refusal and CLI tests pass | command transcript | **pending** |
+| 1 | `vib new demo` | `dsh-plugin-demo/` contains manifest, patch, entry, test, README; stdout names the files | command transcript | **pass (live, 2026-11-11)** — six files written, stdout named them |
+| 2 | `--git` | the bundle has `.git` and an initial commit; a git failure warns but keeps the files | command transcript | **pass (live, 2026-11-11)** — `Scaffold dsh-plugin-git-demo` commit present |
+| 3 | `vib new demo` twice | the second run refuses with “already exists and is not empty”, exit 1 | command transcript | **pass (live, 2026-11-11)** — second run exit 1 with that message |
+| 4 | The scaffolded test | `node --test test/plugin.test.mjs` inside the new bundle passes | command transcript | **pass (live, 2026-11-11)** — 2 tests, 0 failures |
+| 5 | `npm run check` | identity, files, git, refusal and CLI tests pass | command transcript | **pass** — 161 tests, 0 failures; CI green on ubuntu, macOS and windows |
