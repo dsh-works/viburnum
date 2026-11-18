@@ -188,7 +188,9 @@ and the reporting surface; it adds no move.
 - **Hygiene**: the fixture test proves an off-track checkout is reported with its branch, its track
   and a switch suggestion; the core test proves the scanner receives the watched tracks.
 - **Live profile**: the restarted Host served the change, the page's Refresh action returned all three
-  rows `current` (green dot), and the status route reported the released version.
+  rows `current` (green dot), and the viburnum row reported the released `0.4.0` from its checkout. The
+  status route's top-level `version` field names the version the Host loaded at startup, so it still
+  said `0.3.0` in that session; it catches up on the next restart.
 - Not claimed: the page copy itself was not visually re-inspected in this pass (no browser on the
   release session; the client half parses as a classic script and the route data behind the labels is
   verified live), and a real off-track event was not staged on the live profile — that row state is
