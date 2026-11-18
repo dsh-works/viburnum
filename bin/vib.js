@@ -177,11 +177,17 @@ function arrows(row) {
   return parts.join(' ') || '✓'
 }
 
+/** `main`, or `main (on dev)` when the checkout is off its track. */
+function trackText(row) {
+  const track = row.track ?? '-'
+  return row.branch && row.track && row.branch !== row.track ? `${track} (on ${row.branch})` : track
+}
+
 /** One human line per row. */
 function printRows(snapshot) {
   const width = Math.max(0, ...snapshot.rows.map((row) => row.name.length))
   for (const row of snapshot.rows) {
-    const track = row.track ?? '-'
+    const track = trackText(row)
     const stale = row.stale ? ' · stale' : ''
     const error = row.error ? ` · ${row.error}` : ''
     console.log(`${row.name.padEnd(width)}  ${track.padEnd(8)}  ${arrows(row)}  ${row.status}${stale}${error}`)
@@ -214,6 +220,9 @@ function printResult(kind, result) {
   if (Array.isArray(result?.results)) {
     for (const row of result.results) printResult(kind, row)
     console.log(`totals: pushed ${result.totals.pushed}, pulled ${result.totals.pulled}, rebased ${result.totals.rebased}`)
+    if (Array.isArray(result.skipped) && result.skipped.length > 0) {
+      console.log(`not synced: ${result.skipped.join(', ')} — it updates itself (D12)`)
+    }
     return
   }
   const receipt = result?.receipt
@@ -308,7 +317,7 @@ async function main(argv) {
       env,
       argv: processArgv,
     }),
-    hygieneScanner: () => scanHygiene({ roots: [process.cwd(), core.shelfDirectory] }),
+    hygieneScanner: ({ tracks } = {}) => scanHygiene({ roots: [process.cwd(), core.shelfDirectory], tracks }),
   })
 
   try {
@@ -414,6 +423,8 @@ async function main(argv) {
               console.log(`unmerged-branch: ${finding.name} — ${finding.branches.join(', ')}`)
             } else if (finding.kind === 'dirty-checkout') {
               console.log(`dirty-checkout: ${finding.name} — ${finding.dirtyCount} changes`)
+            } else if (finding.kind === 'off-track') {
+              console.log(`off-track: ${finding.name} — on ${finding.branch}, tracks ${finding.track}`)
             }
             if (finding.suggestion) console.log(`  suggest: ${finding.suggestion}`)
           }

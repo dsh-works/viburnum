@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict'
 import { readFile, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 
 import { createCore, OWN_PACKAGE } from '../lib/core.js'
@@ -193,8 +193,28 @@ test('sync over all bundles skips viburnum itself', async (t) => {
   const batch = await core.sync()
   assert.equal(batch.results.length, 2, 'the own row is skipped')
   assert.deepEqual(batch.results.map((row) => row.name), ['dsh-plugin-laptop', 'dsh-plugin-work'])
+  assert.deepEqual(batch.skipped, [OWN_PACKAGE], 'the batch names the row it did not sync (D12)')
   assert.equal(batch.totals.pulled, 1)
   assert.equal(await world.head(world.work), await world.head(world.laptop))
+})
+
+test('hygiene hands the scanner every watched track', async (t) => {
+  let request = null
+  const { world, core } = await setup(t, {
+    hygieneScanner: async (value) => {
+      request = value
+      return { ok: true, scannedAt: new Date().toISOString(), roots: [], checkouts: [], findings: [] }
+    },
+  })
+  await core.load()
+
+  await run(world.laptop, ['switch', '-c', 'dev'])
+  await run(world.laptop, ['push', '-u', 'origin', 'dev'])
+  await run(world.work, ['fetch', 'origin'])
+  await core.switch('dsh-plugin-work', 'dev')
+  await core.hygiene({ refresh: true })
+
+  assert.deepEqual(request.tracks, { [resolve(world.work)]: 'dev' }, 'only the bundle with a track is mapped')
 })
 
 test('switch records the new track and revert restores the old one', async (t) => {

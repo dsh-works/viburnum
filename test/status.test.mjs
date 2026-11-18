@@ -106,6 +106,36 @@ test('a rebase in progress is reported before a dirty tree', async (t) => {
   assert.equal(row.dot, 'grey')
 })
 
+test('a checkout on another branch is off-track, not pullable', async (t) => {
+  const world = await makeWorld(t)
+
+  await run(world.laptop, ['switch', '-c', 'dev'])
+  await run(world.laptop, ['push', '-u', 'origin', 'dev'])
+  await run(world.work, ['fetch', 'origin'])
+  await run(world.work, ['checkout', '-b', 'dev', 'origin/dev'])
+
+  await run(world.laptop, ['switch', 'main'])
+  await world.commit(world.laptop, 'main.txt', 'main\n', 'main work')
+  await world.push(world.laptop)
+
+  const row = await checkBundle({ name: 'plugin-a', dir: world.work, track: 'main' })
+  assert.equal(row.status, STATUS.offTrack)
+  assert.equal(row.dot, 'orange')
+  assert.equal(row.branch, 'dev')
+  assert.equal(row.track, 'main')
+  assert.equal(row.behind, 1, 'the direction still counts against the track')
+
+  const trackedToItsBranch = await checkBundle({ name: 'plugin-a', dir: world.work, track: 'dev' })
+  assert.equal(trackedToItsBranch.status, STATUS.current, 'a checkout on its own track is current')
+
+  const untracked = await checkBundle({ name: 'plugin-a', dir: world.work })
+  assert.equal(untracked.status, STATUS.current, 'without a track the current branch is the track')
+
+  await world.write(world.work, 'dirty.txt', 'x\n')
+  const dirty = await checkBundle({ name: 'plugin-a', dir: world.work, track: 'main' })
+  assert.equal(dirty.status, STATUS.dirty, 'dirty is the first move blocker, so it wins')
+})
+
 test('a failed fetch keeps the previous row marked stale', async (t) => {
   const world = await makeWorld(t)
   const clean = await checkBundle({ name: 'plugin-a', dir: world.work })
@@ -130,6 +160,7 @@ test('the dot aggregates the worst state across rows', () => {
   assert.equal(dotFor(STATUS.current), 'green')
   assert.equal(dotFor(STATUS.remoteAhead), 'violet')
   assert.equal(dotFor(STATUS.dirty), 'orange')
+  assert.equal(dotFor(STATUS.offTrack), 'orange')
   assert.equal(dotFor(STATUS.localAhead), 'red')
   assert.equal(dotFor('something-else'), 'grey')
 })
