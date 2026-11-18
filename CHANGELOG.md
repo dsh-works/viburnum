@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.4.0 — 2026-11-18
+
+The check and the move policy stop contradicting each other: a checkout moved off its track is
+visible before the click, every refusal says why, and `Sync all` names the row it skips.
+
+### Added
+
+- **`off-track` is a first-class check status.** A checkout on a branch other than its track gets the
+  orange dot and the words *off track*; the page row reads `main (on dev)`, the workbench subtitle
+  carries the branch, and `vib status` / `vib_status` / `vib brief` show it. The status is derived from
+  the branch the move gate checks, so a row never advertises a pull its own policy would refuse
+  (D27). The direction arrows still count against the track.
+- **Refusals reach the page in words.** The after-action banner renders
+  `<bundle>: refused: <code> — <message>` using the message the action already returned — for example
+  *refused: not-on-track — the checkout is on "dev", not on its track "main" — switch to the track
+  first* — and `Sync all` names the row it deliberately skips:
+  *not synced: dsh-plugin-viburnum — it updates itself (D12)*.
+- **Hygiene reports off-track checkouts** with the track they follow and a suggestion to switch or
+  re-track; the scan takes the watched tracks from the core.
+
+### Changed
+
+- D17's orange now means *needs a local action* (uncommitted work **or** off its track); the page copy
+  and the design table say so.
+- The sync-all batch carries `skipped`, so the page, CLI and tools can all state the same complete
+  report.
+
 ## 0.3.0 — 2026-11-11
 
 The workbench grows: a stopping conflict now has three exits and a brief, the desktop terminal opens

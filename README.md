@@ -30,7 +30,7 @@ there is no pnpm run, no lockfile write, and no profile edit.
 viburnum never commits and never force-pushes. When a rebase would rewrite something already
 published, it stops and shows both sides; when the rebase conflicts, it aborts and hands you the files.
 
-**Status: 0.3.0 released (tag `v0.3.0`), public under the MIT licence.**
+**Status: 0.4.0 released (tag `v0.4.0`), public under the MIT licence.**
 [`docs/PLAN.md`](docs/PLAN.md) is the approved plan and carries the gate-3 evidence;
 [`DESIGN.md`](DESIGN.md) carries the premise and decisions. `main` is the stable line (see
 [Branches](#branches)).
@@ -171,6 +171,29 @@ form cannot act. The browser half polls the status route every 30 seconds and af
 
 ## Verification
 
+### 0.4.0 verification (2026-11-18)
+
+Verified on Windows (win32 x64, Node 26.5.1) in the `web` profile at release. The change is the check
+and the reporting surface; it adds no move.
+
+- `node scripts/check.mjs` and `node --test test/*.test.mjs` — the same gate as `npm run check`, which
+  this machine's PowerShell execution policy blocks — **165 tests, 0 failures**.
+- **`off-track` status**: fixture tests prove a clean checkout on `dev` with track `main` classifies
+  `off-track` (orange, `behind` still counted, on-track and no-track rows unchanged) and that a dirty
+  tree wins the first-blocker order. The live status route carries `branch` beside `track` for every
+  row after the restart.
+- **Refusal copy and the skipped own row**: the tool render test proves
+  `<bundle>: refused: <code> — <message>` and *not synced: dsh-plugin-viburnum — it updates itself
+  (D12)*; the restarted Host returned the skip line from a `vib_sync` dry run.
+- **Hygiene**: the fixture test proves an off-track checkout is reported with its branch, its track
+  and a switch suggestion; the core test proves the scanner receives the watched tracks.
+- **Live profile**: the restarted Host served the change, the page's Refresh action returned all three
+  rows `current` (green dot), and the status route reported the released version.
+- Not claimed: the page copy itself was not visually re-inspected in this pass (no browser on the
+  release session; the client half parses as a classic script and the route data behind the labels is
+  verified live), and a real off-track event was not staged on the live profile — that row state is
+  fixture-verified rather than seen live.
+
 ### 0.3.0 verification (2026-11-11)
 
 Verified on macOS (Darwin arm64, Node 24.21.0) in the `web` profile at release:
@@ -285,7 +308,7 @@ machine.
   Terminal/PowerShell, iTerm2/Terminal.app through LaunchServices, x-terminal/gnome-terminal/xterm),
   **Browse** needs `zenity` or `kdialog` on Linux, and `vib new --push` needs git 2.28 or newer
   (`git init -b`).
-- 0.3.0 is accepted against the live local profile and offline fixture repositories. No second
+- 0.4.0 is accepted against the live local profile and offline fixture repositories. No second
   machine is available, so cross-machine sync is not verified in this release.
 - The page transport is a localhost-only JSON route pair; it stores no credentials and reads no
   secrets. Git inherits whatever the machine already uses.
