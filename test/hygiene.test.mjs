@@ -72,6 +72,25 @@ test('a clean workspace has no findings', async (t) => {
   assert.deepEqual(result.findings, [])
 })
 
+test('an off-track checkout is reported with its track', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'viburnum-hygiene-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  const workspace = join(root, 'ws')
+  const checkout = await makeCheckout(join(workspace, 'on-dev'), 'dsh-plugin-drifted')
+  await run(checkout, ['checkout', '-b', 'dev'])
+
+  const result = await scanHygiene({ roots: [workspace], tracks: { [checkout]: 'main' } })
+  const finding = result.findings.find((entry) => entry.kind === 'off-track')
+  assert.equal(finding.dir, checkout)
+  assert.equal(finding.branch, 'dev')
+  assert.equal(finding.track, 'main')
+  assert.match(finding.suggestion, /switch the checkout to main/u)
+  assert.equal(result.checkouts[0].track, 'main')
+
+  const onTrack = await scanHygiene({ roots: [workspace], tracks: { [checkout]: 'dev' } })
+  assert.deepEqual(onTrack.findings, [], 'a checkout on its track is not a finding')
+})
+
 test('missing roots are skipped', async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'viburnum-hygiene-'))
   t.after(() => rm(root, { recursive: true, force: true }))

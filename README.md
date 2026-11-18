@@ -8,8 +8,9 @@ pushes, fast-forwards or rebases each one onto the branch it follows — so both
 without you remembering which one pushed last.
 
 A row in the sidebar carries one dot: green when everything is current, violet when something can be
-pulled, orange when work is uncommitted, red when it is unpushed or diverged. Installing from a
-directory, a repository URL or a GitHub organisation is one action, from the page or `vib install`.
+pulled, orange when the tree needs a local action (uncommitted work, or a checkout sitting off its
+track), red when it is unpushed or diverged. Installing from a directory, a repository URL or a GitHub
+organisation is one action, from the page or `vib install`.
 
 viburnum began as one person's two-machine workshop, and it is public now because that problem is not
 unique to one person: everyone who develops a harness plugin on more than one machine has the same
@@ -51,10 +52,13 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
 ## What viburnum does
 
 - **One dot and the counts** in the sidebar, above Plugins: the worst state across every linked
-  checkout — green current, violet pullable, orange uncommitted, red unpushed or diverged, grey
-  unknown — plus the aggregate `↑ahead ↓behind` counts at the row's right edge.
+  checkout — green current, violet pullable, orange needs a local action (uncommitted work, or off its
+  track), red unpushed or diverged, grey unknown — plus the aggregate `↑ahead ↓behind` counts at the
+  row's right edge.
 - **The viburnum page**: the mounted checkouts with each plugin's icon, declared version, track,
-  direction counts and directory, and `Refresh` / `Sync all` / `Install` / `Hygiene`. Clicking a row
+  direction counts and directory, and `Refresh` / `Sync all` / `Install` / `Hygiene`. A checkout that
+  was moved to another branch than its track is flagged before you click: the row reads
+  `main (on dev)`, the word is *off track*, and the arrows still measure the track. Clicking a row
   opens its workbench.
 - **The workbench detail**: the branch as the hero control, the incoming changelog rendered as
   Markdown, target/current versions, the reload class, README and CHANGELOG inline, the folder opened
@@ -70,11 +74,15 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
   or rebases private divergence and pushes it; it refuses to rebase published history, and a
   conflicting rebase **stays stopped** with three exits — **Agree** (union-merge append-only files),
   **Guide** (open the files, fix, Retry) and **Myself** (abort). `Revert` restores the latest update
-  or switch snapshot.
+  or switch snapshot. A refusal is never a bare code: the after-action banner names the bundle, the
+  code and the reason with its next step — for example *refused: not-on-track — the checkout is on
+  "dev", not on its track "main" — switch to the track first* — and `Sync all` names the row it skips
+  (*not synced: dsh-plugin-viburnum — it updates itself*).
 - **Timeline**: what changed since the last look — incoming commits (with their first subject) and
   viburnum's own moves — above the rows; `vib log` reads and clears it.
-- **Hygiene scan**: duplicate checkouts, local branches never merged into `main`, and dirty trees,
-  each with a suggestion. It reports; it never deletes, moves or checks anything out. `vib hygiene`.
+- **Hygiene scan**: duplicate checkouts, local branches never merged into `main`, dirty trees, and
+  checkouts sitting on a branch other than their track, each with a suggestion. It reports; it never
+  deletes, moves or checks anything out. `vib hygiene`.
 - **Settings → viburnum**: refresh interval, refresh on startup, the checkout directory
   (**Browse…** / **Use default**), the organisation list and its default organisation, the
   **terminal application** (Windows Terminal / PowerShell / iTerm2 / Terminal.app / x-terminal / GNOME
