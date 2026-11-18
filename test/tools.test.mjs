@@ -79,6 +79,18 @@ test('vib_status reads the core cache without approval', async () => {
   assert.match(status.output.render({}, value)[0].text, /a — main ✓ current/u)
 })
 
+test('vib_status shows the branch when a checkout is off its track', async () => {
+  const core = coreStub()
+  core.snapshot = () => ({
+    rows: [{ name: 'a', track: 'main', branch: 'dev', ahead: 0, behind: 2, status: 'off-track' }],
+    dot: 'orange',
+    checkedAt: 'now',
+  })
+  const status = tools({ core }).find((tool) => tool.name === 'vib_status')
+  const value = await status.execute({}, { signal: new AbortController().signal })
+  assert.match(status.output.render({}, value)[0].text, /a — main \(on dev\) ↓2 off-track/u)
+})
+
 test('vib_brief reads status and the timeline without approval', async () => {
   const core = coreStub()
   core.brief = async () => ({
@@ -164,8 +176,9 @@ test('batch results are rendered as one line per bundle plus totals', async () =
     totals: { pushed: 1, pulled: 0, rebased: 0 },
     results: [
       { name: 'a', ok: true, receipt: { kind: 'sync', pushed: 1, pulled: 0, rebased: 0 } },
-      { name: 'b', ok: false, code: 'dirty', message: '2 uncommitted files' },
+      { name: 'b', ok: false, code: 'dirty', message: '2 uncommitted files — commit or stash first' },
     ],
+    skipped: ['dsh-plugin-viburnum'],
   })
   const definition = tools({
     core,
@@ -174,6 +187,8 @@ test('batch results are rendered as one line per bundle plus totals', async () =
   const value = await definition.execute({}, { agent: { id: 'agent' }, callId: 'call', signal: new AbortController().signal })
   const rendered = definition.output.render({}, value)[0].text
   assert.match(rendered, /a: pushed 1/u)
-  assert.match(rendered, /refused: dirty/u)
+  assert.match(rendered, /b: refused: dirty — 2 uncommitted files — commit or stash first/u, 'the refusal keeps its bundle and reason')
   assert.match(rendered, /totals: pushed 1, pulled 0, rebased 0/u)
+  assert.match(rendered, /not synced: dsh-plugin-viburnum — it updates itself \(D12\)/u, 'the skipped own row is named (D12)')
+  assert.deepEqual(value.skipped, ['dsh-plugin-viburnum'])
 })

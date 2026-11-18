@@ -72,7 +72,7 @@ export function apply(ctx, config) {
     catalogFetcher: async (owner) => fetchOwnerRepos(owner, { token: await tokenOf() }),
     repoIconFetcher: async (owner, repo) => fetchRepoIcon(owner, repo, { token: await tokenOf() }),
     repoPreviewFetcher: async (owner, repo) => fetchRepoPreview(owner, repo, { token: await tokenOf() }),
-    hygieneScanner: () => scanHygiene({ roots: [workspaceDirectory, core.shelfDirectory] }),
+    hygieneScanner: ({ tracks } = {}) => scanHygiene({ roots: [workspaceDirectory, core.shelfDirectory], tracks }),
   })
 
   /** The state load, as `null` or the error; every consumer awaits it. */

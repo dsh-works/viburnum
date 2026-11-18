@@ -107,7 +107,7 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D14 | **Tests are offline.** Fixtures are real repositories: a bare `origin`, two clones, commits on both sides. | Divergence, rebase and conflict are exercised without network. |
 | D15 | **`vib` is the command; aliases are the user's.** The package links `vib` and `viburnum` to one entry point; anything else is a shell alias. | The tool answers to its name without owning the keyboard: no alias table to maintain, no runtime string to change. |
 | D16 | **One sidebar row, above Plugins.** A `sidebar.panellist` registration ordered before the Plugins row, with the butterfly as its icon. | The tool is one click from anywhere, and it sits with the other panel launchers instead of inventing a second navigation. |
-| D17 | **One dot is the whole status language.** Green current, violet pullable, orange uncommitted, red unpushed or diverged, grey unknown; worst state wins across bundles. | A glance answers "is anything wrong" without opening anything. Colour is always paired with words on the page, never the only signal. |
+| D17 | **One dot is the whole status language.** Green current, violet pullable, orange needs a local action (uncommitted work, or a checkout off its track), red unpushed or diverged, grey unknown; worst state wins across bundles. | A glance answers "is anything wrong" without opening anything. Colour is always paired with words on the page, never the only signal. |
 | D18 | **No hover card.** The sidebar owns the row and exposes no hover slot; refresh and detail live on the page, and the row opens it. | The sketch's hover loses; the dot survives. Nothing is built on a seam the harness does not have. |
 | D19 | **Three doors to install, one lifecycle.** Directory, repository URL, or GitHub organisation — all end at `pluginManager.installBundle`. | Org browsing is a list you pick from, not a second manager; one code path creates every plugin. |
 | D20 | **`vib install .` is the CLI spelling of the directory door.** | The harness's own terminal is the command surface: no in-page bar to build, and the page's buttons are the same verbs without typing. |
@@ -117,6 +117,7 @@ or resolve by hand". If no, the rebase is a private rewrite and safe.
 | D24 | **Versions are suggested, never written.** The drift note may add *next would be 0.5.0*, derived from the changelog; `package.json` is never edited by viburnum. | One fewer thing that changes your files, and the nudge still lands. |
 | D25 | **The organisation is the catalog.** The list is the union of mounted bundles and installable org repositories, grouped *mounted* and *available*; the available group appears only while the org is reachable, and is cached. | The profile stops being the inventory: what you own lives in the org, what runs lives in the profile, and one page shows both. |
 | D26 | **Catalog owners are configured, not hardcoded.** `catalogOwners` defaults to `['dsh-works']`; each entry is an org or a user and is read with the same rules. | A personal account joins the catalog with one config line, and the repository carries no personal handle in its defaults. |
+| D27 | **Off-track is a status, not a surprise.** A checkout on a branch other than its track is classified `off-track` (orange) and shows the branch beside the track; the direction counts still measure the track. A row never advertises a pull its own move policy will refuse, and a refusal names the bundle, the code and the reason in the after-action banner. | The check and the move policy cannot contradict each other; the words arrive before the click, and every refusal carries its next step. |
 
 ## 5. Surfaces
 
@@ -140,7 +141,7 @@ The sketch asked for a hover card with a refresh button. That surface does not e
 | :--- | :--- | :--- |
 | current | green | clean, and equal to `origin/<track>` |
 | pullable | violet | the remote has commits this machine does not |
-| uncommitted | orange | the tree is dirty |
+| uncommitted / off track | orange | the tree is dirty, or the checkout is on a branch other than its track |
 | unpushed / diverged | red | commits here the remote does not have |
 | unknown | grey | the check failed, the directory is missing, or there is no `origin` |
 
@@ -180,6 +181,9 @@ viburnum                                    [ Refresh ]  [ Sync all ]  [ Install
 - **The branch is the version selector**, not a `main`/`dev` toggle. A picker lists local and remote
   branches with `+N` counts against the current head; `main` and `dev` are promoted to chips. Any
   branch is a track, including `feature/subagents-cost-final`.
+- **Off its track is visible before the click.** When the checkout sits on another branch than the
+  track, the row reads `main (on dev)` with the word *off track*, and the arrows still measure
+  `origin/<track>` — the track is what would move, not the branch that happens to be checked out.
 - **Direction, not status.** `↑2` is a push, `↓3` is a pull, `↑2 ↓3` is a rebase, `✓` is nothing.
   The dot says how bad it is; the arrows say what will happen.
 - **Rows expand in place** for the quick actions, and **clicking a bundle's name opens its own page**
@@ -190,7 +194,10 @@ viburnum                                    [ Refresh ]  [ Sync all ]  [ Install
   the changelog, *next would be 0.5.0* — the cheapest reminder for the mismatch that started all this.
   viburnum suggests the number; it never writes it.
 - **After an action:** one banner: *pushed 2, pulled 3, rebased 0 · restart `dsh web`* — or *conflict
-  in 2 files: `lib/png.js`, `client.panel.js` — rebase aborted*.
+  in 2 files: `lib/png.js`, `client.panel.js` — rebase aborted* — or a refusal with its reason and
+  next step: *dsh-plugin-alerts: refused: not-on-track — the checkout is on "dev", not on its track
+  "main" — switch to the track first*. `Sync all` names the row it skips:
+  *not synced: dsh-plugin-viburnum — it updates itself (D12)* (D27).
 
 ### 5.2 Agent tools
 
@@ -302,10 +309,11 @@ for each watched bundle (parallel, at most 3 git processes)
   fetch  = git fetch --prune --tags origin              (timeout, no prompts, no shell)
   track  = state.track or branch or "main"
   counts = git rev-list --left-right --count origin/<track>...HEAD
+  off-track = state.track is set and branch != state.track  (update and sync refuse it)
   behind, ahead = counts
   hashes = git rev-list origin/<track>..HEAD            the "yours" list
            git rev-list HEAD..origin/<track>            the "theirs" list
-  status = dirty | detached | rebasing | diverged | local-ahead | remote-ahead | current
+  status = dirty | off-track | detached | rebasing | diverged | local-ahead | remote-ahead | current
 ```
 
 A failed fetch keeps the previous row, marked stale, with git's error quoted once.

@@ -101,6 +101,8 @@ window.__ModuleLoader__.load({
         installOrganisationHint: 'Pick a repository of a configured owner; it clones into the shelf like the repository door. Private repositories appear when git has GitHub credentials stored on this machine.',
         hygiene: 'Hygiene',
         timeline: 'timeline',
+        skipped: 'not synced',
+        updatesItself: 'it updates itself (D12)',
         noHygieneFindings: 'No hygiene problems found.',
         scan: 'Scan',
         conflict: 'conflict',
@@ -133,6 +135,7 @@ window.__ModuleLoader__.load({
         'status.local-ahead': 'unpushed',
         'status.diverged': 'diverged',
         'status.dirty': 'uncommitted',
+        'status.off-track': 'off track',
         'status.detached': 'detached',
         'status.rebasing': 'rebase in progress',
         'status.local-only': 'local only',
@@ -297,6 +300,14 @@ window.__ModuleLoader__.load({
       if ((row.ahead || 0) > 0) parts.push('↑' + row.ahead)
       if ((row.behind || 0) > 0) parts.push('↓' + row.behind)
       return parts.join(' ') || '✓'
+    }
+
+    /** `main`, or `main (on dev)` with the locale's "on" when the checkout is off its track. */
+    function trackText(row, t) {
+      const track = row.track || '-'
+      return row.branch && row.track && row.branch !== row.track
+        ? track + ' (' + t('on') + ' ' + row.branch + ')'
+        : track
     }
 
     /** The branch chips offered for one row: main, dev and whatever it follows. */
@@ -825,13 +836,22 @@ window.__ModuleLoader__.load({
             t('pushed') + ' ' + result.totals.pushed + ' · ' + t('pulled') + ' ' + result.totals.pulled + ' · ' + t('rebased') + ' ' + result.totals.rebased,
           )
         }
+        if (Array.isArray(result.skipped) && result.skipped.length > 0) {
+          lines.push(t('skipped') + ': ' + result.skipped.join(', ') + ' — ' + t('updatesItself'))
+        }
         return lines.join(' · ')
       }
       if (result.dryRun === true) {
         const plan = result.plan || {}
         return t('dryRun') + ': ' + plan.action
       }
-      if (result.ok === false) return t('refused') + ': ' + (result.code || 'error')
+      const label = typeof result.bundle === 'string' && result.bundle !== ''
+        ? result.bundle + ': '
+        : (typeof result.name === 'string' && result.name !== '' ? result.name + ': ' : '')
+      if (result.ok === false) {
+        const message = typeof result.message === 'string' && result.message !== '' ? ' — ' + result.message : ''
+        return label + t('refused') + ': ' + (result.code || 'error') + message
+      }
       if (result.saved === true) return t('saved')
       if (result.installed === true) {
         return t('installed') + ' ' + (result.name || '') + (result.version ? ' v' + result.version : '')
@@ -839,12 +859,12 @@ window.__ModuleLoader__.load({
       }
       if (result.ok === true && typeof result.path === 'string') return t('selected') + ' ' + result.path
       if (result.opened === true) return t('opened') + ' ' + (result.target || '')
-      if (result.nothing === true) return (result.bundle || '') + ' ✓'
+      if (result.nothing === true) return label + '✓'
       const receipt = result.receipt
       if (receipt) {
         const parts = [t('pushed') + ' ' + receipt.pushed, t('pulled') + ' ' + receipt.pulled, t('rebased') + ' ' + receipt.rebased]
         if (receipt.kind === 'switch' && receipt.track) parts.unshift(t('on') + ' ' + receipt.track)
-        return parts.join(' · ')
+        return label + parts.join(' · ')
       }
       return ''
     }
@@ -1036,7 +1056,7 @@ window.__ModuleLoader__.load({
               },
             }, row.name),
             row.version ? h('span', { style: styles.version }, 'v' + row.version) : null,
-            h('span', { style: styles.track }, row.track || '-'),
+            h('span', { style: styles.track }, trackText(row, t)),
             h('span', { style: styles.arrows }, arrows(row)),
             h('span', { style: styles.status }, t('status.' + row.status)),
             row.stale ? h('span', { style: styles.secondary }, '· ' + t('stale')) : null,
@@ -1116,7 +1136,7 @@ window.__ModuleLoader__.load({
             { style: styles.header },
             back,
             h('span', { style: styles.title }, bundle.name),
-            h('span', { style: styles.subtitle }, (bundle.version ? 'v' + bundle.version + ' · ' : '') + (bundle.track || '-')),
+            h('span', { style: styles.subtitle }, (bundle.version ? 'v' + bundle.version + ' · ' : '') + trackText(bundle, t)),
             h('span', { style: styles.spacer }),
             h('button', { style: styles.button, disabled: busy, onClick: () => runDetail('update', { bundle: bundle.name }) }, t('update')),
             h('button', { style: styles.button, disabled: busy, onClick: () => runDetail('sync', { bundle: bundle.name }) }, t('sync')),
@@ -1357,7 +1377,9 @@ window.__ModuleLoader__.load({
               ? hygiene.findings.map((finding, index) => {
                 const label = finding.kind === 'unmerged-branch'
                   ? `${finding.kind}: ${finding.name} — ${(finding.branches || []).join(', ')}`
-                  : `${finding.kind}: ${finding.name}`
+                  : finding.kind === 'off-track'
+                    ? `${finding.kind}: ${finding.name} — on ${finding.branch}, tracks ${finding.track}`
+                    : `${finding.kind}: ${finding.name}`
                 return h('div', { key: index, style: styles.secondary }, label + (finding.suggestion ? ' · ' + finding.suggestion : ''))
               })
               : null,

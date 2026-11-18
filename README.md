@@ -8,8 +8,9 @@ pushes, fast-forwards or rebases each one onto the branch it follows — so both
 without you remembering which one pushed last.
 
 A row in the sidebar carries one dot: green when everything is current, violet when something can be
-pulled, orange when work is uncommitted, red when it is unpushed or diverged. Installing from a
-directory, a repository URL or a GitHub organisation is one action, from the page or `vib install`.
+pulled, orange when the tree needs a local action (uncommitted work, or a checkout sitting off its
+track), red when it is unpushed or diverged. Installing from a directory, a repository URL or a GitHub
+organisation is one action, from the page or `vib install`.
 
 viburnum began as one person's two-machine workshop, and it is public now because that problem is not
 unique to one person: everyone who develops a harness plugin on more than one machine has the same
@@ -29,7 +30,7 @@ there is no pnpm run, no lockfile write, and no profile edit.
 viburnum never commits and never force-pushes. When a rebase would rewrite something already
 published, it stops and shows both sides; when the rebase conflicts, it aborts and hands you the files.
 
-**Status: 0.3.0 released (tag `v0.3.0`), public under the MIT licence.**
+**Status: 0.4.0 released (tag `v0.4.0`), public under the MIT licence.**
 [`docs/PLAN.md`](docs/PLAN.md) is the approved plan and carries the gate-3 evidence;
 [`DESIGN.md`](DESIGN.md) carries the premise and decisions. `main` is the stable line (see
 [Branches](#branches)).
@@ -51,10 +52,13 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
 ## What viburnum does
 
 - **One dot and the counts** in the sidebar, above Plugins: the worst state across every linked
-  checkout — green current, violet pullable, orange uncommitted, red unpushed or diverged, grey
-  unknown — plus the aggregate `↑ahead ↓behind` counts at the row's right edge.
+  checkout — green current, violet pullable, orange needs a local action (uncommitted work, or off its
+  track), red unpushed or diverged, grey unknown — plus the aggregate `↑ahead ↓behind` counts at the
+  row's right edge.
 - **The viburnum page**: the mounted checkouts with each plugin's icon, declared version, track,
-  direction counts and directory, and `Refresh` / `Sync all` / `Install` / `Hygiene`. Clicking a row
+  direction counts and directory, and `Refresh` / `Sync all` / `Install` / `Hygiene`. A checkout that
+  was moved to another branch than its track is flagged before you click: the row reads
+  `main (on dev)`, the word is *off track*, and the arrows still measure the track. Clicking a row
   opens its workbench.
 - **The workbench detail**: the branch as the hero control, the incoming changelog rendered as
   Markdown, target/current versions, the reload class, README and CHANGELOG inline, the folder opened
@@ -70,11 +74,15 @@ published, it stops and shows both sides; when the rebase conflicts, it aborts a
   or rebases private divergence and pushes it; it refuses to rebase published history, and a
   conflicting rebase **stays stopped** with three exits — **Agree** (union-merge append-only files),
   **Guide** (open the files, fix, Retry) and **Myself** (abort). `Revert` restores the latest update
-  or switch snapshot.
+  or switch snapshot. A refusal is never a bare code: the after-action banner names the bundle, the
+  code and the reason with its next step — for example *refused: not-on-track — the checkout is on
+  "dev", not on its track "main" — switch to the track first* — and `Sync all` names the row it skips
+  (*not synced: dsh-plugin-viburnum — it updates itself*).
 - **Timeline**: what changed since the last look — incoming commits (with their first subject) and
   viburnum's own moves — above the rows; `vib log` reads and clears it.
-- **Hygiene scan**: duplicate checkouts, local branches never merged into `main`, and dirty trees,
-  each with a suggestion. It reports; it never deletes, moves or checks anything out. `vib hygiene`.
+- **Hygiene scan**: duplicate checkouts, local branches never merged into `main`, dirty trees, and
+  checkouts sitting on a branch other than their track, each with a suggestion. It reports; it never
+  deletes, moves or checks anything out. `vib hygiene`.
 - **Settings → viburnum**: refresh interval, refresh on startup, the checkout directory
   (**Browse…** / **Use default**), the organisation list and its default organisation, the
   **terminal application** (Windows Terminal / PowerShell / iTerm2 / Terminal.app / x-terminal / GNOME
@@ -162,6 +170,29 @@ one. It uses two same-origin JSON routes registered on the Host web server,
 form cannot act. The browser half polls the status route every 30 seconds and after every action.
 
 ## Verification
+
+### 0.4.0 verification (2026-11-18)
+
+Verified on Windows (win32 x64, Node 26.5.1) in the `web` profile at release. The change is the check
+and the reporting surface; it adds no move.
+
+- `node scripts/check.mjs` and `node --test test/*.test.mjs` — the same gate as `npm run check`, which
+  this machine's PowerShell execution policy blocks — **165 tests, 0 failures**.
+- **`off-track` status**: fixture tests prove a clean checkout on `dev` with track `main` classifies
+  `off-track` (orange, `behind` still counted, on-track and no-track rows unchanged) and that a dirty
+  tree wins the first-blocker order. The live status route carries `branch` beside `track` for every
+  row after the restart.
+- **Refusal copy and the skipped own row**: the tool render test proves
+  `<bundle>: refused: <code> — <message>` and *not synced: dsh-plugin-viburnum — it updates itself
+  (D12)*; the restarted Host returned the skip line from a `vib_sync` dry run.
+- **Hygiene**: the fixture test proves an off-track checkout is reported with its branch, its track
+  and a switch suggestion; the core test proves the scanner receives the watched tracks.
+- **Live profile**: the restarted Host served the change, the page's Refresh action returned all three
+  rows `current` (green dot), and the status route reported the released version.
+- Not claimed: the page copy itself was not visually re-inspected in this pass (no browser on the
+  release session; the client half parses as a classic script and the route data behind the labels is
+  verified live), and a real off-track event was not staged on the live profile — that row state is
+  fixture-verified rather than seen live.
 
 ### 0.3.0 verification (2026-11-11)
 
@@ -277,7 +308,7 @@ machine.
   Terminal/PowerShell, iTerm2/Terminal.app through LaunchServices, x-terminal/gnome-terminal/xterm),
   **Browse** needs `zenity` or `kdialog` on Linux, and `vib new --push` needs git 2.28 or newer
   (`git init -b`).
-- 0.3.0 is accepted against the live local profile and offline fixture repositories. No second
+- 0.4.0 is accepted against the live local profile and offline fixture repositories. No second
   machine is available, so cross-machine sync is not verified in this release.
 - The page transport is a localhost-only JSON route pair; it stores no credentials and reads no
   secrets. Git inherits whatever the machine already uses.
