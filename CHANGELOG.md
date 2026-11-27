@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **The collapsed rail's glyph sits on the icon axis.** The status dot now positions itself out of
+  flow beneath the butterfly — with a little air between it and the wings — instead of taking a slot
+  beside it, so the mark lines up with the shipped panel icons and the dot reads as its own centred
+  note; the expanded row is unchanged.
+- **`vib hygiene` scans without a readable profile.** The track map is now best-effort: a profile
+  that cannot be read no longer degrades the scan into `hygiene-failed` (exit 1) instead of the
+  findings it can still report (exit 3). The CLI test passed only on machines running the harness,
+  because it inherited `DSH_PROFILE_DIR`; it now uses the derived profile like a bare runner does.
+
 ## 0.4.0 — 2026-11-18
 
 The check and the move policy stop contradicting each other: a checkout moved off its track is

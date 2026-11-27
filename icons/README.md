@@ -23,7 +23,8 @@ with `#b3a6ef` lavender, `#4a4a8c` indigo body, `#b5652f`/`#e8a05c` copper for t
 The package icon is `blue-butterfly-mark.png`: the original 64×64 canvas had 8/4/3/15 px of empty
 edge around the mark, so the shipped crop is the 52×46 mark itself (declared through `package.json`
 `icon` and exported as `./icon`). The **sidebar glyph** embeds the same PNG as a data URI and draws
-it larger than the row cell; the status dot sits after it, before the label. The final shipped mark
+it larger than the row cell; the status dot follows the label in the expanded row and sits centred
+beneath the mark in the collapsed rail. The final shipped mark
 may still change: candidates stay in this directory until one has survived the sidebar at its real
 size.
 

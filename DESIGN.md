@@ -146,9 +146,10 @@ The sketch asked for a hover card with a refresh button. That surface does not e
 | unknown | grey | the check failed, the directory is missing, or there is no `origin` |
 
 Precedence: red > orange > violet > grey > green. Every colour is also spelled out in words on the page:
-at nine pixels, orange and red are a guess, and colour alone is not an accessible answer. The dot sits in
-the icon's top-right corner over the sidebar background, with a 1 px ring in the icon's ink so it reads on
-a light theme.
+at nine pixels, orange and red are a guess, and colour alone is not an accessible answer. The dot follows
+the label in the expanded row. In the collapsed rail it sits centred beneath the butterfly, out of the
+glyph's flow and a couple of pixels clear of the wings — the rail's 12 px row gap supplies the room — so
+the mark itself stays on the rail's icon axis and lines up with the shipped panels.
 
 ### 5.1 Web page — "viburnum"
 
