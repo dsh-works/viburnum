@@ -279,7 +279,13 @@ test('vib hygiene scans the working directory and exits 3 on findings', async (t
   await run(checkout, ['commit', '-m', 'init'])
   await writeFile(join(checkout, 'untracked.txt'), 'not committed\n')
 
+  // The scan must not depend on a readable profile. `setup` drops the launcher's
+  // profile pointer; this test builds its own environment, so it does the same —
+  // otherwise a developer machine with a live `DSH_PROFILE_DIR` passes while a
+  // bare runner reads the (missing) profile under `DSH_HOME` and goes red.
   const env = { ...process.env, DSH_HOME: join(root, 'home'), DSH_PROFILE: 'web' }
+  delete env.DSH_PROFILE_DIR
+  delete env.DSH_WEB_URL
   const result = await runCli(env, ['hygiene', '--json'], root)
   assert.equal(result.code, 3)
   const data = JSON.parse(result.stdout)
