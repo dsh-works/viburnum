@@ -745,10 +745,17 @@ window.__ModuleLoader__.load({
     const ICON_DATA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADQAAAAuCAYAAABnNToWAAACi0lEQVR4nN2ZsU0EQQxFrwgi6AAhCAgQBZBcRAFkQEQLSDSARExGRAOIDhBVUAARpGSgWcknn8/2fHt3bncZybrTaXfGb/1tz+wtFgOOnd3D32JDzjnaKCCv10f/C6hvhCYZ4axTk45wBmqICDcdEccmDcJHzcnZgNDwnJ0dDA3L6dnCWDY7J8r1L8/f3X37x+cr2ypUWeT27r2zvZPLNSu/oc4QDJkE4t+bw0gQzQjOmqc4q8FIawYkYQ6uHl2j67Ro8eh4ME2hyqQezPLhrQrG50JAUKBUTmtABcIyD2oIIO60JXme0xs3a3LzgCSYlGAGqAYRymeaRMpMGq9cHlQGRhYkNI9VKERyBeLj62dlVqRochQIyV9N6hJsDSoDxKNEi0Wk51VWVOomkCY7D0jCWFHSoOj3Wt5KaUcKUyhK1iLaE1su7zuT5RaB8dTg5a9bHJBK50WJgLghFTUDZFY7WjAKJSWgwXCgWjWtAVVzyIOKJCotQACnZzdrQGi/01pESG5Is7Uc0BKUYLJAkYfnbZY3th9oo5PNrhVQCkYrFLUuLjs3CpTJ014wdJN18LP2VjUgFMrb4cMwltx4H7GMrtGAMns2TQHhM5SVO/Lp8WYppUAwHIhHOyrjcFQ8mIy+PblFJRzOFQ6TbawSygLiEfAkzGWfPqZ70Sn/DHw+XXSfxaJA0aiHGicKJGHIskB9y3Tv/BkbSM45WEHYBhBfg8/fK0peUaDcQWAyQPyBaVDNe5DWyfmisv+MBuRBIZ2cv8nhO4RalWsiOQvKgvO6OAFxQARKSnowoAX48s/ajmiAfc9Y6R1DDQ56v+zMEZFzE5ihB7Lr1o4kY/vtDkTO5gv5qQ9LzhmQP3F7cAq8ElTbAAAAAElFTkSuQmCC'
     const ICON_ASPECT = 52 / 46
 
+    /** Air between the collapsed butterfly's ink and the status dot beneath it. */
+    const RAIL_DOT_GAP = 2
+
     /**
      * The sidebar glyph: the trimmed mark, centred on the panel-icon axis, then
      * the label and the status dot. The shell's own label is hidden on this row
      * only and re-rendered here so the dot can follow the text.
+     *
+     * Collapsed there is no label: the mark stands alone on the rail's icon
+     * axis and the dot sits centred beneath it, a little clear of the wings.
+     * The dot is placed out of flow, so it cannot push the mark off that axis.
      */
     function viburnumIcon(props) {
       const state = useStore(props.store)
@@ -767,6 +774,49 @@ window.__ModuleLoader__.load({
       const behind = rows.reduce((sum, row) => sum + (row.behind || 0), 0)
       const arrows = [ahead > 0 ? '↑' + ahead : null, behind > 0 ? '↓' + behind : null].filter(Boolean).join(' ')
 
+      const mark = h('img', {
+        src: ICON_DATA,
+        alt: '',
+        width,
+        height,
+        draggable: false,
+        style: {
+          display: 'block',
+          margin: `${-vertical}px -${half}px ${-vertical}px -${half}px`,
+          opacity: active ? 1 : 0.82,
+        },
+      })
+      const dotStyle = {
+        width: '5px',
+        height: '5px',
+        borderRadius: '50%',
+        flex: '0 0 auto',
+        background: DOT_TOKEN[dot] || DOT_TOKEN.grey,
+      }
+
+      // Collapsed: the mark alone on the icon axis, the dot centred under it.
+      // The mark's layout box is only `size` tall (the negative margins let the
+      // ink overhang by `vertical`), so the dot starts one overhang below the
+      // box and then keeps `RAIL_DOT_GAP` px of air from the wings; the rail's
+      // 12 px row gap supplies the room below.
+      if (!expanded) {
+        return h(
+          'span',
+          { style: { position: 'relative', display: 'inline-flex' } },
+          mark,
+          h('span', {
+            'aria-hidden': 'true',
+            style: {
+              ...dotStyle,
+              position: 'absolute',
+              left: '50%',
+              top: `calc(100% + ${vertical + RAIL_DOT_GAP}px)`,
+              transform: 'translateX(-50%)',
+            },
+          }),
+        )
+      }
+
       return h(
         'span',
         {
@@ -779,37 +829,14 @@ window.__ModuleLoader__.load({
             minWidth: 0,
           },
         },
-        h('img', {
-          src: ICON_DATA,
-          alt: '',
-          width,
-          height,
-          draggable: false,
-          style: {
-            display: 'block',
-            margin: `${-vertical}px -${half}px ${-vertical}px -${half}px`,
-            opacity: active ? 1 : 0.82,
-          },
-        }),
-        expanded
-          ? h('style', { key: 'hide-label' }, `button[aria-label=${JSON.stringify(label)}] > span:last-child{display:none}button[aria-label=${JSON.stringify(label)}] > span:first-child{flex:1 1 auto;min-width:0;justify-content:flex-start}`)
-          : null,
-        expanded
-          ? h('span', { key: 'label', style: { whiteSpace: 'nowrap', position: 'relative', top: '3px', marginLeft: '4px' } }, label)
-          : null,
+        mark,
+        h('style', { key: 'hide-label' }, `button[aria-label=${JSON.stringify(label)}] > span:last-child{display:none}button[aria-label=${JSON.stringify(label)}] > span:first-child{flex:1 1 auto;min-width:0;justify-content:flex-start}`),
+        h('span', { key: 'label', style: { whiteSpace: 'nowrap', position: 'relative', top: '3px', marginLeft: '4px' } }, label),
         h('span', {
           'aria-hidden': 'true',
-          style: {
-            width: '5px',
-            height: '5px',
-            borderRadius: '50%',
-            flex: '0 0 auto',
-            position: 'relative',
-            top: '2px',
-            background: DOT_TOKEN[dot] || DOT_TOKEN.grey,
-          },
+          style: { ...dotStyle, position: 'relative', top: '2px' },
         }),
-        expanded && arrows !== ''
+        arrows !== ''
           ? h('span', {
             key: 'arrows',
             style: {
